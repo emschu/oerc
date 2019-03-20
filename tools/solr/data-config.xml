@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  #%L
+  oer-collector-project
+  %%
+  Copyright (C) 2019 emschu[aet]mailbox.org
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+
+<dataConfig>
+    <dataSource type="JdbcDataSource"
+                driver="org.mariadb.jdbc.Driver"
+                url="jdbc:mysql://localhost/oer_server"
+                user="oer_server_dev"
+                password="oer_server_dev"/>
+    <document name="program_data">
+        <entity name="program_entry" query="SELECT * from program_entry" pk="id" rootEntity="true">
+            <field column="id" name="id" indexed="true" stored="true"/>
+            <field column="title" name="title" type="text_de" indexed="true" stored="true"/>
+            <field column="description" name="description" type="text_de" indexed="false" stored="true"/>
+            <field column="start_date_time" name="start_date_time" indexed="false" stored="true"/>
+            <field column="end_date_time" name="end_date_time" indexed="false" stored="true"/>
+            <field column="duration_in_minutes" name="duration" indexed="false" stored="true"/>
+            <entity name="channel" query="SELECT * from channel WHERE id = ${program_entry.channel_id}" pk="id">
+                <field column="id" name="id" indexed="true"/>
+                <field column="name" name="name" />
+                <field column="home_page" name="home_page" />
+            </entity>
+        </entity>
+    </document>
+</dataConfig>

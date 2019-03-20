@@ -1,0 +1,28 @@
+<table *ngIf="currentStatus" class="table">
+  <tbody>
+  <tr>
+    <td>artist count</td>
+    <td>{{ currentStatus.artistCount }}</td>
+    <td>program entry count</td>
+    <td>{{ currentStatus.programEntryCount }}</td>
+    <td>channel count</td>
+    <td>{{ currentStatus.channelCount }}</td>
+  </tr>
+  <tr>
+    <td>image links count</td>
+    <td>{{ currentStatus.imageLinksCount }}</td>
+    <td>tv show count</td>
+    <td>{{ currentStatus.tvShowCount }}</td>
+    <td>tag count</td>
+    <td>{{ currentStatus.tagCount }}</td>
+  </tr>
+  <tr>
+    <td>version</td>
+    <td>{{ currentStatus.version }}</td>
+    <td>status response server date time</td>
+    <td>{{ currentStatus.serverDateTime }}</td>
+    <td>currently updating</td>
+    <td>{{ currentStatus.currentlyUpdating }}</td>
+  </tr>
+  </tbody>
+</table>
