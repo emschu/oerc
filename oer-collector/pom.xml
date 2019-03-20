@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.emschu.oer</groupId>
     <artifactId>oer-collector</artifactId>
-    <version>0.9.3</version>
+    <version>0.9.4-SNAPSHOT</version>
     <licenses>
         <license>
             <name>GNU Affero General Public License v3</name>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.emschu.oer</groupId>
             <artifactId>oer-core</artifactId>
-            <version>0.9.3</version>
+            <version>0.9.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -148,6 +148,6 @@
     </build>
 
   <scm>
-    <tag>oer-collector-0.9.3</tag>
+    <tag>oer-collector-0.9.0</tag>
   </scm>
 </project>
