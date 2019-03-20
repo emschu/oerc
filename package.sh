@@ -21,7 +21,7 @@
 # #L%
 ###
 
-OER_VERSION="v1-0-0"
+OER_VERSION="v0-9-3"
 
 mvn clean package -DskipTests=true
 

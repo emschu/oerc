@@ -1,7 +1,7 @@
 {
-  "oer.core.jdbc_datasource": "jdbc:mysql://localhost:3306/oer_server_dev?useUnicode=yes&characterEncoding=UTF-8",
-  "oer.core.jdbc_datasource_user": "oer_server_dev",
-  "oer.core.jdbc_datasource_password": "oer_server_dev",
+  "oer.core.jdbc_datasource": "jdbc:mariadb://localhost:3306/oer_program_data?useUnicode=yes&characterEncoding=UTF-8",
+  "oer.core.jdbc_datasource_user": "oer_server_db_user",
+  "oer.core.jdbc_datasource_password": "oer_server_db_pw",
   "oer.core.jdbc_hibernate_dialect": "org.hibernate.dialect.MariaDBDialect",
   "oer.core.jdbc_hibernate_tmp_metadata_defaults": true,
   "oer.collector.update_mode": true,

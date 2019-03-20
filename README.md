@@ -1,4 +1,4 @@
-# OER-Collector – Public-law TV program of Germany
+# OER-Collector
 
 A java software bundle to store and expose program data of public-law tv channels in Germany via a REST JSON interface.
 
@@ -12,7 +12,7 @@ If you are looking for this have a look at [similar projects](#similar-projects)
 **NOTE:** This server software is not ready to be used in any kind of *production* server environment.
 Only use it locally and/or in protected environments.
 
-**Current version:** v1.0.0
+**Current version:** v0.9.3
 
 # Description
 
@@ -28,7 +28,7 @@ In addition there is a very simple **configuration sample** to integrate the dat
 
 To get an impression of the data there is an **Angular example frontend**.
 
-Note: The public law web pages this software needs to access are restricted to certain geographic IP regions. 
+Note: The public-law web pages this software needs to access are restricted to certain geographic IP regions. 
 
 ## Requirements
 - JRE 8/11

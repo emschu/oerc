@@ -3,7 +3,7 @@
   "info": {
     "description": "oerserver - JSON REST server backend for german tv program data of public-law channels",
     "version": "v1",
-    "title": "OER-Server - German public law tv program data api",
+    "title": "OER-Server - German public-law TV program data REST API",
     "contact": {
       "name": "emschu",
       "url": "https://github.com/emschu",
