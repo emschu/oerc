@@ -12,7 +12,7 @@ If you are looking for this have a look at [similar projects](#similar-projects)
 **NOTE:** This server software is not ready to be used in any kind of *production* server environment.
 Only use it locally and/or in protected environments.
 
-**Current version:** v0.9.3
+**Current version:** v0.9.4
 
 # Description
 
