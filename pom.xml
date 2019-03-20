@@ -4,7 +4,7 @@
 
     <groupId>org.emschu.oer</groupId>
     <artifactId>oer-collector-parent</artifactId>
-    <version>0.9.3-SNAPSHOT</version>
+    <version>0.9.3</version>
     <organization>
         <name>emschu[aet]mailbox.org</name>
     </organization>
@@ -22,7 +22,7 @@
     <packaging>pom</packaging>
     <scm>
         <developerConnection>scm:git:git@github.com:emschu/oer-collector.git</developerConnection>
-        <tag>oer-collector-0.9.0</tag>
+        <tag>oer-collector-0.9.3</tag>
     </scm>
 
     <description>German public law TV program data collector</description>

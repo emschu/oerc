@@ -3,11 +3,11 @@
     <parent>
         <groupId>org.emschu.oer</groupId>
         <artifactId>oer-collector-parent</artifactId>
-        <version>0.9.3-SNAPSHOT</version>
+        <version>0.9.3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <version>0.9.3-SNAPSHOT</version>
+    <version>0.9.3</version>
     <licenses>
         <license>
             <name>GNU Affero General Public License</name>
