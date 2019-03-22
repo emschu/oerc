@@ -41,8 +41,8 @@ public class ChannelService {
 
     public void init() {
         LOG.info("Init sender list");
-        for (Channel.AdapterFamily family : getActivatedSenderFamilies()) {
-            List<Channel> channelList = getRegisteredSendersOfFamily(family);
+        for (Channel.AdapterFamily family : getActivatedChannelFamilies()) {
+            List<Channel> channelList = getRegisteredChannelsOfFamily(family);
             LOG.info("Enabling " + channelList.size() + " channels of channel family: " + family.toString());
             LOG.finest(channelList.toString());
             channelList.forEach(this::addChannel);
@@ -55,7 +55,7 @@ public class ChannelService {
      * @param adapterFamily
      * @return
      */
-    public List<Channel> getRegisteredSendersOfFamily(Channel.AdapterFamily adapterFamily) {
+    public List<Channel> getRegisteredChannelsOfFamily(Channel.AdapterFamily adapterFamily) {
         List<Channel> channelList = new ArrayList<>();
         switch (adapterFamily) {
             case ARD:
@@ -102,7 +102,7 @@ public class ChannelService {
         channelRepository.save(newChannel);
     }
 
-    public List<Channel> getAllSendersByFamily(Channel.AdapterFamily adapterFamily) {
+    public List<Channel> getAllChannelsByFamily(Channel.AdapterFamily adapterFamily) {
         return channelRepository.findAllByAdapterFamily(adapterFamily);
     }
 
@@ -111,14 +111,14 @@ public class ChannelService {
      *
      * @return
      */
-    public Channel.AdapterFamily[] getActivatedSenderFamilies() {
+    public Channel.AdapterFamily[] getActivatedChannelFamilies() {
         Channel.AdapterFamily[] families = new Channel.AdapterFamily[2];
         families[0] = Channel.AdapterFamily.ARD;
         families[1] = Channel.AdapterFamily.ZDF;
         return families;
     }
 
-    public Channel.AdapterFamily[] getAllSenderFamilies() {
+    public Channel.AdapterFamily[] getAllChannelFamilies() {
         return Channel.AdapterFamily.values();
     }
 

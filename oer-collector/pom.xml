@@ -26,10 +26,10 @@
         <jsoup-version>1.11.3</jsoup-version>
         <ical4j-version>3.0.1</ical4j-version>
         <mariadb-java-client.version>2.3.0</mariadb-java-client.version>
-        <h2.version>1.4.197</h2.version>
         <mysql-connector-java.version>8.0.13</mysql-connector-java.version>
         <flyway-core.version>5.2.4</flyway-core.version>
         <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
+        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     </properties>
 
     <dependencies>
@@ -137,7 +137,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <argLine>
                         -Dspring.profiles.active=test

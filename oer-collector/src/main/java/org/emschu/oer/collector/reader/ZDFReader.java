@@ -55,7 +55,7 @@ public class ZDFReader extends AbstractReader {
     }
 
     /**
-     * define sender family
+     * define adapter family
      *
      * @return adapter family object
      */

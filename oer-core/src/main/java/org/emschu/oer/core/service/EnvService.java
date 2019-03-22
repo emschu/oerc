@@ -33,25 +33,28 @@ import java.util.Arrays;
 @Service
 public class EnvService {
 
+    private static final String ENV_TEST = "test";
+    private static final String ENV_DEV = "dev";
+    private static final String ENV_PROD = "prod";
     @Autowired
     private ApplicationContext context;
 
     public boolean isTestMode() {
-        if (Arrays.asList(context.getEnvironment().getActiveProfiles()).contains("test")) {
+        if (Arrays.asList(context.getEnvironment().getActiveProfiles()).contains(ENV_TEST)) {
             return true;
         }
         return false;
     }
 
     public boolean isDevMode() {
-        if (Arrays.asList(context.getEnvironment().getActiveProfiles()).contains("dev")) {
+        if (Arrays.asList(context.getEnvironment().getActiveProfiles()).contains(ENV_DEV)) {
             return true;
         }
         return false;
     }
 
     public boolean isProdMode() {
-        if (Arrays.asList(context.getEnvironment().getActiveProfiles()).contains("prod")) {
+        if (Arrays.asList(context.getEnvironment().getActiveProfiles()).contains(ENV_PROD)) {
             return true;
         }
         return false;

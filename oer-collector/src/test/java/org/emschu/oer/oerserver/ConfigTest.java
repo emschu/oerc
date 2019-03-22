@@ -51,7 +51,6 @@ public class ConfigTest {
     public void testCacheManagerExistence() {
         CacheManager cm = context.getBean(CacheManager.class);
         Assert.assertNotNull(cm);
-        Assert.assertTrue(cm instanceof CacheManager);
     }
 
     @Test

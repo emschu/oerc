@@ -59,7 +59,7 @@ public class ARDReader extends AbstractReader {
     }
 
     /**
-     * define sender family
+     * define adapter family
      *
      * @return adapter family object
      */

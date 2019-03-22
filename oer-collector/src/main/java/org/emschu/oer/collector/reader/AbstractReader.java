@@ -640,12 +640,12 @@ public abstract class AbstractReader implements ApplicationContextAware {
     }
 
     /**
-     * method to retrieve senders of this adapter
+     * method to retrieve channels of this adapter
      *
      * @return all channels the app knows
      */
     protected List<Channel> getAllChannels() {
-        return channelService.getAllSendersByFamily(getAdapterFamily());
+        return channelService.getAllChannelsByFamily(getAdapterFamily());
     }
 
     private int getCollectDaysInFutureMax() {

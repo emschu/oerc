@@ -121,15 +121,16 @@ public class ArdICalParser {
             TzId tzid = vtimezone.getProperty("TZID");
             if (tzid != null) {
                 TimeZone tz = registry.getTimeZone(tzid.getValue());
-                for (Component calComponent : calendar.getComponents("VEVENT")) {
+                Component calComponent = calendar.getComponents("VEVENT").get(0);
+                // use first VEVENT element
+                if (calComponent != null) {
                     DtStart startDateFromIcal = calComponent.getProperty(Property.DTSTART);
                     DtEnd endDateFromIcal = calComponent.getProperty(Property.DTEND);
                     LocalDateTime calendarStartDate = LocalDateTime.ofInstant(startDateFromIcal.getDate().toInstant(), tz.toZoneId());
                     LocalDateTime calendarEndDate = LocalDateTime.ofInstant(endDateFromIcal.getDate().toInstant(), tz.toZoneId());
-
+                    LOG.fine("Successfully parsed ard ics content");
                     return Pair.of(calendarStartDate, calendarEndDate);
                 }
-                LOG.fine("Successfully parsed ard ics content");
             } else {
                 LOG.warning("No proper time zone given in ical calendar");
             }

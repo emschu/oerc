@@ -349,8 +349,8 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
 
     /**
      * parses start and end date
+     * TODO Test + extract
      */
-
     public static class ArdTagParser {
         private static final String TAG_URL = "/TV/Programm/Load/Similar35?eid=";
 
