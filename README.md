@@ -36,7 +36,7 @@ Note: The public-law web pages this software needs to access are restricted to c
 - One of the following database backends: MariaDB/MySQL/Postgres 
 
 # Setup 
-- Download release package [here](TODO).
+- Download release package [here](https://github.com/emschu/oer-collector/releases).
 - Extract package
 - Create an empty database and setup `config.json` JDBC connection parameters in `oer.core.jdbc_*`. MariaDb is recommended. See [database options](#database_support) for different driver options.
 - Database is initially set up by running the **Collector** or **Server** component.
@@ -75,22 +75,23 @@ $ ./start.sh
 ```
 This script calls
 
-## Start collector (only)
+## Manage Collector (only)
 ```bash
 $ ./start_collector.sh
+# Follow log output
+$ tail -f collector.log
+$ ./stop_collector.sh
 ```
-## Start server (only)
+## Manage Server (only)
 ```bash
 $ ./start_server.sh
+$ tail -f server.log
+$ ./stop_server.sh
 ```
 
 ## Stop services
 ```bash
-# stopping both:
 $ ./stop.sh
-# or:
-$ ./stop_server.sh
-$ ./stop_collector.sh
 ```
 
 ## Angular example frontend
@@ -142,14 +143,15 @@ improve public-law tv and radio stations.
 
 <a name="similar-projects"></a>
 ## Similar projects:
-- [MediathekView(Web)-Project](https://github.com/mediathekview)
 - [cemrich/zapp-backend](https://github.com/cemrich/zapp-backend)
+- [MediathekView(Web)-Project](https://github.com/mediathekview)
+- [MediathekDirekt](https://mediathekdirekt.de/) + [Sources](https://gitlab.com/mediathekdirekt/mediathekdirekt)
 
 
 # REST API
 Run the server and visit the following site to see an OpenApi v2 REST interface specification *oer-collector* provides:
 
-[OpenApi v2 API description of this project](http://127.0.0.1:8080/openapi2)
+[OpenApi v2 API description of this project](http://127.0.0.1:8081/openapi2)
 
 # Data Model
 ### Entities
@@ -162,7 +164,7 @@ Run the server and visit the following site to see an OpenApi v2 REST interface 
 
 ### ER-Diagram
 
-![ER-Diagram](./docs/er-model.png)
+![ER-Diagram](https://raw.githubusercontent.com/emschu/oer-collector/master/docs/er-model-v1.png)
 
 Java source classes can be found in *org.emschu.oer.core.model*.
 

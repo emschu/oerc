@@ -48,7 +48,7 @@ public class ProgramEntry implements UpdateControlInterface, Serializable {
     @Column(length = 1000)
     private String title;
 
-    @Column(length = 500, unique = true, name = "technicalId")
+    @Column(length = 36, unique = true, name = "technicalId")
     private String technicalId;
 
     @Column
