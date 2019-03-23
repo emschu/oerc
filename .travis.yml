@@ -11,12 +11,16 @@ jdk:
   - openjdk8
   - openjdk10
   - openjdk11
-  - openjdk-ea
+#  - openjdk-ea
 
 before_install:
   - export TZ=Europe/Berlin
 script:
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar
+
+#matrix:
+#  allow_failures:
+#    - jdk: openjdk-ea
 
 cache:
   directories:

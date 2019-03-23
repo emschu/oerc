@@ -35,7 +35,7 @@ To get an impression of the data there is an **Angular example frontend**.
 Note: The public-law web pages this software needs to access are restricted to certain geographic IP regions. 
 
 ## Requirements
-- JRE 8/11
+- JRE 8/10/11
 - Collector: ~ 164 MB of RAM
 - One of the following database backends: MariaDB/MySQL/Postgres 
 
