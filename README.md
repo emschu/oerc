@@ -73,7 +73,7 @@ Configuration of Collector and Server is done in the central `config.json` file.
 - **oer.collector.end_date**: End of date range to collet data for. Only active if `mass_mode: true`.
 
 
-# Run
+# Run and use
 
 By default the Collector and Server component are running as background processes, until they stop due to configuration (e.g. if no Java *cron* definition is used) or you stop them.
 

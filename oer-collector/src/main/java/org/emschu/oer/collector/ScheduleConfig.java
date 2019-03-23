@@ -56,7 +56,7 @@ public class ScheduleConfig implements SchedulingConfigurer {
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         if (cronDefinition == null || cronDefinition.isEmpty() || cronDefinition.equals("null")) {
             LOG.info("Running in single-execution-mode with cron feature disabled");
-            runOneTime();
+            runOneTime(true);
             return;
         }
         if (!CronSequenceGenerator.isValidExpression(cronDefinition)) {
@@ -77,11 +77,11 @@ public class ScheduleConfig implements SchedulingConfigurer {
 
         LOG.info("Running collector process at startup: oer.collector.cron_mode_run_at_startup=" + cronModeRunAtStartup);
         if (cronModeRunAtStartup != null && cronModeRunAtStartup) {
-            runOneTime();
+            runOneTime(false);
         }
     }
 
-    private void runOneTime() {
+    private void runOneTime(boolean close) {
         try {
             updateData();
         } catch (InterruptedException e) {
@@ -90,7 +90,7 @@ public class ScheduleConfig implements SchedulingConfigurer {
         } finally {
             LOG.info("Exiting after update");
         }
-        if (!envService.isTestMode()) {
+        if (!envService.isTestMode() && close) {
             // don't kill context in test env!
             System.exit(0);
         } else {
