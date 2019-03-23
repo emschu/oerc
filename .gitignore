@@ -31,6 +31,9 @@ release/LICENSE
 release/THIRD-PARTY.txt
 release-*.zip
 
+tools/docker/**/*.jar
+tools/docker/**/*.sh
+
 server.log*
 server-*.log*
 collector.log*

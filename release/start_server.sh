@@ -29,7 +29,7 @@ echo "Starting OER Collector REST API server..."
 if [ -z "$JAVA_HOME" ]; then
     JAVA_EXEC="java"
 else
-    JAVA_EXEC="$JAVA_HOME/java"
+    JAVA_EXEC="$JAVA_HOME/bin/java"
     echo "using java: JAVA_EXEC"
 fi
 
@@ -38,7 +38,7 @@ SPRING_APPLICATION_JSON=$(cat config.json)
 export SPRING_APPLICATION_JSON
 
 # build java cmd
-CMD="$JAVA_EXEC -Xmx64M -Xmx64M -jar oer-collector-server.jar"
+CMD="$JAVA_EXEC -Xmx64M -Xmx64M -jar oer-collector-server.jar $JAVA_ARGS"
 echo "$CMD"
 
 # check if already running

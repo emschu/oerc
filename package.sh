@@ -31,17 +31,29 @@ rm -r "$TMP_BUILD_DIR"
 mkdir -p "$TMP_BUILD_DIR"
 # copy scripts
 cp -r release/* "$TMP_BUILD_DIR"/
+cp -f release/start_collector.sh tools/docker/oer_collector
+cp -f release/stop_collector.sh tools/docker/oer_collector
+cp -f release/start_server.sh tools/docker/oer_server
+cp -f release/stop_server.sh tools/docker/oer_server
 
 # get new jars
 cp -f oer-collector/target/oer-collector.jar "$TMP_BUILD_DIR"/
 cp -f oer-collector/target/oer-collector.jar release/
+cp -f oer-collector/target/oer-collector.jar tools/docker/oer_collector/
 cp -f oer-collector-server/target/oer-collector-server.jar "$TMP_BUILD_DIR"/
 cp -f oer-collector-server/target/oer-collector-server.jar release/
+cp -f oer-collector-server/target/oer-collector-server.jar tools/docker/oer_server/
 
 # bundle tools into release dir
 mkdir -p "$TMP_BUILD_DIR"/tools
-cp -r tools "$TMP_BUILD_DIR"/tools
+cp -r tools "$TMP_BUILD_DIR"/
 
+# remove jars and -sh files in docker dir
+echo "Deleting: "
+find "$TMP_BUILD_DIR"/tools/docker -name "*.jar" -type f -delete
+find "$TMP_BUILD_DIR"/tools/docker -name "*.sh" -type f -delete
+
+# exec rights
 chmod +x "$TMP_BUILD_DIR"/start.sh
 chmod +x "$TMP_BUILD_DIR"/start_collector.sh
 chmod +x "$TMP_BUILD_DIR"/start_server.sh

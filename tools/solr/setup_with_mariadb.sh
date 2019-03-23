@@ -1,4 +1,4 @@
-#!/bin/#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 ###
 # #%L
@@ -21,9 +21,13 @@
 # #L%
 ###
 
+# Get latest Apache Solr software from http://lucene.apache.org/solr/
+
 # script parameters:
 
-SOLR_FOLDER=~/software/solr-7.7.0
+# this script is repeatable and (re-)sets everything if needed for a clean new solr integration
+
+SOLR_FOLDER=~/software/solr-8.0.0
 
 if [ ! -d  "$SOLR_FOLDER" ]; then
     echo "solr folder $SOLR_FOLDER does not exist. Please edit script."
@@ -39,7 +43,10 @@ if [ ! -f "$SOLR_FOLDER/lib/$DRIVER_NAME" ]; then
   mv mariadb-java-client-*.jar "$SOLR_FOLDER/lib/"
 fi
 
-rm -r "$SOLR_FOLDER"/server/solr/oer-server
+if [ -d "$SOLR_FOLDER/server/solr/oer-server" ]; then
+    echo "removing oer server"
+    curl http://localhost:8983/solr/admin/cores?action=UNLOAD&core=oer-server&deleteIndex=true&deleteDataDir=true&deleteInstanceDir=true
+fi
 
 "$SOLR_FOLDER"/bin/solr stop
 "$SOLR_FOLDER"/bin/solr start
@@ -69,6 +76,7 @@ fi
 
 echo "Starting Apache Solr..."
 "$SOLR_FOLDER"/bin/solr start
+$SOLR_FOLDER/bin/solr config -c oer-server -p 8983 -action set-user-property -property update.autoCreateFields -value false
 
 echo "Add fields via solr api"
 ENDPOINT=http://localhost:8983/solr/oer-server/schema
@@ -78,3 +86,7 @@ curl -X POST -H 'Content-type:application/json' --data-binary '{"add-field": {"n
 curl -X POST -H 'Content-type:application/json' --data-binary '{"add-field": {"name":"start_date_time", "type":"pdate", "multiValued":false, "stored":true}}' "$ENDPOINT"
 curl -X POST -H 'Content-type:application/json' --data-binary '{"add-field": {"name":"end_date_time", "type":"pdate", "multiValued":false, "stored":true}}' "$ENDPOINT"
 curl -X POST -H 'Content-type:application/json' --data-binary '{"add-field": {"name":"duration", "type":"pint", "multiValued":false, "stored":true}}' "$ENDPOINT"
+curl -X POST -H 'Content-type:application/json' --data-binary '{"add-field": {"name":"channel_id", "type":"pint", "multiValued":false, "stored":true}}' "$ENDPOINT"
+
+
+echo "Have a look at: http://localhost:8983"

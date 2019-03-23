@@ -103,7 +103,7 @@
                         <root>oer-collector/src/main/java</root>
                         <root>oer-collector/src/test</root>
                         <root>oer-core/src/main/java</root>
-                        <root>tools</root>
+                        <root>tools/solr</root>
                         <root>oer-collector-server/src/main/java</root>
                     </roots>
                 </configuration>

@@ -29,7 +29,7 @@ echo "Starting OER Collector component..."
 if [ -z "$JAVA_HOME" ]; then
     JAVA_EXEC="java"
 else
-    JAVA_EXEC="$JAVA_HOME/java"
+    JAVA_EXEC="$JAVA_HOME/bin/java"
     echo "using java: JAVA_EXEC"
 fi
 
@@ -39,7 +39,7 @@ echo $SPRING_APPLICATION_JSON
 export SPRING_APPLICATION_JSON
 
 # build java cmd
-CMD="$JAVA_EXEC -Xmx164M -Xms164M -jar oer-collector.jar"
+CMD="$JAVA_EXEC -Xmx164M -Xms164M -jar oer-collector.jar $JAVA_ARGS"
 echo "$CMD"
 
 # check for foreground mode

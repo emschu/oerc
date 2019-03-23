@@ -26,7 +26,6 @@ import org.emschu.oer.collector.service.UpdaterService;
 import org.emschu.oer.core.service.EnvService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.CronTask;
@@ -44,33 +43,20 @@ public class ScheduleConfig implements SchedulingConfigurer {
     @Value("${oer.collector.cron_definition}")
     private String cronDefinition;
 
+    @Value("${oer.collector.cron_mode_run_at_startup}")
+    private Boolean cronModeRunAtStartup;
+
     @Autowired
     private UpdaterService updaterService;
 
     @Autowired
     private EnvService envService;
 
-    @Autowired
-    private ConfigurableApplicationContext applicationContext;
-
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         if (cronDefinition == null || cronDefinition.isEmpty() || cronDefinition.equals("null")) {
             LOG.info("Running in single-execution-mode with cron feature disabled");
-            try {
-                updateData();
-            } catch (InterruptedException e) {
-                LOG.warning("Update interrupted");
-                Thread.currentThread().interrupt();
-            } finally {
-                LOG.info("Exiting after update");
-            }
-            if (!envService.isTestMode()) {
-                // don't kill context in test env!
-                System.exit(0);
-            } else {
-                LOG.info("No context close, because of test mode");
-            }
+            runOneTime();
             return;
         }
         if (!CronSequenceGenerator.isValidExpression(cronDefinition)) {
@@ -88,6 +74,28 @@ public class ScheduleConfig implements SchedulingConfigurer {
                 Thread.currentThread().interrupt();
             }
         }, cronDefinition));
+
+        LOG.info("Running collector process at startup: oer.collector.cron_mode_run_at_startup=" + cronModeRunAtStartup);
+        if (cronModeRunAtStartup != null && cronModeRunAtStartup) {
+            runOneTime();
+        }
+    }
+
+    private void runOneTime() {
+        try {
+            updateData();
+        } catch (InterruptedException e) {
+            LOG.warning("Update interrupted");
+            Thread.currentThread().interrupt();
+        } finally {
+            LOG.info("Exiting after update");
+        }
+        if (!envService.isTestMode()) {
+            // don't kill context in test env!
+            System.exit(0);
+        } else {
+            LOG.info("No context close, because of test mode");
+        }
     }
 
     private void updateData() throws InterruptedException {

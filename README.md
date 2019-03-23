@@ -59,7 +59,8 @@ Configuration of Collector and Server is done in the central `config.json` file.
 - **oer.collector.proxy_port**: Optional HTTP proxy port.
 - **oer.collector.skip_ard**: Flag to skip collection of ARD data.
 - **oer.collector.skip_zdf**: Flag to skip collection of ZDF data.
-- **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example: `*/15 * * * * *`. Default: `null`
+- **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example for twice executions a day at 4 am and 4 pm: `0 0 4,16 * * *`. Default: `null`
+- **oer.collector.cron_mode_run_at_startup**: Runs collection process at program startup. Effective if *cron_definition* is not empty. Default: `true`
 - **oer.collector.invalidate_update_hours**: Number of hours to consider data records in db as old and web data is used to refresh/update record. Has no effect if not in update mode. Default: `72` 
 
 ### Default collection mode
@@ -114,8 +115,17 @@ Feel free to improve and enhance!
 
 ## Apache Solr-Integration
 
-*Work in progress.*  
-Have a look at `tools/solr/` dir of this project.
+*This is a work in progress.*
+
+There is a basic sample how to setup and use Apache Solr with MariaDB and the collected program entry data.
+
+Have a look at `tools/solr` directory and customize `tools/solr/setup_with_mariadb.sh` and `data-config.xml` for your needs. Please share improvements. 
+
+## Container environment
+
+OER Collector + Server can be used with docker-compose by following this [guide](https://github.com/emschu/oer-collector/tree/master/tools/docker). A`docker-compose.yml` is contained in release packages and can be found in `tools/docker` directory (of this repository).  
+
+Images: MariaDB, Squid Proxy, OER Collector, OER Server.
 
 # Channel list
 | Nr. | Sender     | Version |
@@ -261,9 +271,6 @@ This project is licensed under [GNU Affero General Public License](./LICENSE).
 *TV:*
  - SRF-Channel-Family
  - ORF-Channel-Family
-
-Support for container environments is under construction.
-
 
 # More information
 - [German] [Die Vermessung des TV-Programms auf datenjournalist.de](https://www.datenjournalist.de/die-vermessung-des-tv-programms/)
