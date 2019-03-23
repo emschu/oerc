@@ -1,5 +1,6 @@
 # OER-Collector
 
+[![Build](https://travis-ci.org/emschu/oer-collector.svg?branch=master)](https://travis-ci.org/emschu/oer-collector)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=emschu_oer-collector&metric=alert_status)](https://sonarcloud.io/dashboard?id=emschu_oer-collector)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=emschu_oer-collector&metric=ncloc)](https://sonarcloud.io/dashboard?id=emschu_oer-collector)
 
