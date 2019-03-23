@@ -3,7 +3,7 @@ sudo: false
 install: true
 addons:
   sonarcloud:
-    organization: "your_organization_key"
+    organization: "emschu-github"
     token:
       secure: "$SONAR_TOKEN"
 
