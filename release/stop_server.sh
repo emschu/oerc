@@ -26,5 +26,5 @@ if [ "$(jps -l | grep -c 'oer-collector-server')" -gt 0 ]; then
     jps -vl | grep 'oer-collector-server'
     jps -l | grep "oer-collector-server" | awk '{print $1}' | xargs kill -9
 else
-    echo "No running web processes found"
+    echo "No running OER Server processes found"
 fi
