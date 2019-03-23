@@ -22,7 +22,6 @@
 ###
 
 ./stop_collector.sh
-
 ./stop_server.sh
 
 exit 0;

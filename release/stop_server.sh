@@ -21,8 +21,7 @@
 # #L%
 ###
 
-if [ "$(jps -l | grep -c 'oer-collector-server')" -gt 0 ]
- then
+if [ "$(jps -l | grep -c 'oer-collector-server')" -gt 0 ]; then
     echo "Killing $(jps -l | grep -c 'oer-collector-server') oer web processes"
     jps -vl | grep 'oer-collector-server'
     jps -l | grep "oer-collector-server" | awk '{print $1}' | xargs kill -9

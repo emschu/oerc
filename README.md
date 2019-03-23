@@ -1,5 +1,8 @@
 # OER-Collector
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=emschu_oer-collector&metric=alert_status)](https://sonarcloud.io/dashboard?id=emschu_oer-collector)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=emschu_oer-collector&metric=ncloc)](https://sonarcloud.io/dashboard?id=emschu_oer-collector)
+
 A java software bundle to store and expose program data of public-law tv channels in Germany via a REST JSON interface.
 
 This project is licensed under *AGPL v3* and you are encouraged to participate and improve functionality.
@@ -39,7 +42,7 @@ Note: The public-law web pages this software needs to access are restricted to c
 - Download release package [here](https://github.com/emschu/oer-collector/releases).
 - Extract package
 - Create an empty database and setup `config.json` JDBC connection parameters in `oer.core.jdbc_*`. MariaDb is recommended. See [database options](#database_support) for different driver options.
-- Database is initially set up by running the **Collector** or **Server** component.
+- Database is initially set up by running the **Collector** *or* **Server** component once. Use the `--foreground` flag to see if everything is running fine.
 
 
 ## Configuration options
@@ -70,22 +73,27 @@ Configuration of Collector and Server is done in the central `config.json` file.
 
 # Run
 
+By default the Collector and Server component are running as background processes, until they stop due to configuration (e.g. if no Java *cron* definition is used) or you stop them.
+
+Stopping a component should never be problematic, except during database migrations at (first time) startup.
+
+To debug your (database) configuration, use the `--foreground` flag of the following start scripts.
+
 ```bash
 $ ./start.sh
 ```
-This script calls
+This script basically calls both `start_collector.sh` and `start_server.sh`.
 
 ## Manage Collector (only)
 ```bash
-$ ./start_collector.sh
+$ ./start_collector.sh [--foreground]
 # Follow log output
 $ tail -f collector.log
 $ ./stop_collector.sh
 ```
 ## Manage Server (only)
 ```bash
-$ ./start_server.sh
-$ tail -f server.log
+$ ./start_server.sh [--foreground]
 $ ./stop_server.sh
 ```
 
@@ -103,7 +111,7 @@ $ npm run start
 After the simple example client ui is reachable at [http://localhost:4200](http://localhost:4200).  
 Feel free to improve and enhance!
 
-## Solr-Integration
+## Apache Solr-Integration
 
 *Work in progress.*  
 Have a look at `tools/solr/` dir of this project.

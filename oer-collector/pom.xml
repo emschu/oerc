@@ -29,7 +29,6 @@
         <mysql-connector-java.version>8.0.13</mysql-connector-java.version>
         <flyway-core.version>5.2.4</flyway-core.version>
         <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
-        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     </properties>
 
     <dependencies>
@@ -137,7 +136,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <argLine>
                         -Dspring.profiles.active=test

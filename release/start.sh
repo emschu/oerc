@@ -26,6 +26,3 @@ touch server.log
 
 ./start_collector.sh
 ./start_server.sh
-
-tail -f collector.log server.log
-

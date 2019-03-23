@@ -34,7 +34,9 @@ cp -r release/* "$TMP_BUILD_DIR"/
 
 # get new jars
 cp -f oer-collector/target/oer-collector.jar "$TMP_BUILD_DIR"/
+cp -f oer-collector/target/oer-collector.jar release/
 cp -f oer-collector-server/target/oer-collector-server.jar "$TMP_BUILD_DIR"/
+cp -f oer-collector-server/target/oer-collector-server.jar release/
 
 # bundle tools into release dir
 mkdir -p "$TMP_BUILD_DIR"/tools

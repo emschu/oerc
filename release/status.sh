@@ -21,5 +21,17 @@
 # #L%
 ###
 
-jps -vl | grep oer-collector.jar
-jps -vl | grep oer-collector-server.jar
+if [[ $(jps -vl | grep oer-collector-server.jar) ]]; then
+    echo "OER Server is running"
+    jps -vl | grep oer-collector-server.jar
+else
+    echo "OER Server is NOT running"
+fi
+
+if [[ $(jps -vl | grep oer-collector.jar) ]]; then
+    echo "OER Collector is running"
+    jps -vl | grep oer-collector.jar
+else
+    echo "OER Collector is NOT running"
+fi
+

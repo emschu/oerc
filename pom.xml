@@ -8,6 +8,7 @@
     <organization>
         <name>emschu[aet]mailbox.org</name>
     </organization>
+    <name>oer-collector-project</name>
     <licenses>
         <license>
             <name>GNU Affero General Public License v3</name>
@@ -39,7 +40,7 @@
         <flyway-version>5.2.0</flyway-version>
         <main.basedir>${project.basedir}</main.basedir>
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
     </properties>
@@ -51,6 +52,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
+                    <inherited>true</inherited>
                     <configuration>
                         <source>1.8</source>
                         <target>1.8</target>

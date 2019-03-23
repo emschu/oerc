@@ -23,6 +23,38 @@
 
 touch collector.log
 
-echo "Starting collector..."
+echo "Starting OER Collector component..."
 
-nohup java -Dspring.application.json="$(cat config.json)" -Xmx164M -Xms164M -jar oer-collector.jar > collector.log 2>&1 &
+# use user defined java
+if [ -z "$JAVA_HOME" ]; then
+    JAVA_EXEC="java"
+else
+    JAVA_EXEC="$JAVA_HOME/java"
+    echo "using java: JAVA_EXEC"
+fi
+
+# export app properties
+SPRING_APPLICATION_JSON=$(cat config.json)
+echo $SPRING_APPLICATION_JSON
+export SPRING_APPLICATION_JSON
+
+# build java cmd
+CMD="$JAVA_EXEC -Xmx164M -Xms164M -jar oer-collector.jar"
+echo "$CMD"
+
+# check for foreground mode
+if [[ $* == *--foreground* ]]; then
+    echo "Running in foreground"
+    command $CMD
+    echo "Collector finished"
+    exit 0
+fi
+
+# use nohup if possible
+if ! [ -x "$(command -v nohup)" ]; then
+    $($CMD >> collector.log 2>&1) &
+else
+    nohup $CMD >> collector.log 2>&1 &
+fi
+echo "Collector started in background process: " $(jps -l | grep "oer-collector\.jar" | awk '{print $1}')
+exit 0

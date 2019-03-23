@@ -23,6 +23,43 @@
 
 touch server.log
 
-echo "Starting oer-collector-server..."
+echo "Starting OER Collector REST API server..."
 
-nohup java -Dspring.application.json="$(cat config.json)" -Xmx64M -Xmx64M -jar oer-collector-server.jar > server.log 2>&1 &
+# use user defined java
+if [ -z "$JAVA_HOME" ]; then
+    JAVA_EXEC="java"
+else
+    JAVA_EXEC="$JAVA_HOME/java"
+    echo "using java: JAVA_EXEC"
+fi
+
+# export app properties
+SPRING_APPLICATION_JSON=$(cat config.json)
+export SPRING_APPLICATION_JSON
+
+# build java cmd
+CMD="$JAVA_EXEC -Xmx64M -Xmx64M -jar oer-collector-server.jar"
+echo "$CMD"
+
+# check if already running
+if [[ $(jps -l | grep "oer-collector-server.jar" | awk '{print $1}') ]]; then
+    echo "OER Server is already running!"
+    exit 1
+fi
+
+# check for foreground mode
+if [[ $* == *--foreground* ]]; then
+    echo "Running in foreground"
+    command $CMD
+    echo "OER Server finished"
+    exit 0
+fi
+
+# use nohup if possible
+if ! [ -x "$(command -v nohup)" ]; then
+    $($CMD >> server.log 2>&1) &
+else
+    nohup $CMD >> server.log 2>&1 &
+fi
+echo "Server started in background process: " $(jps -l | grep "oer-collector-server.jar" | awk '{print $1}')
+exit 0
