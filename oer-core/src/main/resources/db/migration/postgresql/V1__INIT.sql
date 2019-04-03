@@ -10,7 +10,6 @@ SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
@@ -18,20 +17,6 @@ SET row_security = off;
 --
 -- Name: oer_server_dev; Type: DATABASE; Schema: -; Owner: postgres
 --
-
---
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner:
---
-
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
-
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner:
---
-
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
 
 SET default_tablespace = '';
 
@@ -51,8 +36,6 @@ CREATE TABLE IF NOT EXISTS public.channel (
 );
 
 
-ALTER TABLE public.channel OWNER TO postgres;
-
 --
 -- Name: channel_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -64,8 +47,6 @@ CREATE SEQUENCE public.channel_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.channel_id_seq OWNER TO postgres;
 
 --
 -- Name: channel_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -85,8 +66,6 @@ CREATE TABLE IF NOT EXISTS public.image_link (
 );
 
 
-ALTER TABLE public.image_link OWNER TO postgres;
-
 --
 -- Name: image_link_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -98,8 +77,6 @@ CREATE SEQUENCE public.image_link_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.image_link_id_seq OWNER TO postgres;
 
 --
 -- Name: image_link_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -129,8 +106,6 @@ CREATE TABLE IF NOT EXISTS public.program_entry (
 );
 
 
-ALTER TABLE public.program_entry OWNER TO postgres;
-
 --
 -- Name: program_entry_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -142,8 +117,6 @@ CREATE SEQUENCE public.program_entry_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.program_entry_id_seq OWNER TO postgres;
 
 --
 -- Name: program_entry_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -162,8 +135,6 @@ CREATE TABLE IF NOT EXISTS public.program_entry_image_links (
 );
 
 
-ALTER TABLE public.program_entry_image_links OWNER TO postgres;
-
 --
 -- Name: program_entry_tags; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -173,8 +144,6 @@ CREATE TABLE IF NOT EXISTS public.program_entry_tags (
     tags_id bigint NOT NULL
 );
 
-
-ALTER TABLE public.program_entry_tags OWNER TO postgres;
 
 --
 -- Name: tag; Type: TABLE; Schema: public; Owner: postgres
@@ -187,8 +156,6 @@ CREATE TABLE IF NOT EXISTS public.tag (
 );
 
 
-ALTER TABLE public.tag OWNER TO postgres;
-
 --
 -- Name: tag_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -199,9 +166,6 @@ CREATE SEQUENCE public.tag_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
-ALTER TABLE public.tag_id_seq OWNER TO postgres;
 
 --
 -- Name: tag_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -228,8 +192,6 @@ CREATE TABLE IF NOT EXISTS public.tv_show (
 );
 
 
-ALTER TABLE public.tv_show OWNER TO postgres;
-
 --
 -- Name: tv_show_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -241,8 +203,6 @@ CREATE SEQUENCE public.tv_show_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE public.tv_show_id_seq OWNER TO postgres;
 
 --
 -- Name: tv_show_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -261,8 +221,6 @@ CREATE TABLE IF NOT EXISTS public.tv_show_related_program_entries (
 );
 
 
-ALTER TABLE public.tv_show_related_program_entries OWNER TO postgres;
-
 --
 -- Name: tv_show_tags; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -272,8 +230,6 @@ CREATE TABLE IF NOT EXISTS public.tv_show_tags (
     tag_id bigint NOT NULL
 );
 
-
-ALTER TABLE public.tv_show_tags OWNER TO postgres;
 
 --
 -- Name: channel id; Type: DEFAULT; Schema: public; Owner: postgres
