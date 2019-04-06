@@ -1,5 +1,5 @@
 
-Lists of 114 third-party dependencies.
+Lists of 113 third-party dependencies.
      (BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Apache License, Version 2.0) Apache Commons Codec (commons-codec:commons-codec:1.10 - http://commons.apache.org/proper/commons-codec/)
      (Apache License, Version 2.0) Apache Commons Collections (org.apache.commons:commons-collections4:4.1 - http://commons.apache.org/proper/commons-collections/)
@@ -107,7 +107,6 @@ Lists of 114 third-party dependencies.
      (The Apache Software License, Version 2.0) springfox-spi (io.springfox:springfox-spi:2.9.2 - https://github.com/springfox/springfox)
      (The Apache Software License, Version 2.0) springfox-spring-web (io.springfox:springfox-spring-web:2.9.2 - https://github.com/springfox/springfox)
      (The Apache Software License, Version 2.0) springfox-swagger-common (io.springfox:springfox-swagger-common:2.9.2 - https://github.com/springfox/springfox)
-     (The Apache Software License, Version 2.0) springfox-swagger-ui (io.springfox:springfox-swagger-ui:2.9.2 - https://github.com/springfox/springfox)
      (The Apache Software License, Version 2.0) springfox-swagger2 (io.springfox:springfox-swagger2:2.9.2 - https://github.com/springfox/springfox)
      (Apache License 2.0) swagger-annotations (io.swagger:swagger-annotations:1.5.20 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
      (Apache License 2.0) swagger-models (io.swagger:swagger-models:1.5.20 - https://github.com/swagger-api/swagger-core/modules/swagger-models)
