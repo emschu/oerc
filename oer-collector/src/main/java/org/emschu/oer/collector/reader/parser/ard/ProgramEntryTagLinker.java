@@ -161,7 +161,13 @@ public class ProgramEntryTagLinker extends CustomParser {
     private void processEventListPage(String tagName, String url) {
         List<String> technicalIdList = new ArrayList<>();
         LOG.finest("Fetching: " + url);
-        Document doc = Fetcher.fetchDocument(url, ".event-list");
+        Document doc;
+        try {
+            doc = Fetcher.fetchDocument(url, ".event-list");
+        } catch(IllegalStateException ise) {
+            LOG.warning("Something went wrong fetching: " + url);
+            return;
+        }
         Elements elements = doc.select(".event-list ul li[class^=eid]");
         elements.forEach(
                 element -> {

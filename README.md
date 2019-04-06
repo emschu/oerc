@@ -42,7 +42,7 @@ Note: The public-law web pages this software needs to access are restricted to c
 # Setup 
 - Download release package [here](https://github.com/emschu/oer-collector/releases).
 - Extract package
-- Create an empty database and setup `config.json` JDBC connection parameters in `oer.core.jdbc_*`. MariaDb is recommended. See [database options](#database_support) for different driver options.
+- Create an empty database and setup `config.json` JDBC connection parameters in `oer.core.jdbc_*`. MariaDB is recommended. See [database options](#database_support) for different driver options.
 - Database is initially set up by running the **Collector** *or* **Server** component once. Use the `--foreground` flag to see if everything is running fine.
 
 
@@ -59,7 +59,7 @@ Configuration of Collector and Server is done in the central `config.json` file.
 - **oer.collector.proxy_port**: Optional HTTP proxy port.
 - **oer.collector.skip_ard**: Flag to skip collection of ARD data.
 - **oer.collector.skip_zdf**: Flag to skip collection of ZDF data.
-- **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example for twice executions a day at 4 am and 4 pm: `0 0 4,16 * * *`. Default: `null`
+- **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example for twice executions a day at 4 AM and 4 PM: `0 0 4,16 * * *`. Default: `null`
 - **oer.collector.cron_mode_run_at_startup**: Runs collection process at program startup. Effective if *cron_definition* is not empty. Default: `true`
 - **oer.collector.invalidate_update_hours**: Number of hours to consider data records in db as old and web data is used to refresh/update record. Has no effect if not in update mode. Default: `72` 
 
@@ -112,7 +112,7 @@ Located in `oer-example-client`. To use it, use the following commands:
 $ npm install
 $ npm run start
 ```
-After the simple example client ui is reachable at [http://localhost:4200](http://localhost:4200).  
+After the second command the simple example client ui should be reachable at [http://localhost:4200](http://localhost:4200).  
 Feel free to improve and enhance!
 
 ## Apache Solr-Integration
@@ -130,7 +130,10 @@ OER Collector + Server can be used with docker-compose by following this [guide]
 Images: MariaDB, Squid Proxy, OER Collector, OER Server.
 
 # Channel list
-| Nr. | Sender     | Version |
+
+Note: The first column does not necessarily have to correspond to the channel id in the database.
+
+| No. | Channel    | Version |
 | --- | --------------| ---- |
 |1| ARD               |   v1 |
 |2| ZDF               |   v1 |

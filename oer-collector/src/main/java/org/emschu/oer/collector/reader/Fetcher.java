@@ -94,6 +94,7 @@ public class Fetcher {
      * @param url url to fetch until a response is retrieved. max 5 retries
      * @param testSelection jsoup selector for detection of correct page fetch
      * @return jsoup Document object
+     * @throws IllegalStateException if a call went wrong 5 times
      */
     public static Document fetchDocument(String url, String testSelection,@Null Map<String, String> headers) {
         if (url == null) {
@@ -121,12 +122,12 @@ public class Fetcher {
      *
      * @param url
      * @param testSelection
+     * @throws IllegalStateException
      * @return
      */
     public static Document fetchDocument(String url, String testSelection) {
         return fetchDocument(url, testSelection, null);
     }
-
 
     public static long getCounter() {
         return counter;

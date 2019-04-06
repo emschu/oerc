@@ -118,7 +118,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
             // quiet skipping of these pages - there is too less information
             return;
         }
-        LOG.info("calling url: " + url);
+        LOG.fine("calling url: " + url);
 
         final Document page = getPage(url);
         final String fullDescription = page.select(".paragraph").text();
@@ -178,7 +178,6 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
         // future: 23 days ?
         // past: 15 days ?
         long daysBetween = ChronoUnit.DAYS.between(day, LocalDate.now());
-        System.out.println("days between: " + daysBetween);
         // negative values represent future
         if (daysBetween > 14 || daysBetween < -22) {
             LOG.warning("Invalid date range for orf data request.");
