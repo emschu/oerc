@@ -21,10 +21,11 @@ package org.emschu.oer.collector.service;
  * #L%
  */
 
-import org.emschu.oer.collector.reader.ARDReader;
+import org.emschu.oer.collector.reader.parser.ard.ARDReader;
 import org.emschu.oer.collector.reader.Fetcher;
 import org.emschu.oer.collector.reader.ParserException;
-import org.emschu.oer.collector.reader.ZDFReader;
+import org.emschu.oer.collector.reader.parser.orf.ORFReader;
+import org.emschu.oer.collector.reader.parser.zdf.ZDFReader;
 import org.emschu.oer.core.service.EnvService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +55,9 @@ public class UpdaterService {
     private ZDFReader zdfReader;
 
     @Autowired
+    private ORFReader orfReader;
+
+    @Autowired
     private EnvService envService;
 
     @Value(value = "${oer.collector.skip_ard}")
@@ -61,6 +65,9 @@ public class UpdaterService {
 
     @Value(value = "${oer.collector.skip_zdf}")
     private boolean skipZdf;
+
+    @Value(value = "${oer.collector.skip_orf}")
+    private boolean skipOrf;
 
     @Value(value = "${oer.collector.proxy_host}")
     private String proxyHost;
@@ -88,6 +95,7 @@ public class UpdaterService {
         try {
             ardReader.execute();
             zdfReader.execute();
+            orfReader.execute();
         } catch (Exception e) {
             LOG.throwing(UpdaterService.class.getName(), "fetchNewTvProgram", e);
             throw e;
@@ -112,8 +120,11 @@ public class UpdaterService {
             if (!skipZdf) {
                 Fetcher.fetchDocument("https://www.zdf.de/live-tv", "body");
             }
+            if (!skipOrf) {
+                Fetcher.fetchDocument("https://orf.at/", "body");
+            }
             return true;
-        } catch (IllegalStateException ise) { }
+        } catch (IllegalStateException ignored) { }
         return false;
     }
 

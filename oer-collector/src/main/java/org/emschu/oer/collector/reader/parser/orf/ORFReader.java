@@ -1,8 +1,8 @@
-package org.emschu.oer.collector.reader;
+package org.emschu.oer.collector.reader.parser.orf;
 
 /*-
  * #%L
- * oer-server
+ * oer-collector-project
  * %%
  * Copyright (C) 2019 emschu[aet]mailbox.org
  * %%
@@ -21,18 +21,17 @@ package org.emschu.oer.collector.reader;
  * #L%
  */
 
+import org.emschu.oer.collector.reader.AbstractReader;
 import org.emschu.oer.collector.reader.parser.ProgramEntryParserInterface;
-import org.emschu.oer.core.model.Channel;
 import org.emschu.oer.collector.reader.parser.TvShowParserInterface;
-import org.emschu.oer.collector.reader.parser.zdf.TvShowParser;
-import org.emschu.oer.collector.reader.parser.zdf.ProgramEntryParser;
+import org.emschu.oer.core.model.Channel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
 @Component
-public class ZDFReader extends AbstractReader {
+public class ORFReader extends AbstractReader {
 
     @Autowired
     private ProgramEntryParser programEntryParser;
@@ -46,7 +45,7 @@ public class ZDFReader extends AbstractReader {
 
     @Override
     public ProgramEntryParserInterface getProgramEntryParser() {
-        return this.programEntryParser;
+        return programEntryParser;
     }
 
     @Override
@@ -54,13 +53,8 @@ public class ZDFReader extends AbstractReader {
         return tvShowParser;
     }
 
-    /**
-     * define adapter family
-     *
-     * @return adapter family object
-     */
     @Override
     public Channel.AdapterFamily getAdapterFamily() {
-        return Channel.AdapterFamily.ZDF;
+        return Channel.AdapterFamily.ORF;
     }
 }

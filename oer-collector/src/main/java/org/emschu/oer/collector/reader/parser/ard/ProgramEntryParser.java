@@ -282,23 +282,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
 
     @Override
     public void preProcessProgramList(List<ProgramEntry> linkedProgramList) {
-        // this works for all entries, but not for the last one..
-        Iterator<ProgramEntry> programIterator = linkedProgramList.iterator();
-        int i = 0;
-        while (programIterator.hasNext()) {
-            ProgramEntry entry = programIterator.next();
-            if (entry.getStartDateTime() != null && entry.getEndDateTime() != null) {
-                continue;
-            }
-            ProgramEntry next = null;
-            if (i + 1 < linkedProgramList.size()) {
-                next = linkedProgramList.get(i + 1);
-                if (next != null && entry.getEndDateTime() != null) {
-                    entry.setEndDateTime(next.getStartDateTime());
-                }
-            }
-            i++;
-        }
+        tryToDetectEndDates(linkedProgramList);
     }
 
     public Elements getRootElement(Channel channel, LocalDate day) {
@@ -356,7 +340,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
 
         public List<String> getTags(String technicalId) {
             List<String> tagList = new ArrayList<>();
-            Document jsoupDoc = Fetcher.getDocument(ARD_HOST + TAG_URL + technicalId);
+            Document jsoupDoc = Fetcher.fetchDocument(ARD_HOST + TAG_URL + technicalId, "body");
             jsoupDoc.select("form[id^=bookmark-checks] .row span[class*=similar-events-bookmark]")
                     .forEach(element -> tagList.add(element.text()));
             return tagList;

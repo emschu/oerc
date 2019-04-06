@@ -40,7 +40,7 @@ public class ChannelService {
     private ChannelRepository channelRepository;
 
     public void init() {
-        LOG.info("Init sender list");
+        LOG.info("Init channel list");
         for (Channel.AdapterFamily family : getActivatedChannelFamilies()) {
             List<Channel> channelList = getRegisteredChannelsOfFamily(family);
             LOG.info("Enabling " + channelList.size() + " channels of channel family: " + family.toString());
@@ -50,7 +50,7 @@ public class ChannelService {
     }
 
     /**
-     * This method provides senders this application can handle
+     * This method provides all channels this application can handle
      *
      * @param adapterFamily
      * @return
@@ -59,34 +59,53 @@ public class ChannelService {
         List<Channel> channelList = new ArrayList<>();
         switch (adapterFamily) {
             case ARD:
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.ARD, "28106", "ARD - Das Erste", "https://ard.de"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.BR, "28107", "BR Fernsehen", "https://www.br.de/fernsehen/index.html"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.HR, "28108", "HR Fernsehen", "https://www.hr-fernsehen.de/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.MDR, "28229", "MDR Fernsehen", "https://www.mdr.de/tv/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.NDR, "28226", "NDR Fernsehen", "https://www.ndr.de"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.RBB, "28205", "RBB Fernsehen", "https://www.rbb-online.de/fernsehen/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.RADIO_BREMEN_TV, "28385", "Radio Bremen TV", "https://www.radiobremen.de/fernsehen/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.SR, "28486", "SR Fernsehen", "https://www.sr.de/sr/home/fernsehen/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.SWR_BW, "28113", "SWR BW Fernsehen", "https://www.swrfernsehen.de/tv-programm/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.SWR_RP, "28231", "SWR RP Fernsehen", "https://www.swrfernsehen.de/tv-programm/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.WDR, "28111", "WDR Fernsehen", "http://www.wdr.de/tv/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.ALPHA, "28487", "ARD ALPHA", "http://www.br.de/fernsehen/ard-alpha/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.TAGESSCHAU_24, "28721", "Tagesschau24", "http://programm.tagesschau24.de/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.ONE, "28722", "ARD One", "http://www.one.ard.de/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.KIKA, "28008", "KIKA", "http://www.kika.de/"));
+                addARDChannels(channelList);
                 break;
             case ZDF:
-                channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ZDF, "zdf", "ZDF", "http://www.zdf.de/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ZDF_INFO, "zdfinfo", "ZDFinfo", "https://www.zdf.de/dokumentation/zdfinfo-doku"));
-                channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ZDF_NEO, "zdfneo", "ZDFneo", "https://www.zdf.de/sender/zdfneo"));
-                channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.PHOENIX, "phoenix", "Phoenix", "http://www.phoenix.de/"));
-                channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.DREISAT, "3sat", "3Sat", "https://www.3sat.de"));
-                channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ARTE, "arte", "ARTE", "https://www.arte.tv/de"));
+                addZDFChannels(channelList);
+                break;
+            case ORF:
+                addORFChannels(channelList);
                 break;
             default:
                 throw new IllegalArgumentException("channel family '" + adapterFamily.toString() + "' is not yet implemented.");
         }
         return channelList;
+    }
+
+    private void addORFChannels(List<Channel> channelList) {
+        channelList.add(new Channel(Channel.AdapterFamily.ORF, Channel.ChannelKey.ORF1, "orf1", "ORF eins", "http://tv.orf.at/program/orf1"));
+        channelList.add(new Channel(Channel.AdapterFamily.ORF, Channel.ChannelKey.ORF2, "orf2", "ORF 2", "http://tv.orf.at/program/orf2"));
+        channelList.add(new Channel(Channel.AdapterFamily.ORF, Channel.ChannelKey.ORF2_EUROPE, "orf2", "ORF 2 Europe", "http://tv.orf.at/program/orf2"));
+        channelList.add(new Channel(Channel.AdapterFamily.ORF, Channel.ChannelKey.ORF3, "orf3", "ORF III", "https://tv.orf.at/orf3"));
+        channelList.add(new Channel(Channel.AdapterFamily.ORF, Channel.ChannelKey.ORF_SPORT, "orfsportplus", "ORF Sport +", "http://sport.orf.at/"));
+    }
+
+    private void addZDFChannels(List<Channel> channelList) {
+        channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ZDF, "zdf", "ZDF", "http://www.zdf.de/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ZDF_INFO, "zdfinfo", "ZDFinfo", "https://www.zdf.de/dokumentation/zdfinfo-doku"));
+        channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ZDF_NEO, "zdfneo", "ZDFneo", "https://www.zdf.de/sender/zdfneo"));
+        channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.PHOENIX, "phoenix", "Phoenix", "http://www.phoenix.de/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.DREISAT, "3sat", "3Sat", "https://www.3sat.de"));
+        channelList.add(new Channel(Channel.AdapterFamily.ZDF, Channel.ChannelKey.ARTE, "arte", "ARTE", "https://www.arte.tv/de"));
+    }
+
+    private void addARDChannels(List<Channel> channelList) {
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.ARD, "28106", "ARD - Das Erste", "https://ard.de"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.BR, "28107", "BR Fernsehen", "https://www.br.de/fernsehen/index.html"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.HR, "28108", "HR Fernsehen", "https://www.hr-fernsehen.de/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.MDR, "28229", "MDR Fernsehen", "https://www.mdr.de/tv/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.NDR, "28226", "NDR Fernsehen", "https://www.ndr.de"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.RBB, "28205", "RBB Fernsehen", "https://www.rbb-online.de/fernsehen/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.RADIO_BREMEN_TV, "28385", "Radio Bremen TV", "https://www.radiobremen.de/fernsehen/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.SR, "28486", "SR Fernsehen", "https://www.sr.de/sr/home/fernsehen/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.SWR_BW, "28113", "SWR BW Fernsehen", "https://www.swrfernsehen.de/tv-programm/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.SWR_RP, "28231", "SWR RP Fernsehen", "https://www.swrfernsehen.de/tv-programm/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.WDR, "28111", "WDR Fernsehen", "http://www.wdr.de/tv/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.ALPHA, "28487", "ARD ALPHA", "http://www.br.de/fernsehen/ard-alpha/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.TAGESSCHAU_24, "28721", "Tagesschau24", "http://programm.tagesschau24.de/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.ONE, "28722", "ARD One", "http://www.one.ard.de/"));
+        channelList.add(new Channel(Channel.AdapterFamily.ARD, Channel.ChannelKey.KIKA, "28008", "KIKA", "http://www.kika.de/"));
     }
 
     /**
@@ -98,7 +117,7 @@ public class ChannelService {
             // do nothing
             return;
         }
-        LOG.info("Adding new channel " + newChannel);
+        LOG.info("Add new channel " + newChannel);
         channelRepository.save(newChannel);
     }
 
@@ -112,9 +131,10 @@ public class ChannelService {
      * @return
      */
     public Channel.AdapterFamily[] getActivatedChannelFamilies() {
-        Channel.AdapterFamily[] families = new Channel.AdapterFamily[2];
+        Channel.AdapterFamily[] families = new Channel.AdapterFamily[3];
         families[0] = Channel.AdapterFamily.ARD;
         families[1] = Channel.AdapterFamily.ZDF;
+        families[2] = Channel.AdapterFamily.ORF;
         return families;
     }
 

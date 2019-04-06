@@ -111,6 +111,9 @@ public abstract class AbstractReader implements ApplicationContextAware {
     @Value(value = "${oer.collector.skip_zdf}")
     private boolean skipZdf;
 
+    @Value(value = "${oer.collector.skip_orf}")
+    private boolean skipOrf;
+
     @Value(value = "${oer.collector.mass_mode}")
     private boolean isMassMode;
 
@@ -143,6 +146,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
         LOG.info(String.format("oer.collector.invalidate_update_hours: %s", invalidationHours));
         LOG.info(String.format("oer.collector.skip_ard: %s", skipArd));
         LOG.info(String.format("oer.collector.skip_zdf: %s", skipZdf));
+        LOG.info(String.format("oer.collector.skip_orf: %s", skipOrf));
         LOG.info(String.format("oer.collector.mass_mode: %s", isMassMode));
 
         try {
@@ -166,8 +170,8 @@ public abstract class AbstractReader implements ApplicationContextAware {
             LOG.warning("Invalidate_update_hours is not set correctly. using fallback '24'");
             invalidationHours = "24";
         }
-        if (skipArd && skipZdf) {
-            LOG.warning("Update for zdf and ard is completely disabled");
+        if (skipArd && skipZdf && skipOrf) {
+            LOG.warning("NOTE: Update for zdf and ard is completely disabled");
         }
 
         setInitialized();
@@ -238,6 +242,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
      * update/import process of reader
      */
     private void update() throws ParserException, InterruptedException {
+        // check for skipping first
         if (getAdapterFamily().equals(Channel.AdapterFamily.ARD) && skipArd) {
             LOG.warning("ARD update is configured being skipped");
             return;
@@ -246,6 +251,11 @@ public abstract class AbstractReader implements ApplicationContextAware {
             LOG.warning("ZDF update is configured being skipped");
             return;
         }
+        if (getAdapterFamily().equals(Channel.AdapterFamily.ORF) && skipOrf) {
+            LOG.warning("ZDF update is configured being skipped");
+            return;
+        }
+        // start with tv shows
         if (collectTvShows) {
             // store tv shows
             LOG.info("Start fetching tv shows...");
@@ -255,6 +265,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
             LOG.info("Collecting tv shows is generally disabled");
         }
 
+        // proceed with program entries
         if (collectProgramEntries) {
             LOG.info("Start fetching program data of channels");
             // store program entries per channel
@@ -313,6 +324,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
      * process a channel
      *
      * @param channel
+     * @throws InterruptedException
      */
     private void readProgramEntries(Channel channel) throws InterruptedException {
         List<LocalDate> dayListToFetch = generateDateRangeToFetch();
@@ -332,7 +344,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
                 LOG.info("Start fetching day: " + day.format(DateTimeFormatter.ISO_LOCAL_DATE));
 
                 try {
-                    getProgramEntries(channelProgramThreadPool, channel, day);
+                    handleProgramEntries(channelProgramThreadPool, channel, day);
                 } catch (ParserException pe) {
                     LOG.log(Level.WARNING, pe.getMessage(), pe);
                     LOG.throwing(AbstractReader.class.getName(), "readProgramEntries", pe);
@@ -360,7 +372,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
      */
     private List<List<LocalDate>> getDateBlocks(List<LocalDate> dayListToFetch) {
         List<List<LocalDate>> dateBlocks = new ArrayList<>();
-        for (int i = 0; i <= (int) dayListToFetch.size() / DAY_BLOCK_LIST_SIZE; i++) {
+        for (int i = 0; i <= dayListToFetch.size() / DAY_BLOCK_LIST_SIZE; i++) {
             int upperLimit = (i + 1) * DAY_BLOCK_LIST_SIZE;
             if (upperLimit > dayListToFetch.size()) {
                 upperLimit = dayListToFetch.size();
@@ -469,15 +481,20 @@ public abstract class AbstractReader implements ApplicationContextAware {
      * @param day the day to fetch
      * @throws ParserException internal error
      */
-    protected void getProgramEntries(ThreadPoolExecutor threadPoolTaskExecutor, Channel channel, LocalDate day) throws ParserException {
+    protected void handleProgramEntries(ThreadPoolExecutor threadPoolTaskExecutor, Channel channel, LocalDate day) throws ParserException {
         LinkedList<ProgramEntry> linkedTvList = detectProgramEntries(channel, day);
         List<ProgramEntryPostProcessThread> calls = new ArrayList<>();
 
         // set end dates as the html does not contain this information
-        for (int i = 0; i < linkedTvList.size(); i++) {
-            ProgramEntry programEntry = linkedTvList.get(i);
+
+        for (ProgramEntry programEntry : linkedTvList) {
             if (programEntry == null) {
                 throw new IllegalStateException("null program entry given");
+            }
+            if (programEntry.getStartDateTime() == null ||
+                    programEntry.getEndDateTime() == null) {
+                LOG.warning("SKIPPING. No start date time or end date time for entry " + programEntry.toString());
+                continue;
             }
             if (programEntry.getId() == null) {
                 calls.add(new ProgramEntryPostProcessThread(programEntry));
@@ -489,6 +506,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
                 }
             }
         }
+
 
         if (!calls.isEmpty()) {
             LOG.info("Start fetching of " + calls.size() + " calls");
@@ -521,6 +539,11 @@ public abstract class AbstractReader implements ApplicationContextAware {
             for (Iterator<?> it = programListItems.iterator(); it.hasNext(); ) {
                 ProgramEntry programEntry = programEntryParser.preProcessItem(it.next(), day);
 
+                if (programEntry == null) {
+                    LOG.warning("Null program entry found. Skipping storage step.");
+                    continue;
+                }
+
                 if (programEntry.getTechnicalId() == null || programEntry.getTechnicalId().isEmpty()) {
                     throw new ParserException("no technical id set by pre-process adapter method");
                 }
@@ -538,7 +561,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
             }
         } catch (ProgramEntryParserException e) {
             errorCounter++;
-            LOG.throwing(AbstractReader.class.getName(), "getProgramEntries", e);
+            LOG.throwing(AbstractReader.class.getName(), "handleProgramEntries", e);
         }
 
         programEntryParser.preProcessProgramList(linkedProgramList);
@@ -585,7 +608,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
             }
         } catch (TvShowParserException e) {
             errorCounter++;
-            LOG.throwing(AbstractReader.class.getName(), "getProgramEntries", e);
+            LOG.throwing(AbstractReader.class.getName(), "handleProgramEntries", e);
         }
 
         LOG.info(String.format("Found %d entries, start post-processing", entryCounter));

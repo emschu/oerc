@@ -43,8 +43,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 @Component(value = "ardTvShowParser")
-public class TvShowParser extends AbstractTvShowParser
-        implements TvShowParserInterface {
+public class TvShowParser extends AbstractTvShowParser {
 
     private static final String INTER_URL_PART = "Sendungen-von-A-bis-Z";
     private static final String ALL_CHANNEL_URL = "https://programm.ard.de/TV/" + INTER_URL_PART + "/Startseite?page=&char=all";
@@ -71,25 +70,7 @@ public class TvShowParser extends AbstractTvShowParser
                 // 'whitelist' entries by url
                 continue;
             }
-
-            // skip duplicates
-            final String tvShowHash = Hasher.getHash(title + url);
-            if (isKeyRegistered(url)) {
-                LOG.info(String.format("Detected duplicate tv show: '%s'", title));
-                continue;
-            }
-
-            TvShow tvShow = new TvShow();
-            tvShow.setTitle(title);
-            tvShow.setUrl(ProgramEntryParser.ARD_HOST + url);
-            tvShow.setTechnicalId(tvShowHash);
-            tvShow.setAdapterFamily(getAdapterFamily());
-            if (!isKeyRegistered(tvShow.getUrl())) {
-                registerKey(tvShow.getUrl(), tvShowHash);
-            } else {
-                LOG.warning("tv show is already registered: " + tvShow.getTitle() + " with url: " + tvShow.getUrl());
-            }
-            tvShowList.add(tvShow);
+            handleTvShow(tvShowList, title, url, ProgramEntryParser.ARD_HOST);
         }
         return tvShowList;
     }
@@ -163,5 +144,7 @@ public class TvShowParser extends AbstractTvShowParser
     }
 
     @Override
-    public void cleanup() { }
+    public void cleanup() {
+        this.clear();
+    }
 }

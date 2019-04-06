@@ -27,6 +27,7 @@ import org.emschu.oer.core.model.repository.ProgramEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -37,5 +38,9 @@ public class ProgramService {
 
     public Optional<ProgramEntry> findProgramEntryByTechnicalId(String technicalId, Channel.AdapterFamily adapterFamily) {
         return programEntryRepository.findByTechnicalIdAndAdapterFamily(technicalId, adapterFamily);
+    }
+
+    public Optional<ProgramEntry> nearestProgramEntryInFuture(LocalDateTime startDateTime, Channel channel) {
+        return programEntryRepository.findFirstByChannelAndStartDateTimeIsAfterOrderByStartDateTime(channel, startDateTime);
     }
 }

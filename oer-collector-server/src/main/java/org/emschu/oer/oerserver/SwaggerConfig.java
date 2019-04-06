@@ -21,6 +21,8 @@ package org.emschu.oer.oerserver;
  * #L%
  */
 
+import com.fasterxml.classmate.TypeResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,11 +59,14 @@ public class SwaggerConfig {
     @Value("${oer.latest_api_version}")
     private String latestApiVersion;
 
+    @Autowired
+    private TypeResolver typeResolver;
+
     @Bean
     public Docket apiDocket() {
         ApiInfo apiInfo = new ApiInfo(
                 appName,
-                "oerserver - JSON REST server backend for german tv program data of public-law channels",
+                "oer-collector - JSON REST server backend for tv program data of public-law channels in Germany, Austria and Switzerland",
                 latestApiVersion,
                 "",
                 new Contact("emschu", "https://github.com/emschu", "look@github.com"),
@@ -82,6 +87,7 @@ public class SwaggerConfig {
                 .genericModelSubstitutes(ResponseEntity.class)
                 .globalResponseMessage(RequestMethod.GET, defaultResponseMessages)
                 .enableUrlTemplating(true)
+                .additionalModels(typeResolver.resolve(Error.class))
                 .select()
                 .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.ant("/v1/**"))

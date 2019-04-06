@@ -29,7 +29,9 @@ import org.emschu.oer.collector.reader.parser.ard.ProgramEntryParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.Null;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -51,17 +53,23 @@ public class Fetcher {
      * @param url url to fetch
      * @return jsoup Document object
      */
-    public static Document getDocument(String url) {
+    private static Document getDocument(String url, @Null Map<String, String> additionalHeaders) {
         boolean isArdLink = url.contains(ProgramEntryParser.ARD_HOST);
 
         try {
             Connection connection = Jsoup.connect(url)
                     .header("Accept", "text/html")
-                    .header("Accept-Encoding", "gzip, deflate")
+                    .header("Accept-Encoding", "gzip, deflate, br")
                     .header("Accept-Language", "de,en-US")
-                    .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
+                    .userAgent("Mozilla/5.0 (Windows NT 6.1; rv:60.0) Gecko/20100101 Firefox/60.0")
                     .maxBodySize(0)
                     .timeout(20 * 1000);
+
+            // apply additional headers
+            if (additionalHeaders != null) {
+                additionalHeaders.forEach((s, s2) -> connection.header(s, s2));
+            }
+
             if (isArdLink) {
                 connection.header("Host", "programm.ard.de");
             }
@@ -87,14 +95,14 @@ public class Fetcher {
      * @param testSelection jsoup selector for detection of correct page fetch
      * @return jsoup Document object
      */
-    public static Document fetchDocument(String url, String testSelection) {
+    public static Document fetchDocument(String url, String testSelection,@Null Map<String, String> headers) {
         if (url == null) {
             throw new IllegalArgumentException(String.format("invalid url '%s'", url));
         }
         Document document = null;
         int counter = 0;
         while(document == null) {
-            document = Fetcher.getDocument(url);
+            document = Fetcher.getDocument(url, headers);
             if (counter > 4) {
                 throw new IllegalStateException(String.format("could not fetch url '%s'", url));
             }
@@ -102,10 +110,23 @@ public class Fetcher {
         }
         Elements testElement = document.select(testSelection);
         if (testElement == null || testElement.isEmpty()) {
-            return fetchDocument(url, testSelection);
+            return fetchDocument(url, testSelection, null);
         }
         return document;
     }
+
+    /**
+     * delegating method for convenience for {@link #fetchDocument(String, String, Map)}
+     *
+     *
+     * @param url
+     * @param testSelection
+     * @return
+     */
+    public static Document fetchDocument(String url, String testSelection) {
+        return fetchDocument(url, testSelection, null);
+    }
+
 
     public static long getCounter() {
         return counter;

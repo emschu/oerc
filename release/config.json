@@ -16,6 +16,7 @@
   "oer.collector.proxy_port": null,
   "oer.collector.skip_ard": false,
   "oer.collector.skip_zdf": false,
+  "oer.collector.skip_orf": false,
   "oer.collector.cron_definition": null,
   "oer.collector.cron_mode_run_at_startup": true,
   "oer.collector.invalidate_update_hours": 72,

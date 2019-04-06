@@ -1,4 +1,4 @@
-package org.emschu.oer.collector.reader;
+package org.emschu.oer.collector.reader.parser.ard;
 
 /*-
  * #%L
@@ -21,13 +21,10 @@ package org.emschu.oer.collector.reader;
  * #L%
  */
 
-import org.emschu.oer.collector.reader.parser.ard.ProgramEntryParser;
-import org.emschu.oer.collector.reader.parser.ard.ProgramEntryTagLinker;
-import org.emschu.oer.collector.reader.parser.ard.TvShowTagLinker;
+import org.emschu.oer.collector.reader.AbstractReader;
 import org.emschu.oer.core.model.Channel;
 import org.emschu.oer.collector.reader.parser.ProgramEntryParserInterface;
 import org.emschu.oer.collector.reader.parser.TvShowParserInterface;
-import org.emschu.oer.collector.reader.parser.ard.TvShowParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

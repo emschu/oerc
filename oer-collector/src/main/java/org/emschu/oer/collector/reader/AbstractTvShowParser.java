@@ -21,10 +21,18 @@ package org.emschu.oer.collector.reader;
  * #L%
  */
 
+import org.emschu.oer.collector.reader.parser.TvShowParserInterface;
+import org.emschu.oer.core.model.TvShow;
+import org.emschu.oer.core.util.Hasher;
+
+import javax.validation.constraints.Null;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
-public abstract class AbstractTvShowParser {
+public abstract class AbstractTvShowParser implements TvShowParserInterface {
 
+    private static final Logger LOG = Logger.getLogger(AbstractTvShowParser.class.getName());
     private ConcurrentHashMap<String, String> usedTvShowIds = new ConcurrentHashMap<>();
 
     protected void registerKey(String tvShowId, String tvShowHash) {
@@ -36,6 +44,39 @@ public abstract class AbstractTvShowParser {
 
     protected boolean isKeyRegistered(String key) {
         return usedTvShowIds.containsKey(key);
+    }
+
+    /**
+     * method to create a tv show with its title + url
+     *
+     * @param tvShowList
+     * @param title
+     * @param url
+     * @param urlPrefix
+     */
+    protected void handleTvShow(List<TvShow> tvShowList, String title, String url, @Null String urlPrefix) {
+        // skip duplicates
+        final String tvShowHash = Hasher.getHash(title + url);
+        if (isKeyRegistered(url)) {
+            LOG.info(String.format("Detected duplicate tv show: '%s'", title));
+            return;
+        }
+
+        TvShow tvShow = new TvShow();
+        tvShow.setTitle(title);
+        if (urlPrefix != null) {
+            tvShow.setUrl(urlPrefix + url);
+        } else {
+            tvShow.setUrl(url);
+        }
+        tvShow.setTechnicalId(tvShowHash);
+        tvShow.setAdapterFamily(getAdapterFamily());
+        if (!isKeyRegistered(tvShow.getUrl())) {
+            registerKey(tvShow.getUrl(), tvShowHash);
+        } else {
+            LOG.warning("tv show is already registered: " + tvShow.getTitle() + " with url: " + tvShow.getUrl());
+        }
+        tvShowList.add(tvShow);
     }
 
     public void clear() {

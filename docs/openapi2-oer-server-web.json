@@ -1,9 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "oerserver - JSON REST server backend for german tv program data of public-law channels",
+    "description": "oer-collector - JSON REST server backend for tv program data of public-law channels in Germany, Austria and Switzerland",
     "version": "v1",
-    "title": "OER-Server - German public-law TV program data REST API",
+    "title": "OER-Collector-Server - German public-law TV program data REST API",
     "contact": {
       "name": "emschu",
       "url": "https://github.com/emschu",
@@ -197,12 +197,12 @@
         "deprecated": false
       }
     },
-    "/v1/program{?channelId,from,to}": {
+    "/v1/program": {
       "get": {
         "tags": [
           "status-controller"
         ],
-        "summary": "programEntries",
+        "summary": "Get program data",
         "operationId": "programEntriesUsingGET",
         "produces": [
           "*/*"
@@ -214,21 +214,24 @@
             "description": "channelId",
             "required": false,
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "allowEmptyValue": false
           },
           {
             "name": "from",
             "in": "query",
             "description": "from",
-            "required": true,
-            "type": "string"
+            "required": false,
+            "type": "string",
+            "allowEmptyValue": false
           },
           {
             "name": "to",
             "in": "query",
             "description": "to",
-            "required": true,
-            "type": "string"
+            "required": false,
+            "type": "string",
+            "allowEmptyValue": false
           }
         ],
         "responses": {
@@ -287,7 +290,8 @@
           "type": "string",
           "enum": [
             "ARD",
-            "ZDF"
+            "ZDF",
+            "ORF"
           ]
         },
         "channelKey": {
@@ -313,7 +317,12 @@
             "TAGESSCHAU_24",
             "ONE",
             "KIKA",
-            "PHOENIX"
+            "PHOENIX",
+            "ORF1",
+            "ORF2",
+            "ORF2_EUROPE",
+            "ORF_SPORT",
+            "ORF3"
           ]
         },
         "homePage": {
@@ -331,6 +340,10 @@
         }
       },
       "title": "Channel"
+    },
+    "Error": {
+      "type": "object",
+      "title": "Error"
     },
     "ImageLink": {
       "type": "object",
@@ -355,7 +368,8 @@
           "type": "string",
           "enum": [
             "ARD",
-            "ZDF"
+            "ZDF",
+            "ORF"
           ]
         },
         "channel": {

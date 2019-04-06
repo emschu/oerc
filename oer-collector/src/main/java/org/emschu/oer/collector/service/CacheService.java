@@ -22,6 +22,7 @@ package org.emschu.oer.collector.service;
  */
 
 import org.emschu.oer.collector.reader.parser.zdf.ProgramEntryParser;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -35,12 +36,20 @@ public class CacheService {
 
     private static final Logger LOG = Logger.getLogger(CacheService.class.getName());
 
+    @Value("${oer.collector.skip_zdf}")
+    private boolean skipZdf;
+
     @Cacheable("oer_data_api_key")
     public String getZdfApiKey() {
         LOG.info("Starting cached method of retrieving zdf api key");
+
+        if (skipZdf) {
+            LOG.info("skip_zdf = true, will not connect to retrieve api key: SKIPPING");
+            return "";
+        }
         ProgramEntryParser.ZDFScraper zdfScraper = new ProgramEntryParser.ZDFScraper();
         String apiKey = zdfScraper.retrieveApiKey();
-        LOG.info("Used zdf api key: " + apiKey);
+        LOG.info("retrieved zdf api key: " + apiKey);
         return apiKey;
     }
 }

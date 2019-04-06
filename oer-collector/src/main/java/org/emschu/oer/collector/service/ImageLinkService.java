@@ -53,8 +53,7 @@ public class ImageLinkService {
             ImageLink newImage = new ImageLink();
             newImage.setCreatedAt(LocalDateTime.now());
             newImage.setUrl(url);
-            ImageLink savedEntry = imageLinkRepository.save(newImage);
-            return savedEntry;
+            return imageLinkRepository.save(newImage);
         }
     }
 }

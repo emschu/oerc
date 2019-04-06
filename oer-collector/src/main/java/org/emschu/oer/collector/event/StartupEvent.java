@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 public class StartupEvent implements ApplicationListener<ApplicationReadyEvent> {
 
     private static final Logger LOG = Logger.getLogger(StartupEvent.class.getName());
+    private boolean isFinished = false;
 
     @Autowired
     private ChannelService channelService;
@@ -80,5 +81,14 @@ public class StartupEvent implements ApplicationListener<ApplicationReadyEvent> 
         }
         // .. in several secs the update service is starting
         /* @see org.emschu.oer.collector.service.UpdaterService */
+        this.setFinished();
+    }
+
+    private void setFinished() {
+        isFinished = true;
+    }
+
+    public boolean isFinished() {
+        return isFinished;
     }
 }

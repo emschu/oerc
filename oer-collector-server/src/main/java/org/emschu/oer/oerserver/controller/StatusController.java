@@ -22,6 +22,7 @@ package org.emschu.oer.oerserver.controller;
  */
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 import org.emschu.oer.core.model.Channel;
 import org.emschu.oer.core.model.ProgramEntry;
 import org.emschu.oer.core.service.ChannelReadonlyService;
@@ -88,9 +89,9 @@ public class StatusController {
     }
 
     @GetMapping("/program")
-    public ResponseEntity<List<ProgramEntry>> programEntries(@RequestParam(name = "from", required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-                                                             @RequestParam(name = "to", required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
-                                                             @RequestParam(name = "channelId", required = false) Long channelId) {
+    public ResponseEntity<List<ProgramEntry>> programEntries(@ApiParam(name = "from", type = "string") @RequestParam(name = "from", required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+                                                             @ApiParam(name = "to", type = "string") @RequestParam(name = "to", required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+                                                             @ApiParam(name = "channelId", type = "integer") @RequestParam(name = "channelId", required = false) Long channelId) {
         if (channelId == null) {
             return ResponseEntity.ok(programService.getProgram(fromDate, toDate));
         }

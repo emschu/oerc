@@ -31,7 +31,6 @@ import org.emschu.oer.core.model.TvShow;
 import org.emschu.oer.collector.reader.Fetcher;
 import org.emschu.oer.collector.reader.ZdfApiFetcher;
 import org.emschu.oer.collector.reader.parser.TvShowParserException;
-import org.emschu.oer.collector.reader.parser.TvShowParserInterface;
 import org.emschu.oer.collector.service.TagService;
 import org.emschu.oer.core.util.Hasher;
 import org.emschu.oer.zdf_api.model.EditorialTag;
@@ -44,8 +43,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @Component(value = "zdfTvShowParser")
-public class TvShowParser extends AbstractTvShowParser
-        implements TvShowParserInterface {
+public class TvShowParser extends AbstractTvShowParser {
 
     private static final String ZDF_TV_SHOW_LINK = "https://www.zdf.de/sendungen-a-z?group=";
     private static String[] tvShowGroups = {
@@ -150,6 +148,6 @@ public class TvShowParser extends AbstractTvShowParser
 
     @Override
     public void cleanup() {
-        super.clear();
+        this.clear();
     }
 }

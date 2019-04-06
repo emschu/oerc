@@ -21,6 +21,7 @@ package org.emschu.oer.collector;
  * #L%
  */
 
+import org.emschu.oer.collector.event.StartupEvent;
 import org.emschu.oer.collector.reader.ParserException;
 import org.emschu.oer.collector.service.UpdaterService;
 import org.emschu.oer.core.service.EnvService;
@@ -52,8 +53,15 @@ public class ScheduleConfig implements SchedulingConfigurer {
     @Autowired
     private EnvService envService;
 
+    @Autowired
+    private StartupEvent startupEvent;
+
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        // wait for startup event
+        while (!startupEvent.isFinished()) { }
+        LOG.info("Startup event has finished");
+
         if (cronDefinition == null || cronDefinition.isEmpty() || cronDefinition.equals("null")) {
             LOG.info("Running in single-execution-mode with cron feature disabled");
             runOneTime(true);

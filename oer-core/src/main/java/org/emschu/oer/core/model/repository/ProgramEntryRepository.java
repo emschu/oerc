@@ -38,4 +38,5 @@ public interface ProgramEntryRepository extends CrudRepository<ProgramEntry, Lon
     public List<ProgramEntry> findByStartDateTimeAfterAndEndDateTimeBefore(LocalDateTime startDateTime, LocalDateTime endDateTime);
     public List<ProgramEntry> findByStartDateTimeAfterAndEndDateTimeBeforeAndChannel(LocalDateTime startDateTime, LocalDateTime endDateTime, Channel channel);
     public Iterable<ProgramEntry> getAllByTechnicalIdIsInAndAdapterFamily(List<String> technicalIdList, Channel.AdapterFamily adapterFamily);
+    public Optional<ProgramEntry> findFirstByChannelAndStartDateTimeIsAfterOrderByStartDateTime(Channel channel, LocalDateTime startDateTime);
 }

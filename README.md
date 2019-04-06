@@ -4,11 +4,11 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=org.emschu.oer%3Aoer-collector-parent&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.emschu.oer%3Aoer-collector-parent)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=org.emschu.oer%3Aoer-collector-parent&metric=ncloc)](https://sonarcloud.io/dashboard?id=org.emschu.oer%3Aoer-collector-parent)
 
-A java software bundle to store and expose program data of public-law tv channels in Germany via a REST JSON interface.
+A java software bundle to store and expose program data of public-law tv channels in Germany, Austria and Switzerland via a REST JSON interface.
 
 This project is licensed under *AGPL v3* and you are encouraged to participate and improve functionality.
 
-The focus of this project lies in providing reliable program data - ready to be enriched or analysed as long as there is no Open Data policy of the public-law sector in Germany.
+The focus of this project lies in providing reliable program data - ready to be enriched or analysed as long as there is no Open Data policy of the public-law sector.
 
 At the moment its not intended to create links between program data and media(thek) data.
 If you are looking for this have a look at [similar projects](#similar-projects).
@@ -86,6 +86,8 @@ $ ./start.sh
 ```
 This script basically calls both `start_collector.sh` and `start_server.sh`.
 
+NOTE: For complete ORF program data, you should run the collector at least twice.
+
 ## Manage Collector (only)
 ```bash
 $ ./start_collector.sh [--foreground]
@@ -151,6 +153,18 @@ Images: MariaDB, Squid Proxy, OER Collector, OER Server.
 |19| MDR Fernsehen	  |   v1 |
 |20| HR Fernsehen     |   v1 |
 |21| BR Fernsehen     |   v1 |
+|22| ORF eins         |   v1 |
+|23| ORF 2            |   v1 |
+|24| ORF III          |   v1 |
+|25| ORF Sport +      |   v1 |
+
+## Data import limits
+
+| Channel Family | Earliest date       | Latest date     |
+| ---------------| ------------------- | --------------- |
+| ARD/ZDF        | ~ 2011              | Today + 6 weeks |
+| ORF            | Today - 14 days     | Today + 22 days |
+
 
 # Project guidelines
 - This project is non-commercial.
@@ -261,7 +275,7 @@ This project is licensed under [GNU Affero General Public License](./LICENSE).
 - You need a new feature/improvement? -> File an issue.
 - Contribute code through pull requests or submit patch files.
 
-**Planned - and not yet implemented - support of tv/radio channels and SRF + ORF support:** 
+**Planned - and not yet implemented - support of tv/radio channels and SRF support:** 
 
 *Radio:*
  - DLR/DLF
@@ -270,7 +284,6 @@ This project is licensed under [GNU Affero General Public License](./LICENSE).
 
 *TV:*
  - SRF-Channel-Family
- - ORF-Channel-Family
 
 # More information
 - [German] [Die Vermessung des TV-Programms auf datenjournalist.de](https://www.datenjournalist.de/die-vermessung-des-tv-programms/)
