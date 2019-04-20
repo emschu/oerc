@@ -320,6 +320,10 @@ public abstract class AbstractReader implements ApplicationContextAware {
         System.gc();
     }
 
+    public List<CustomParser> getCustomParsers() {
+        return customParsers;
+    }
+
     /**
      * process a channel
      *
@@ -491,27 +495,29 @@ public abstract class AbstractReader implements ApplicationContextAware {
             if (programEntry == null) {
                 throw new IllegalStateException("null program entry given");
             }
-            if (programEntry.getStartDateTime() == null ||
-                    programEntry.getEndDateTime() == null) {
+            // zdf program entries are handled differently
+            if (programEntry.getAdapterFamily() != Channel.AdapterFamily.ZDF
+                    && (programEntry.getStartDateTime() == null || programEntry.getEndDateTime() == null)) {
                 LOG.warning("SKIPPING. No start date time or end date time for entry " + programEntry.toString());
                 continue;
             }
             if (programEntry.getId() == null) {
-                calls.add(new ProgramEntryPostProcessThread(programEntry));
+                calls.add(new ProgramEntryPostProcessThread(getProgramEntryParser(), programEntryRepository,
+                        programEntry, isDebug));
             } else {
                 // not a new entry!
+                // todo check what happens if .getDescription() is no longer a condition here
                 if (programEntry.getDescription() == null || needsUpdate(programEntry)) {
                     // only update data if needed!
-                    calls.add(new ProgramEntryPostProcessThread(programEntry));
+                    calls.add(new ProgramEntryPostProcessThread(getProgramEntryParser(), programEntryRepository,
+                            programEntry, isDebug));
                 }
             }
         }
 
-
         if (!calls.isEmpty()) {
             LOG.info("Start fetching of " + calls.size() + " calls");
         }
-
         for (ProgramEntryPostProcessThread thread : calls) {
             threadPoolTaskExecutor.execute(thread);
         }
@@ -551,10 +557,7 @@ public abstract class AbstractReader implements ApplicationContextAware {
                     // update existing entry. avoid duplicates!
                     programEntry = programEntryRepository.getByTechnicalIdAndChannel(programEntry.getTechnicalId(), channel);
                 } else {
-                    programEntry.setCreatedAt(LocalDateTime.now());
-                    // link channel record
-                    programEntry.setChannel(channel);
-                    programEntry.setAdapterFamily(getAdapterFamily());
+                    initNewProgramEntry(programEntry, channel);
                 }
                 linkedProgramList.add(programEntry);
                 entryCounter++;
@@ -571,6 +574,19 @@ public abstract class AbstractReader implements ApplicationContextAware {
         LOG.info(String.format("Successfully parsed %d entries. Errors: %d",
                 linkedProgramList.size(), errorCounter));
         return linkedProgramList;
+    }
+
+    /**
+     * method to init a new program entry
+     *
+     * @param programEntry
+     * @param channel
+     */
+    public void initNewProgramEntry(ProgramEntry programEntry, Channel channel) {
+        programEntry.setCreatedAt(LocalDateTime.now());
+        // link channel record
+        programEntry.setChannel(channel);
+        programEntry.setAdapterFamily(getAdapterFamily());
     }
 
     /**
@@ -645,6 +661,11 @@ public abstract class AbstractReader implements ApplicationContextAware {
         return false;
     }
 
+    /**
+     * method to register a custom parser per adapter family
+     *
+     * @param customerParserClass
+     */
     protected void registerParser(Class<? extends CustomParser> customerParserClass) {
         if (customerParserClass == null) {
             throw new IllegalArgumentException("null parser class given");
@@ -719,56 +740,6 @@ public abstract class AbstractReader implements ApplicationContextAware {
             LOG.warning("invalid end date value: " + dateValue);
         }
         return Optional.empty();
-    }
-
-    /**
-     * this thread is used for program entries
-     * <p>
-     * suppressing printStacktrace hint in sonar
-     */
-    @SuppressWarnings("squid:S1148")
-    class ProgramEntryPostProcessThread implements Runnable {
-        private final ProgramEntry programEntry;
-
-        public ProgramEntryPostProcessThread(ProgramEntry programEntry) {
-            this.programEntry = programEntry;
-        }
-
-        @Override
-        public void run() {
-            try {
-                getProgramEntryParser().postProcessItem(this.programEntry);
-            } catch (Exception e) {
-                LOG.throwing(ProgramEntryPostProcessThread.class.getName(), "run", e);
-            }
-            if (this.programEntry.getId() != null) {
-                this.programEntry.setUpdatedAt(LocalDateTime.now());
-            }
-            // calc minutes of program entry finally
-            // calc duration in minutes
-            if (programEntry.getStartDateTime() != null && programEntry.getEndDateTime() != null) {
-                long minutes = ChronoUnit.MINUTES.between(programEntry.getStartDateTime(), programEntry.getEndDateTime());
-                programEntry.setDurationInMinutes((int) minutes);
-            } else {
-                LOG.info("problem with entry: " + programEntry.toString());
-                throw new IllegalStateException("missing start or end date in program entry: " + programEntry.getTitle());
-            }
-
-            try {
-                ProgramEntry entry = programEntryRepository.save(this.programEntry);
-                getProgramEntryParser().linkItem(entry);
-            } catch (Exception e) {
-                LOG.warning("program entry could not be stored: " + e.getMessage());
-                LOG.throwing(ProgramEntryPostProcessThread.class.getName(), "run", e);
-                if (isDebug) {
-                    LOG.warning("Program entry:" + this.programEntry);
-                    LOG.info("Debug mode stacktrace: ");
-                    e.printStackTrace();
-                }
-            } finally {
-                getProgramEntryParser().finishEntry(this.programEntry);
-            }
-        }
     }
 
     /**
