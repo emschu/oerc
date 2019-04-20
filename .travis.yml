@@ -16,8 +16,7 @@ jdk:
 before_install:
   - export TZ=Europe/Berlin
 script:
-  - cd oer-collector; mvn clean test jacoco:report; cd ..
-  - mvn sonar:sonar
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
 
 #matrix:
 #  allow_failures:
