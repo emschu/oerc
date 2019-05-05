@@ -35,8 +35,8 @@ public interface ProgramEntryRepository extends CrudRepository<ProgramEntry, Lon
     public boolean existsByTechnicalId(String technicalId);
     public ProgramEntry getByTechnicalIdAndChannel(String technicalId, Channel channel);
     public Optional<ProgramEntry> findByTechnicalIdAndAdapterFamily(String technicalId, Channel.AdapterFamily adapterFamily);
-    public List<ProgramEntry> findByStartDateTimeAfterAndEndDateTimeBefore(LocalDateTime startDateTime, LocalDateTime endDateTime);
-    public List<ProgramEntry> findByStartDateTimeAfterAndEndDateTimeBeforeAndChannel(LocalDateTime startDateTime, LocalDateTime endDateTime, Channel channel);
+    public List<ProgramEntry> findByStartDateTimeIsBetweenOrderByStartDateTime(LocalDateTime startDateTime, LocalDateTime endDateTime);
+    public List<ProgramEntry> findByStartDateTimeIsBetweenAndChannelOrderByStartDateTime(LocalDateTime startDateTime, LocalDateTime endDateTime, Channel channel);
     public Iterable<ProgramEntry> getAllByTechnicalIdIsInAndAdapterFamily(List<String> technicalIdList, Channel.AdapterFamily adapterFamily);
     public Optional<ProgramEntry> findFirstByChannelAndStartDateTimeIsAfterOrderByStartDateTime(Channel channel, LocalDateTime startDateTime);
 }

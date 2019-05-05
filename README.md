@@ -20,13 +20,14 @@ Only use it locally and/or in protected environments.
 
 # Description
 
-This software contains two end-user relevant components:
+This software contains two components which are relevant to the end-user:
 
 - **Collector:** Collects data and is running in a background process.
 - **Server:** JSON REST interface. Have a look at the [OpenApi 2/Swagger specification of this server](./docs/openapi2-oer-server-web.json).
 
 *Collector* and *Server* component run as independent processes so *Collector* problems won't affect the *Server* and vice versa.
-You can run the *Collector* by triggering it manually, by cron in background or by programmatic (java) cron.
+
+You can run the *Collector* by triggering it manually, by crontab in background or by programmatic (java) cron.
 
 In addition there is a very simple **configuration sample** to integrate the data model into [Apache Solr](http://lucene.apache.org/solr/).
 
@@ -40,7 +41,7 @@ Note: The public-law web pages this software needs to access are restricted to c
 - One of the following database backends: MariaDB/MySQL/Postgres 
 
 # Setup 
-- Download release package [here](https://github.com/emschu/oer-collector/releases).
+- Download release package [here](https://github.com/emschu/oer-collector/releases)
 - Extract package
 - Create an empty database and setup `config.json` JDBC connection parameters in `oer.core.jdbc_*`. MariaDB is recommended. See [database options](#database_support) for different driver options.
 - Database is initially set up by running the **Collector** *or* **Server** component once. Use the `--foreground` flag to see if everything is running fine.
@@ -53,15 +54,18 @@ Configuration of Collector and Server is done in the central `config.json` file.
 
 - **oer.core.jdbc_**\*: Database and Hibernate configuration and connection parameters.
 - **oer.collector.update_mode**: Flag to skip updating of \"old\" (as defined in hours by *oer.collector.invalidate_update_hours*) entries in general.
-- **oer.collector.enable_tv_show_collect**: Flag to control collection of tv shows.
-- **oer.collector.enable_program_entry_collect**: Flag to control collection of program entries.
-- **oer.collector.proxy_host**: Optional HTTP proxy host.
-- **oer.collector.proxy_port**: Optional HTTP proxy port.
-- **oer.collector.skip_ard**: Flag to skip collection of ARD data.
-- **oer.collector.skip_zdf**: Flag to skip collection of ZDF data.
+- **oer.collector.enable_tv_show_collect**: Flag to control collecting tv show data.
+- **oer.collector.enable_program_entry_collect**: Flag to control collecting program entry data.
+- **oer.collector.proxy_host**: (Optional) HTTP proxy host.
+- **oer.collector.proxy_port**: (Optional) HTTP proxy port.
+- **oer.collector.skip_ard**: Flag to skip collecting ARD data.
+- **oer.collector.skip_zdf**: Flag to skip collecting ZDF data.
 - **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example for twice executions a day at 4 AM and 4 PM: `0 0 4,16 * * *`. Default: `null`
 - **oer.collector.cron_mode_run_at_startup**: Runs collection process at program startup. Effective if *cron_definition* is not empty. Default: `true`
 - **oer.collector.invalidate_update_hours**: Number of hours to consider data records in db as old and web data is used to refresh/update record. Has no effect if not in update mode. Default: `72` 
+- **server.address**: Host the webserver will listen to. Default: `127.0.0.1`
+- **server.port**: Port the webserver will listen to. Default: `8081`
+
 
 ### Default collection mode
 - **oer.collector.collect_past_program_days_max**: Number of days in past to collect data for.
@@ -107,7 +111,7 @@ $ ./stop.sh
 ```
 
 ## Angular example frontend
-Located in `oer-example-client`. To use it, use the following commands:
+Located in `oer-example-client`. Basically it contains a timeline with all channels and program entry data on it. If you want to have a look, use the following commands:
 ```bash
 $ npm install
 $ npm run start
@@ -121,11 +125,11 @@ Feel free to improve and enhance!
 
 There is a basic sample how to setup and use Apache Solr with MariaDB and the collected program entry data.
 
-Have a look at `tools/solr` directory and customize `tools/solr/setup_with_mariadb.sh` and `data-config.xml` for your needs. Please share improvements. 
+Have a look at `tools/solr` directory and customise. `tools/solr/setup_with_mariadb.sh` and `data-config.xml` for your needs. Please share improvements. 
 
 ## Container environment
 
-OER Collector + Server can be used with docker-compose by following this [guide](https://github.com/emschu/oer-collector/tree/master/tools/docker). A`docker-compose.yml` is contained in release packages and can be found in `tools/docker` directory (of this repository).  
+OER Collector + Server can be used with *docker-compose* by following this [guide](https://github.com/emschu/oer-collector/tree/master/tools/docker). A `docker-compose.yml` is contained in release packages and can be found in `tools/docker` directory (of this repository).  
 
 Images: MariaDB, Squid Proxy, OER Collector, OER Server.
 
@@ -163,7 +167,7 @@ Note: The first column does not necessarily have to correspond to the channel id
 
 ## Data import limits
 
-| Channel Family | Earliest date       | Latest date     |
+| Channel family | Earliest date       | Latest date     |
 | ---------------| ------------------- | --------------- |
 | ARD/ZDF        | ~ 2011              | Today + 6 weeks |
 | ORF            | Today - 14 days     | Today + 22 days |
@@ -172,10 +176,10 @@ Note: The first column does not necessarily have to correspond to the channel id
 # Project guidelines
 - This project is non-commercial.
 - Private/commercial sector tv or radio stations will *never* be part of this project.
-- This project shall be an instrument mainly to analyze the program and constructively 
+- This project shall be an instrument mainly to analyse the program and constructively 
 improve public-law tv and radio stations.
 - This project would be superfluous, if there was a public API for public data, OpenData...
-- Minimize traffic and external load to the least needed.
+- Minimise traffic and external load to the least needed.
 
 <a name="similar-projects"></a>
 ## Similar projects:

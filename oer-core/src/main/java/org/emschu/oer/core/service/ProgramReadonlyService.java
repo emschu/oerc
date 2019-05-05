@@ -68,11 +68,11 @@ public class ProgramReadonlyService {
             // invalid channel
             return new ArrayList<>();
         }
-        return programEntryRepository.findByStartDateTimeAfterAndEndDateTimeBeforeAndChannel(startDateTime, endDateTime, channelOptional.get());
+        return programEntryRepository.findByStartDateTimeIsBetweenAndChannelOrderByStartDateTime(startDateTime, endDateTime, channelOptional.get());
     }
 
     public List<ProgramEntry> getProgram(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        return programEntryRepository.findByStartDateTimeAfterAndEndDateTimeBefore(startDateTime, endDateTime);
+        return programEntryRepository.findByStartDateTimeIsBetweenOrderByStartDateTime(startDateTime, endDateTime);
     }
 
     public Optional<ProgramEntry> getProgramEntry(Long entryId) {

@@ -21,10 +21,11 @@
 # #L%
 ###
 
-if [ "$(jps -l | grep -c 'oer-collector')" -gt 0 ]; then
-    echo "Killing $(jps -l | grep -c 'oer-collector') collector processes"
-    jps -vl | grep 'oer-collector'
-    jps -l | grep "oer-collector" | awk '{print $1}' | xargs kill -9
+if [ "$(jps -l | grep -c 'oer-collector.jar')" -gt 0 ]; then
+    echo "Killing $(jps -l | grep -c 'oer-collector.jar') collector processes"
+    jps -vl | grep 'oer-collector.jar'
+    jps -l | grep "oer-collector.jar" | awk '{print $1}' | xargs kill -9
 else
     echo "No running OER Collector processes found"
 fi
+exit 0
