@@ -67,6 +67,7 @@ public class ScheduleConfig implements SchedulingConfigurer {
             runOneTime(true);
             return;
         }
+        LOG.fine("cron definition: " + cronDefinition);
         if (!CronSequenceGenerator.isValidExpression(cronDefinition)) {
             LOG.warning(String.format("'%s' is not a valid cron sequence", cronDefinition));
             return;

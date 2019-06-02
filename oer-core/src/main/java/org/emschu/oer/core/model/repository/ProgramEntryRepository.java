@@ -32,7 +32,6 @@ import java.util.Optional;
 
 @Repository
 public interface ProgramEntryRepository extends CrudRepository<ProgramEntry, Long> {
-    public boolean existsByTechnicalId(String technicalId);
     public ProgramEntry getByTechnicalIdAndChannel(String technicalId, Channel channel);
     public Optional<ProgramEntry> findByTechnicalIdAndAdapterFamily(String technicalId, Channel.AdapterFamily adapterFamily);
     public List<ProgramEntry> findByStartDateTimeIsBetweenOrderByStartDateTime(LocalDateTime startDateTime, LocalDateTime endDateTime);

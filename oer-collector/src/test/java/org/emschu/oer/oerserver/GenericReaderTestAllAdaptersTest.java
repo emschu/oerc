@@ -32,6 +32,7 @@ import org.emschu.oer.collector.reader.parser.ard.ARDReader;
 import org.emschu.oer.collector.reader.parser.ard.ProgramEntryParser;
 import org.emschu.oer.collector.reader.parser.ard.TvShowParser;
 import org.emschu.oer.collector.reader.parser.orf.ORFReader;
+import org.emschu.oer.collector.reader.parser.srf.SRFReader;
 import org.emschu.oer.collector.reader.parser.zdf.ZDFReader;
 import org.emschu.oer.collector.service.ChannelService;
 import org.emschu.oer.core.model.Channel;
@@ -52,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+// TODO add srf reader
 @SpringBootTest(classes = OerCollector.class)
 @RunWith(SpringRunner.class)
 public class GenericReaderTestAllAdaptersTest {
@@ -65,6 +67,9 @@ public class GenericReaderTestAllAdaptersTest {
 
     @Autowired
     private ORFReader orfReader;
+
+    @Autowired
+    private SRFReader srfReader;
 
     @Autowired
     private ChannelService channelService;
@@ -118,11 +123,25 @@ public class GenericReaderTestAllAdaptersTest {
     }
 
     @Test
+    public void testSrfReaderSetup() {
+        Assert.assertNotNull(srfReader);
+        Assert.assertEquals(Channel.AdapterFamily.SRF, srfReader.getAdapterFamily());
+        Assert.assertEquals(org.emschu.oer.collector.reader.parser.srf.ProgramEntryParser.class, srfReader.getProgramEntryParser().getClass());
+        Assert.assertEquals(org.emschu.oer.collector.reader.parser.srf.TvShowParser.class, srfReader.getTvShowParser().getClass());
+
+        // check init was called and parsers are registered
+        Assert.assertNotNull(srfReader.getCustomParsers());
+        Assert.assertEquals(0, srfReader.getCustomParsers().size());
+        srfReader.checkConfiguration();
+    }
+
+    @Test
     public void testProgramEntriesAllAdaptersToday() throws ParserException {
         AbstractReader[] abstractReaders = new AbstractReader[]{
                 ardReader,
                 zdfReader,
-                orfReader
+                orfReader,
+                srfReader
         };
         final LocalDate testDay = LocalDate.now();
 
@@ -138,7 +157,7 @@ public class GenericReaderTestAllAdaptersTest {
             List<ProgramEntry> testDayProgramEntryList = new ArrayList<>();
             // preprocess
             for (Iterator<?> it = elements.iterator(); it.hasNext(); ) {
-                final ProgramEntry programEntry = programEntryParser1.preProcessItem(it.next(), testDay);
+                final ProgramEntry programEntry = programEntryParser1.preProcessItem(it.next(), testDay, channel);
                 Assert.assertNotNull(programEntry);
                 Assert.assertNotNull(programEntry.getTechnicalId());
                 if (adapterFamily != Channel.AdapterFamily.ZDF) {

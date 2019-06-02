@@ -65,7 +65,9 @@ public class ProgramEntryPostProcessThread implements Runnable {
         try {
             programEntryParser.postProcessItem(this.programEntry);
         } catch (Exception e) {
+            LOG.warning("Exception occured. Skipping entry: " + e.getMessage());
             LOG.throwing(ProgramEntryPostProcessThread.class.getName(), "run", e);
+            return;
         }
         if (this.programEntry.getId() != null) {
             this.programEntry.setUpdatedAt(LocalDateTime.now());

@@ -79,7 +79,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
     private TvShowService tvShowService;
 
     @Override
-    public ProgramEntry preProcessItem(ZdfBroadcast broadcast, LocalDate affectedDay) throws ProgramEntryParserException {
+    public ProgramEntry preProcessItem(ZdfBroadcast broadcast, LocalDate affectedDay, Channel channel) throws ProgramEntryParserException {
         ProgramEntry zdfProgramEntry = new ProgramEntry();
 
         zdfProgramEntry.setTechnicalId(broadcast.getPosId());

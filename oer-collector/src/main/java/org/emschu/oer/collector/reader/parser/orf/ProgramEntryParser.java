@@ -27,6 +27,8 @@ import org.emschu.oer.collector.reader.parser.ProgramEntryParserException;
 import org.emschu.oer.collector.reader.parser.ProgramEntryParserInterface;
 import org.emschu.oer.collector.service.ProgramService;
 import org.emschu.oer.collector.service.TagService;
+import org.emschu.oer.collector.util.DateConverter;
+import org.emschu.oer.collector.util.StringFormat;
 import org.emschu.oer.core.model.Channel;
 import org.emschu.oer.core.model.ProgramEntry;
 import org.emschu.oer.core.model.Tag;
@@ -57,7 +59,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
     private ProgramService programService;
 
     @Override
-    public ProgramEntry preProcessItem(Element element, LocalDate affectedDay) throws ProgramEntryParserException {
+    public ProgramEntry preProcessItem(Element element, LocalDate affectedDay, Channel channel) throws ProgramEntryParserException {
         final Elements title = element.select("h2");
         final Elements subTitle = element.select("div.teaser h3");
         final Elements detailLink = element.select("p.detaillink");
@@ -88,7 +90,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
             programEntry.setUrl(url);
         }
 
-        final LocalDateTime startDateTime = ORFDateConverter.generateDateForEntry(isNightEntry, affectedDay, startTime.text());
+        final LocalDateTime startDateTime = DateConverter.generateDateForEntry(isNightEntry, affectedDay, startTime.text());
         if (startDateTime == null) {
             LOG.warning("something went wrong parsing: " + startTime.text());
             return null;
@@ -147,7 +149,9 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
     }
 
     @Override
-    public void linkItem(ProgramEntry programEntry) { }
+    public void linkItem(ProgramEntry programEntry) {
+        //nothing to do here
+    }
 
     @Override
     public Iterable<Element> getElements(Channel channel, LocalDate day) throws ParserException {
@@ -165,18 +169,18 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
         return foundElements;
     }
 
-    private String ensureTwoDigits(int digit) {
-        if (digit < 10) {
-            return "0" + digit;
-        }
-        return String.valueOf(digit);
-    }
-
+    /**
+     * method to retrieve root page element of a channel per day
+     *
+     * @param channel
+     * @param day
+     * @return
+     */
     private Elements getRootElement(Channel channel, LocalDate day) {
         Elements mainElementDiv = null;
 
-        // future: 23 days ?
-        // past: 15 days ?
+        // future: 23 days
+        // past: 15 days
         long daysBetween = ChronoUnit.DAYS.between(day, LocalDate.now());
         // negative values represent future
         if (daysBetween > 14 || daysBetween < -22) {
@@ -185,8 +189,8 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
         }
 
         String queryUrl = "https://tv.orf.at/program/" + channel.getTechnicalId() + "/" + day.getYear() +
-                ensureTwoDigits(day.getMonthValue())
-                + ensureTwoDigits(day.getDayOfMonth());
+                StringFormat.ensureTwoDigits(day.getMonthValue())
+                + StringFormat.ensureTwoDigits(day.getDayOfMonth());
 
         Document jsoupDoc = getPage(queryUrl);
         mainElementDiv = jsoupDoc.body().select("div.main");
@@ -197,6 +201,12 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
         return mainElementDiv;
     }
 
+    /**
+     * method to query all orf.at pages
+     *
+     * @param queryUrl
+     * @return
+     */
     private Document getPage(String queryUrl) {
         LOG.fine("Query url: " + queryUrl);
 
@@ -209,10 +219,14 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
     }
 
     @Override
-    public void cleanup() { }
+    public void cleanup() {
+        // do nothing here for orf
+    }
 
     @Override
-    public void finishEntry(ProgramEntry programEntry) { }
+    public void finishEntry(ProgramEntry programEntry) {
+        // do nothing here for orf
+    }
 
     @Override
     public void preProcessProgramList(List<ProgramEntry> linkedProgramList) {

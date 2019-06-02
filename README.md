@@ -16,7 +16,7 @@ If you are looking for this have a look at [similar projects](#similar-projects)
 **NOTE:** This server software is not ready to be used in any kind of *production* server environment.
 Only use it locally and/or in protected environments.
 
-**Current version:** v0.9.4
+**Current version:** v0.9.5
 
 # Description
 
@@ -58,8 +58,10 @@ Configuration of Collector and Server is done in the central `config.json` file.
 - **oer.collector.enable_program_entry_collect**: Flag to control collecting program entry data.
 - **oer.collector.proxy_host**: (Optional) HTTP proxy host.
 - **oer.collector.proxy_port**: (Optional) HTTP proxy port.
-- **oer.collector.skip_ard**: Flag to skip collecting ARD data.
-- **oer.collector.skip_zdf**: Flag to skip collecting ZDF data.
+- **oer.collector.skip_ard**: Flag to skip collecting *ARD* data.
+- **oer.collector.skip_zdf**: Flag to skip collecting *ZDF* data.
+- **oer.collector.skip_zdf**: Flag to skip collecting *ORF* data.
+- **oer.collector.skip_zdf**: Flag to skip collecting *SRF* data.
 - **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example for twice executions a day at 4 AM and 4 PM: `0 0 4,16 * * *`. Default: `null`
 - **oer.collector.cron_mode_run_at_startup**: Runs collection process at program startup. Effective if *cron_definition* is not empty. Default: `true`
 - **oer.collector.invalidate_update_hours**: Number of hours to consider data records in db as old and web data is used to refresh/update record. Has no effect if not in update mode. Default: `72` 
@@ -164,6 +166,10 @@ Note: The first column does not necessarily have to correspond to the channel id
 |23| ORF 2            |   v1 |
 |24| ORF III          |   v1 |
 |25| ORF Sport +      |   v1 |
+|26| SRF-1            |   v1 |
+|27| SRF-zwei         |   v1 |
+|28| SRF-info         |   v1 |
+
 
 ## Data import limits
 
@@ -171,7 +177,7 @@ Note: The first column does not necessarily have to correspond to the channel id
 | ---------------| ------------------- | --------------- |
 | ARD/ZDF        | ~ 2011              | Today + 6 weeks |
 | ORF            | Today - 14 days     | Today + 22 days |
-
+| SRF            | Today - 14 days     | Today + 29 days |
 
 # Project guidelines
 - This project is non-commercial.

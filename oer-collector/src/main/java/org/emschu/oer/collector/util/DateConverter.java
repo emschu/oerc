@@ -1,4 +1,4 @@
-package org.emschu.oer.collector.reader.parser.orf;
+package org.emschu.oer.collector.util;
 
 /*-
  * #%L
@@ -32,9 +32,9 @@ import java.util.logging.Logger;
 /**
  * class to convert given dates/times in orf parsing context
  */
-public class ORFDateConverter {
+public class DateConverter {
 
-    private static final Logger LOG = Logger.getLogger(ORFDateConverter.class.getName());
+    private static final Logger LOG = Logger.getLogger(DateConverter.class.getName());
 
     /**
      * method to parse a time string and combine it with the correct day to a {@link LocalDateTime} object
@@ -52,13 +52,24 @@ public class ORFDateConverter {
             LOG.warning("invalid time string given: " + timeString);
             return null;
         }
+
         final int hour;
         final int minutes;
         try {
-            hour = Integer.valueOf(timeString.substring(0, middle));
+            hour = Integer.valueOf(timeString.substring(Math.max(middle - 2, 0), middle));
             minutes = Integer.valueOf(timeString.substring(middle + 1, middle + 3));
+            // check if second number = minutes are not split
+            if (timeString.length() >= middle + 4) {
+                if (Integer.parseInt(String.valueOf(timeString.charAt(middle + 4))) >= 0) {
+                    return null;
+                }
+            }
         } catch (NumberFormatException nfe) {
             LOG.warning("invalid time string given: " + timeString);
+            return null;
+        }
+        if (hour > 60 || minutes > 60) {
+            // invalid values!
             return null;
         }
 
@@ -75,5 +86,42 @@ public class ORFDateConverter {
             return null;
         }
         return ret;
+    }
+
+    /**
+     * made for strings like:
+     *  Dienstag, 09.04.2019
+     *
+     * TODO test
+     * @param dateString
+     * @return
+     */
+    public static LocalDate getDateInString(String dateString) {
+        if (dateString == null || dateString.isEmpty()) {
+            return null;
+        }
+        final int firstPointIndex = dateString.indexOf('.');
+        if (firstPointIndex == -1) {
+            // not a valid string
+            return null;
+        }
+        final int secondPointIndex = dateString.indexOf('.', firstPointIndex + 1);
+        if (secondPointIndex == -1) {
+            // we need two points '.' in the string to work
+            return null;
+        }
+        try {
+            if (dateString.length() < secondPointIndex + 5) {
+                // not plausible
+                return null;
+            }
+            final int day = Integer.parseInt(dateString.substring(firstPointIndex - 2, firstPointIndex));
+            final int month = Integer.parseInt(dateString.substring(firstPointIndex + 1, secondPointIndex));
+            final int year = Integer.parseInt(dateString.substring(secondPointIndex + 1, secondPointIndex + 5));
+            return LocalDate.of(year, month, day);
+        } catch (NumberFormatException | DateTimeException nfe) {
+            LOG.warning("invalid dateString in string: " + dateString);
+            return null;
+        }
     }
 }

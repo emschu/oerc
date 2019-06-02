@@ -40,11 +40,13 @@ public interface ProgramEntryParserInterface<T> {
      * <p>
      * at least set: start time, technical id and url
      *
+     * @param element
      * @param affectedDay
+     * @param channel
      * @return
      * @throws ProgramEntryParserException
      */
-    public ProgramEntry preProcessItem(T element, LocalDate affectedDay) throws ProgramEntryParserException;
+    public ProgramEntry preProcessItem(T element, LocalDate affectedDay, Channel channel) throws ProgramEntryParserException;
 
     /**
      * This method is called on each program entry record, right after it was pre-processed.
@@ -113,7 +115,8 @@ public interface ProgramEntryParserInterface<T> {
                 next = linkedProgramList.get(i + 1);
                 if (next != null && entry.getEndDateTime() == null) {
                     Logger.getLogger(ProgramEntryParserInterface.class.getName())
-                            .info("set end date time " + next.getStartDateTime() +" for entry: " + entry);
+                            .info(String.format("set end date time %s for entry: '%s'",
+                                    next.getStartDateTime(), entry.getTitle()));
                     entry.setEndDateTime(next.getStartDateTime());
                 }
             }

@@ -110,7 +110,7 @@ public class Channel implements Serializable {
 
     /* --- enums --- */
     public enum AdapterFamily {
-        ARD("ARD"), ZDF("ZDF"), ORF("ORF");
+        ARD("ARD"), ZDF("ZDF"), ORF("ORF"), SRF("SRF");
 
         private String familyKey;
         AdapterFamily(String familyKey) {
@@ -128,8 +128,9 @@ public class Channel implements Serializable {
         ARD, ZDF, ZDF_INFO, ZDF_NEO, DREISAT, ARTE,
         BR, HR, MDR, NDR, RBB, RADIO_BREMEN_TV, SR,
         SWR_BW, SWR_RP, WDR, ALPHA, TAGESSCHAU_24,
-        ONE, KIKA, PHOENIX, ORF1, ORF2, ORF2_EUROPE,
-        ORF_SPORT, ORF3;
+        ONE, KIKA, PHOENIX,
+        ORF1, ORF2, ORF2_EUROPE, ORF_SPORT, ORF3,
+        SRF1, SRF_zwei, SRF_info;
     }
 
     @Override

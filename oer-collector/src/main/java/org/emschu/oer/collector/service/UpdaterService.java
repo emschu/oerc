@@ -25,6 +25,7 @@ import org.emschu.oer.collector.reader.parser.ard.ARDReader;
 import org.emschu.oer.collector.reader.Fetcher;
 import org.emschu.oer.collector.reader.ParserException;
 import org.emschu.oer.collector.reader.parser.orf.ORFReader;
+import org.emschu.oer.collector.reader.parser.srf.SRFReader;
 import org.emschu.oer.collector.reader.parser.zdf.ZDFReader;
 import org.emschu.oer.core.service.EnvService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,9 @@ public class UpdaterService {
     private ORFReader orfReader;
 
     @Autowired
+    private SRFReader srfReader;
+
+    @Autowired
     private EnvService envService;
 
     @Value(value = "${oer.collector.skip_ard}")
@@ -68,6 +72,9 @@ public class UpdaterService {
 
     @Value(value = "${oer.collector.skip_orf}")
     private boolean skipOrf;
+
+    @Value(value = "${oer.collector.skip_srf}")
+    private boolean skipSrf;
 
     @Value(value = "${oer.collector.proxy_host}")
     private String proxyHost;
@@ -96,6 +103,7 @@ public class UpdaterService {
             ardReader.execute();
             zdfReader.execute();
             orfReader.execute();
+            srfReader.execute();
         } catch (Exception e) {
             LOG.throwing(UpdaterService.class.getName(), "fetchNewTvProgram", e);
             throw e;
@@ -112,6 +120,11 @@ public class UpdaterService {
         endUpdating();
     }
 
+    /**
+     * this method does an (initial) connection check to target websites
+     *
+     * @return
+     */
     public boolean connectionCheck() {
         try {
             if (!skipArd) {
@@ -122,6 +135,9 @@ public class UpdaterService {
             }
             if (!skipOrf) {
                 Fetcher.fetchDocument("https://orf.at/", "body");
+            }
+            if (!skipSrf) {
+                Fetcher.fetchDocument("https://srf.ch/", "body");
             }
             return true;
         } catch (IllegalStateException ignored) { }

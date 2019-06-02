@@ -67,10 +67,19 @@ public class ChannelService {
             case ORF:
                 addORFChannels(channelList);
                 break;
+            case SRF:
+                addSRFChannels(channelList);
+                break;
             default:
                 throw new IllegalArgumentException("channel family '" + adapterFamily.toString() + "' is not yet implemented.");
         }
         return channelList;
+    }
+
+    private void addSRFChannels(List<Channel> channelList) {
+        channelList.add(new Channel(Channel.AdapterFamily.SRF, Channel.ChannelKey.SRF1, "srf-1", "SRF 1", "https://www.srf.ch/tv"));
+        channelList.add(new Channel(Channel.AdapterFamily.SRF, Channel.ChannelKey.SRF_zwei, "srf-2", "SRF zwei", "https://www.srf.ch/tv/srf-2"));
+        channelList.add(new Channel(Channel.AdapterFamily.SRF, Channel.ChannelKey.SRF_info, "srf-info", "SRF info", "http://www.srf.ch/tv"));
     }
 
     private void addORFChannels(List<Channel> channelList) {
@@ -117,8 +126,8 @@ public class ChannelService {
             // do nothing
             return;
         }
-        LOG.info("Add new channel " + newChannel);
         channelRepository.save(newChannel);
+        LOG.info(String.format("Add new channel %s (#%d)", newChannel.getName(), newChannel.getId()));
     }
 
     public List<Channel> getAllChannelsByFamily(Channel.AdapterFamily adapterFamily) {
@@ -131,10 +140,11 @@ public class ChannelService {
      * @return
      */
     public Channel.AdapterFamily[] getActivatedChannelFamilies() {
-        Channel.AdapterFamily[] families = new Channel.AdapterFamily[3];
+        Channel.AdapterFamily[] families = new Channel.AdapterFamily[4];
         families[0] = Channel.AdapterFamily.ARD;
         families[1] = Channel.AdapterFamily.ZDF;
         families[2] = Channel.AdapterFamily.ORF;
+        families[3] = Channel.AdapterFamily.SRF;
         return families;
     }
 

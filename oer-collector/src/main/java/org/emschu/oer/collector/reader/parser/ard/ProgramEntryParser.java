@@ -64,7 +64,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<Element> 
     private ImageLinkService imageLinkService;
 
     @Override
-    public ProgramEntry preProcessItem(Element html, LocalDate affectedDay) throws ProgramEntryParserException {
+    public ProgramEntry preProcessItem(Element html, LocalDate affectedDay, Channel channel) throws ProgramEntryParserException {
         ProgramEntry ardProgramEntry = new ProgramEntry();
         Document jsoupDoc = Jsoup.parse(html.outerHtml());
 
