@@ -60,8 +60,8 @@ Configuration of Collector and Server is done in the central `config.json` file.
 - **oer.collector.proxy_port**: (Optional) HTTP proxy port.
 - **oer.collector.skip_ard**: Flag to skip collecting *ARD* data.
 - **oer.collector.skip_zdf**: Flag to skip collecting *ZDF* data.
-- **oer.collector.skip_zdf**: Flag to skip collecting *ORF* data.
-- **oer.collector.skip_zdf**: Flag to skip collecting *SRF* data.
+- **oer.collector.skip_orf**: Flag to skip collecting *ORF* data.
+- **oer.collector.skip_srf**: Flag to skip collecting *SRF* data.
 - **oer.collector.cron_definition**: Collector is running in endless cron mode. Not recommended at the moment. Should never be used in combination with mass mode. Example for twice executions a day at 4 AM and 4 PM: `0 0 4,16 * * *`. Default: `null`
 - **oer.collector.cron_mode_run_at_startup**: Runs collection process at program startup. Effective if *cron_definition* is not empty. Default: `true`
 - **oer.collector.invalidate_update_hours**: Number of hours to consider data records in db as old and web data is used to refresh/update record. Has no effect if not in update mode. Default: `72` 
@@ -294,9 +294,6 @@ This project is licensed under [GNU Affero General Public License](./LICENSE).
  - DLR/DLF
  - DW
  - ...
-
-*TV:*
- - SRF-Channel-Family
 
 # More information
 - [German] [Die Vermessung des TV-Programms auf datenjournalist.de](https://www.datenjournalist.de/die-vermessung-des-tv-programms/)
