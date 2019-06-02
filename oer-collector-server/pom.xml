@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.emschu.oer</groupId>
     <artifactId>oer-collector-server</artifactId>
-    <version>0.9.5-SNAPSHOT</version>
+    <version>0.9.5</version>
     <licenses>
         <license>
             <name>GNU Affero General Public License</name>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>org.emschu.oer</groupId>
             <artifactId>oer-core</artifactId>
-            <version>0.9.5-SNAPSHOT</version>
+            <version>0.9.5</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -128,7 +128,7 @@
             <dependency>
                 <groupId>org.emschu.oer</groupId>
                 <artifactId>oer-collector-parent</artifactId>
-                <version>0.9.5-SNAPSHOT</version>
+                <version>0.9.5</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -153,6 +153,6 @@
     </build>
 
   <scm>
-    <tag>oer-collector-0.9.0</tag>
+    <tag>v0.9.5</tag>
   </scm>
 </project>
