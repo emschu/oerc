@@ -192,6 +192,7 @@ improve public-law tv and radio stations.
 - [cemrich/zapp-backend](https://github.com/cemrich/zapp-backend)
 - [MediathekView(Web)-Project](https://github.com/mediathekview)
 - [MediathekDirekt](https://mediathekdirekt.de/) + [Sources](https://gitlab.com/mediathekdirekt/mediathekdirekt)
+- [EPG Scraper for ARD TV Stations to Use With tvheadend External XMLTV Grabber](https://projects.webvoss.de/2019/04/14/legal-epg-scraper-for-ard-tv-stations-to-use-with-tvheadend-external-xmltv-grabber/)
 
 
 # REST API

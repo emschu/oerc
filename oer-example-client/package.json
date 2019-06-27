@@ -26,7 +26,7 @@
     "jquery": "^3.4.1",
     "popper.js": "^1.15.0",
     "rxjs": "^6.5.2",
-    "tslib": "^1.9.0",
+    "tslib": "^1.10.0",
     "vis": "^4.21.0",
     "zone.js": "^0.8.29"
   },
@@ -37,8 +37,8 @@
     "@angular/language-service": "7.2.4",
     "@types/jasmine": "^3.3.13",
     "@types/jasminewd2": "^2.0.6",
-    "@types/node": "^10.14.8",
-    "@types/vis": "^4.21.16",
+    "@types/node": "^10.14.10",
+    "@types/vis": "^4.21.17",
     "codelyzer": "^4.0.1",
     "jasmine-core": "~3.3.0",
     "jasmine-spec-reporter": "~4.2.1",
@@ -48,7 +48,7 @@
     "karma-jasmine": "~2.0.1",
     "karma-jasmine-html-reporter": "^1.4.2",
     "protractor": "^5.4.2",
-    "ts-node": "^8.2.0",
+    "ts-node": "^8.3.0",
     "tslint": "~5.12.1",
     "typescript": "3.2.4"
   }
