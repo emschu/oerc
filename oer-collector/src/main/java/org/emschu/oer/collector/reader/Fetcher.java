@@ -53,7 +53,7 @@ public class Fetcher {
      * @param url url to fetch
      * @return jsoup Document object
      */
-    private static Document getDocument(String url, @Null Map<String, String> additionalHeaders) {
+    private static Document getDocument(final String url, @Null Map<String, String> additionalHeaders) {
         boolean isArdLink = url.contains(ProgramEntryParser.ARD_HOST);
 
         try {
@@ -67,7 +67,7 @@ public class Fetcher {
 
             // apply additional headers
             if (additionalHeaders != null) {
-                additionalHeaders.forEach((s, s2) -> connection.header(s, s2));
+                additionalHeaders.forEach(connection::header);
             }
 
             if (isArdLink) {
@@ -82,7 +82,7 @@ public class Fetcher {
                 return connection.get();
             }
         } catch (IOException e) {
-            LOG.warning("io exception: " + e.getMessage());
+            LOG.warning(String.format("io exception with message '%s' and url '%s'", e.getMessage(), url));
             LOG.throwing(Fetcher.class.getName(), "getProgram", e);
         }
         return null;

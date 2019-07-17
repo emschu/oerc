@@ -86,14 +86,15 @@ public class ProgramEntryTagLinker extends CustomParser {
         subTagPages.put("Tatort", "Film/Tatort/Startseite");
         subTagPages.put("Polizeiruf 110", "Film/Polizeiruf-110/Startseite");
         subTagPages.put("Drama", "Film/Drama/Startseite");
-        subTagPages.put("Action/Abenteuer", "Film/Action-und-Abenteuer/Startseite");
+        // disabled 07/2019
+//        subTagPages.put("Action/Abenteuer", "Film/Action-und-Abenteuer/Startseite");
         subTagPages.put("Western", "Film/Western/Startseite");
         subTagPages.put("Kurzfilm", "Film/Kurzfilm/Startseite");
 
         subTagPages.put("Polit-Talkshow", "Politik/Polit-Talkshows/Startseite");
         subTagPages.put("Nachrichten", "Politik/Nachrichten/Startseite");
         subTagPages.put("Aktuelle-Reportage", "Politik/Aktuelle-Reportagen/Startseite");
-        subTagPages.put("Polit-Magazin", "Politik/Politmagazine/Startseite");
+        subTagPages.put("Polit-Magazine", "Politik/Politmagazine/Startseite");
 
         subTagPages.put("Geschichte", "Dokus--Reportagen/Geschichte/Startseite");
         subTagPages.put("Kultur-Reportage", "Dokus--Reportagen/Kultur/Startseite");
@@ -101,6 +102,7 @@ public class ProgramEntryTagLinker extends CustomParser {
         subTagPages.put("Gesundheit", "Dokus--Reportagen/Gesundheit/Startseite");
         subTagPages.put("Umwelt/Natur", "Dokus--Reportagen/Umwelt-und-Natur/Startseite");
         subTagPages.put("Reise-Dokumentation", "Dokus--Reportagen/Reisen/Startseite");
+        subTagPages.put("Eisenbahn", "Dokus--Reportagen/Eisenbahn/Startseite");
         subTagPages.put("Wissenschaft", "Dokus--Reportagen/Wissenschaft/Startseite");
         subTagPages.put("Wissensmagazin", "Dokus--Reportagen/Wissensmagazine/Startseite");
 
@@ -116,6 +118,7 @@ public class ProgramEntryTagLinker extends CustomParser {
         subTagPages.put("Reiseratgeber", "Ratgeber-der-ARD/Reisen/Startseite");
         subTagPages.put("Gesundheitsratgeber", "Ratgeber-der-ARD/Gesundheit/Startseite");
         subTagPages.put("Natur-/Umweltratgeber", "Ratgeber-der-ARD/Natur-und-Umwelt/Startseite");
+        subTagPages.put("Magazin", "Ratgeber-der-ARD/Magazine/Startseite");
 
         subTagPages.put("Kochen", "Kochen/Alle-Sendungen/Startseite");
 
@@ -126,9 +129,13 @@ public class ProgramEntryTagLinker extends CustomParser {
         subTagPages.put("Soap/Telenovela", "Serien--Soaps/Soaps-und-Telenovelas/Startseite/Startseite"); // correct!
         subTagPages.put("Dokusoap", "Serien--Soaps/Dokusoaps/Startseite");
 
+        subTagPages.put("Show/Quiz", "Unterhaltung/Show--Quiz/Startseite");
+        subTagPages.put("Kabarett/Comedy", "Unterhaltung/Kabarett--Comedy/Startseite");
         subTagPages.put("Schlager/Volksmusik", "Unterhaltung/Schlager--Volksmusik/Startseite");
         subTagPages.put("Talkshow", "Unterhaltung/Talkshows/Startseite");
-        subTagPages.put("Mit dem Zug", "Unterhaltung/Mit-dem-Zug/Startseite");
+        // disabled 07/2019
+//        subTagPages.put("Mit dem Zug", "Unterhaltung/Mit-dem-Zug/Startseite");
+        subTagPages.put("Zoogeschichten", "Themenschwerpunkte/Unterhaltung/Zoogeschichten/Startseite");
     }
 
     @Override

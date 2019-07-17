@@ -10,39 +10,43 @@ package org.emschu.oer.collector.reader.parser.zdf;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 
+import org.emschu.oer.collector.reader.Fetcher;
 import org.emschu.oer.collector.reader.ParserException;
 import org.emschu.oer.collector.reader.ZdfApiFetcher;
 import org.emschu.oer.collector.reader.parser.ProgramEntryParserException;
 import org.emschu.oer.collector.reader.parser.ProgramEntryParserInterface;
-import org.emschu.oer.core.model.Channel;
-import org.emschu.oer.core.model.ProgramEntry;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.emschu.oer.core.model.ImageLink;
-import org.emschu.oer.core.model.Tag;
-import org.emschu.oer.collector.reader.Fetcher;
 import org.emschu.oer.collector.service.CacheService;
 import org.emschu.oer.collector.service.ImageLinkService;
 import org.emschu.oer.collector.service.TagService;
 import org.emschu.oer.collector.service.TvShowService;
-import org.emschu.oer.zdf_api.model.*;
+import org.emschu.oer.core.model.Channel;
+import org.emschu.oer.core.model.ImageLink;
+import org.emschu.oer.core.model.ProgramEntry;
+import org.emschu.oer.core.model.Tag;
+import org.emschu.oer.core.util.Hasher;
+import org.emschu.oer.zdf_api.model.Layouts;
+import org.emschu.oer.zdf_api.model.TvShowModel;
+import org.emschu.oer.zdf_api.model.ZdfBroadcast;
+import org.emschu.oer.zdf_api.model.ZdfImage;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
-import java.io.*;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
@@ -64,7 +68,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
     private static final String ZDF_HOST = "https://www.zdf.de";
     private static final Logger LOG = Logger.getLogger(ProgramEntryParser.class.getName());
 
-    private Map<String, ZdfBroadcast> apiData = new ConcurrentReferenceHashMap<>(20);
+    private Map<String, ZdfBroadcast> apiData = new ConcurrentReferenceHashMap<>(45);
 
     @Autowired
     private TagService tagService;
@@ -82,7 +86,14 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
     public ProgramEntry preProcessItem(ZdfBroadcast broadcast, LocalDate affectedDay, Channel channel) throws ProgramEntryParserException {
         ProgramEntry zdfProgramEntry = new ProgramEntry();
 
-        zdfProgramEntry.setTechnicalId(broadcast.getPosId());
+        String programEntryHash = Hasher.getHash(broadcast.getPosId() + "|" + broadcast.getAirtimeBegin());
+        zdfProgramEntry.setTechnicalId(programEntryHash);
+        LOG.fine(String.format("Adding broadcast with podId '%s' (technicalId: '%s') and title '%s' with air_time_begin'%s'",
+                broadcast.getPosId(),
+                programEntryHash,
+                broadcast.getTitle(),
+                broadcast.getAirtimeBegin()));
+
         apiData.put(zdfProgramEntry.getTechnicalId(), broadcast);
 
         return zdfProgramEntry;
@@ -135,7 +146,8 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
     public void postProcessItem(ProgramEntry programEntry) throws ProgramEntryParserException {
         ZdfBroadcast broadcast = apiData.get(programEntry.getTechnicalId());
         if (broadcast == null) {
-            throw new ProgramEntryParserException("invalid technical id " + programEntry.getTechnicalId());
+            throw new ProgramEntryParserException(
+                    String.format("invalid technical id %s or empty api data", programEntry.getTechnicalId()));
         }
 
         String title = broadcast.getTitle();
@@ -149,8 +161,8 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
         programEntry.setDescription(broadcast.getText());
 
         ZdfImage zdfImage = broadcast.getZdfImage();
-        if (zdfImage != null ) {
 
+        if (zdfImage != null) {
             Layouts zdfLayouts = zdfImage.getLayouts();
             // add image links as list
             List<String> imageUrls = zdfLayouts.getAllImageLinks();
@@ -263,8 +275,8 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
                 throw new IllegalArgumentException("null day object given!");
             }
 
-            LocalDateTime fromDate = LocalDateTime.of(day, LocalTime.of(0,0));
-            LocalDateTime toDate = LocalDateTime.of(day.plus(1, ChronoUnit.DAYS), LocalTime.of(0,0));
+            LocalDateTime fromDate = LocalDateTime.of(day, LocalTime.of(0, 0));
+            LocalDateTime toDate = LocalDateTime.of(day.plus(1, ChronoUnit.DAYS), LocalTime.of(0, 0));
 
             StringBuilder argumentList = new StringBuilder();
             if (channel != null) {
@@ -292,6 +304,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
 
         /**
          * method to fetch zdf api key from zdf home page
+         *
          * @return
          */
         public String retrieveApiKey() {
@@ -301,7 +314,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
             String apiKey = null;
             for (Element ele : elements) {
                 final String html = ele.html();
-                if(html.contains("IMPORTANT CONFIGURATION!")) {
+                if (html.contains("IMPORTANT CONFIGURATION!")) {
                     Pattern pattern = Pattern.compile("apiToken: '(.*?)'");
                     Matcher matcher = pattern.matcher(html);
                     if (matcher.find()) {
@@ -332,7 +345,7 @@ public class ProgramEntryParser implements ProgramEntryParserInterface<ZdfBroadc
                 LOG.finest("zdf show '" + tvShowModel.getTitle() + "' has no category in api response. url: " + zdfPosUrl);
             }
             if (tvShowModel.getGenre() != null && !tvShowModel.getGenre().isEmpty()
-                && tvShowModel.getCategory() != null && !tvShowModel.getCategory().equals(tvShowModel.getGenre())) {
+                    && tvShowModel.getCategory() != null && !tvShowModel.getCategory().equals(tvShowModel.getGenre())) {
                 tagList.add(tvShowModel.getGenre());
             }
             return tagList;

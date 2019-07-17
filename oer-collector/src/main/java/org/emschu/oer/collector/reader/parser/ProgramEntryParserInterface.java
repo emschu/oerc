@@ -115,7 +115,7 @@ public interface ProgramEntryParserInterface<T> {
                 next = linkedProgramList.get(i + 1);
                 if (next != null && entry.getEndDateTime() == null) {
                     Logger.getLogger(ProgramEntryParserInterface.class.getName())
-                            .info(String.format("set end date time %s for entry: '%s'",
+                            .fine(String.format("set end date time %s for entry: '%s'",
                                     next.getStartDateTime(), entry.getTitle()));
                     entry.setEndDateTime(next.getStartDateTime());
                 }

@@ -22,6 +22,7 @@ package org.emschu.oer.collector.reader;
  */
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.emschu.oer.zdf_api.model.ProgramItemModel;
 import org.emschu.oer.zdf_api.model.TvShowModel;
 import org.emschu.oer.zdf_api.model.ZdfTvShowResponseModel;
@@ -105,8 +106,8 @@ public class ZdfApiFetcher extends Fetcher {
             increaseCounter();
             vr = new BufferedReader(new InputStreamReader(response.getBody()));
             return new Gson().fromJson(vr, outputClass);
-        } catch (IOException | URISyntaxException e) {
-            LOG.warning(String.format("problem fetching '%s'", url));
+        } catch (IOException | URISyntaxException | JsonSyntaxException e) {
+            LOG.warning(String.format("problem fetching '%s'. Throwing exception '%s' with cause '%s'", url, e.getMessage(), e.getCause()));
             LOG.throwing(ZdfApiFetcher.class.getName(), "getProgram", e);
         } finally {
             if (vr != null) {
