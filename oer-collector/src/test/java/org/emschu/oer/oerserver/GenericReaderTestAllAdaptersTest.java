@@ -136,7 +136,7 @@ public class GenericReaderTestAllAdaptersTest {
     }
 
     @Test
-    public void testProgramEntriesAllAdaptersToday() throws ParserException {
+    public void testProgramEntriesAllAdaptersToday() throws ParserException, InterruptedException {
         AbstractReader[] abstractReaders = new AbstractReader[]{
                 ardReader,
                 zdfReader,
@@ -175,7 +175,10 @@ public class GenericReaderTestAllAdaptersTest {
                 if (adapterFamily == Channel.AdapterFamily.ORF && programEntry.getEndDateTime() == null) {
                     continue;
                 }
-                new Thread(new ProgramEntryPostProcessThread(programEntryParser1, programEntryRepository, programEntry, true)).run();
+                final Thread thread = new Thread(new ProgramEntryPostProcessThread(programEntryParser1, programEntryRepository, programEntry, true));
+                thread.run();
+                thread.join();
+
                 Assert.assertNotNull(programEntry.getId());
                 Assert.assertNotNull(programEntry.getChannel());
                 Assert.assertEquals(channel.getId(), programEntry.getChannel().getId());
