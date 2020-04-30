@@ -23,7 +23,7 @@
     "@angular/router": "7.2.4",
     "bootstrap": "^4.3.1",
     "core-js": "^2.6.9",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "popper.js": "^1.15.0",
     "rxjs": "^6.5.2",
     "tslib": "^1.10.0",
