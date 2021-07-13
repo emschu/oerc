@@ -1,1 +1,0 @@
-SELECT COUNT(*), channel_id, MIN(start_date_time), MAX(end_date_time) FROM `oer_server`.`program_entry` GROUP by channel_id;
