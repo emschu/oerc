@@ -7,7 +7,7 @@ This tool needs an external PostgreSQL database and some configuration parameter
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
 - Running an **HTTP backend server** to access program data in JSON format (`oerc server`)
 - Running an HTTP server to serve a **client web application** to view the program data and 
-  your personal recommendations (`oerc client`)
+  your personal recommendations (`oerc server`)
 
 With the help of `oerc` you can build and use your own, private, TV program recommendation tool while ALL
 information is processed locally.
@@ -144,38 +144,21 @@ After installing `oerc` and setting it up, you should run at least one time the 
 It is recommended to update the program data regularly, e.g. daily, by using a **cron job** which runs `oerc fetch` 
 and `oerc search`.
 
-While it is possible to run `oerc server` and `oerc client` in parallel in a user session, you should consider to create a systemd
-service to run and control both servers (backend + frontend) in the background persistently. 
+While it is possible to run `oerc server` in a user session, you should consider to create a systemd
+service to run and control the web server (backend + frontend) in the background persistently. 
 
 The following two systemd service files
 are simple examples for you to integrate `oerc` with systemd:
 
-**oerc-backend.service:**
+**oerc.service:**
 ```
 [Unit]
-Description=oer-collector backend service
+Description=oer-collector service
 After=network.target
 
 [Service]
 Type=simple
 ExecStart=<path_to_oerc_bin> server
-StandardOutput=journal
-KillMode=process
-
-[Install]
-WantedBy=multi-user.target
-```
-
-**oerc-frontend.service:**
-```
-[Unit]
-Description=oer-collector frontend service
-After=network.target
-Requires=oerc-backend.service
-
-[Service]
-Type=simple
-ExecStart=<path_to_oerc_bin> client
 StandardOutput=journal
 KillMode=process
 
@@ -192,12 +175,12 @@ Copy the modified system service templates to your systemd services directory, e
 
 After the last command you can use 
 
-`$ sudo systemctl [start|stop] [oerc-backend|oerc-frontend]` 
+`$ sudo systemctl [start|stop] oerc` 
 
 to start (or stop) the services. 
 If you want to get the servers up after system (re-)boot, you need to execute 
 
-`$ sudo systemctl [enable|disable] [oerc-backend|oerc-frontend]`.
+`$ sudo systemctl [enable|disable] oerc`.
 
 If you do so (enabling both services by default), please keep in mind that the PostgreSQL database needs 
 to be available, too, so use systemctl to enable the postgres service as well.
