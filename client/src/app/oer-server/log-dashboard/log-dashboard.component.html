@@ -1,0 +1,33 @@
+<div class="columns head-section">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <h3>Log entries <span *ngIf="logEntries && logEntries.size > 0">({{ logEntries.size }} results)</span></h3>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="columns">
+  <div class="column col-12">
+    <div *ngIf="!logEntries || logEntries.size === 0" class="text-center m-2">
+      <h3>No log entries available</h3>
+    </div>
+
+    <div class="log_table" *ngIf="logEntries && logEntries.size > 0">
+      <table>
+        <thead>
+        <tr>
+          <th>Time</th>
+          <th>Message</th>
+        </tr>
+        </thead>
+        <tbody *ngIf="logEntries != null">
+        <tr *ngFor="let item of logEntries.elements">
+          <td class="col_date">{{ item.created_at | date:'d.MM.y - HH:mm:SS' }}</td>
+          <td class="col_message" [innerHTML]="item.message"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

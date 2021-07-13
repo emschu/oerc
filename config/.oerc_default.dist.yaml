@@ -1,0 +1,41 @@
+# oerc configuration file
+# general fetch settings
+ForceUpdate: false
+TimeToRefreshInMinutes: 360
+DaysInPast: 2
+DaysInFuture: 7
+EnableARD: true
+EnableZDF: true
+EnableORF: true
+EnableSRF: true
+EnableProgramEntryCollection: true
+EnableTVShowCollection: true
+ProxyUrl:
+TimeZone: Europe/Berlin
+# backend server settings
+ServerHost: 127.0.0.1
+ServerPort: 8080
+# client server settings
+ClientEnabled: true
+# db settings
+DbType: postgres
+DbHost: localhost
+DbPort: 5432
+DbName: <db_name>
+DbUser: <db_user>
+DbPassword: <db_password>
+DbSSLEnabled: false
+# search settings
+SearchDaysInFuture: 3
+SearchKeywords:
+  - Die Anstalt
+  - Max Uthoff
+  - Claus von Wagner
+  - Loriot
+  - Zapp
+  - Kroymann
+  - James Bond
+  - Satire
+SearchSkipChannels:
+  - KIKA
+  - ORF Sport +

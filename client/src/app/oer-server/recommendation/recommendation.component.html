@@ -1,0 +1,65 @@
+<div class="columns head-section">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <h3>Recommendations <span *ngIf="recommendations && recommendations.length > 0">({{ recommendations.length }}
+          results)</span></h3>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="columns">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="btn-group btn-group-block menu">
+          <a class="btn btn-sm btn-primary" (click)="fetchRecommendations('now')">Now</a>
+          <a class="btn btn-sm btn-primary" (click)="fetchRecommendations('20')">At 20:00</a>
+          <a class="btn btn-sm btn-primary" (click)="fetchRecommendations('22')">At 22:00</a>
+          <a class="btn btn-sm btn-primary" (click)="fetchRecommendations('0')">At 0:00</a>
+          <a class="btn btn-sm btn-primary" (click)="fetchRecommendations('tomorrow')">Tomorrow</a>
+          <a class="btn btn-sm btn-primary" (click)="fetchRecommendations('dayAfterTomorrow')">Day after tomorrow</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="columns">
+  <div class="column col-12">
+    <div class="rec_table" *ngIf="recommendations && recommendations.length > 0">
+      <table>
+        <thead>
+        <tr>
+          <th>Channel &amp; Time</th>
+          <th>Title</th>
+          <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let item of recommendations">
+          <td class="col_start_date"><span
+            class="channel_label">{{ apiService.getChannelById(item.channel_id)?.title}}</span><br/>
+            {{item.program_entry.start_date_time | date:'d.MM.y - HH:mm' }}-{{item.program_entry.end_date_time | date:'HH:mm' }}<br/>
+            <img
+              *ngIf="item.program_entry.image_links && item.program_entry.image_links.length > 0"
+              class="img-responsive img-fit-contain"
+              src="{{item.program_entry.image_links[0].url}}"
+              loading="lazy"/><br/>
+              <em>Keywords: {{ item.keywords }}</em>
+          </td>
+          <td class="col_title" [innerHTML]="item.program_entry?.title | search:item.keywords"></td>
+          <td class="col_description"
+              [innerHTML]="item.program_entry?.description | readMore | search:item.keywords"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="!recommendations || recommendations.length === 0" class="text-center m-2">
+      <h3>There are no recommended program items available. You should run:
+        <pre>oerc search</pre>
+        and define some
+        keywords in the configuration file you want to search for.
+      </h3>
+    </div>
+  </div>
+</div>

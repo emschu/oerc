@@ -1,0 +1,49 @@
+#timeline {
+  width: 100%;
+  margin: 2rem auto;
+}
+
+.menu {
+  button {
+    min-width: 3rem;
+    max-width: 5rem;
+    margin-right: 0.2rem;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+.scroll-cont {
+  scrollbar-color: #0A4C95 #C2D2E4;
+  &::-webkit-scrollbar {
+    width: 15px;
+    height: 15px;
+  }
+  &::-webkit-scrollbar-track-piece  {
+    background-color: #C2D2E4;
+  }
+  &::-webkit-scrollbar-thumb:vertical {
+    height: 30px;
+    background-color: #0A4C95;
+  }
+}
+
+.modal-container {
+  @extend .scroll-cont;
+
+  word-wrap: break-word;
+  .modal-header div {
+    font-size: 125%;
+    font-weight: bold;
+  }
+  .modal-body {
+    word-wrap: break-word;
+    .table {
+      tr td a {
+        word-break: break-word;
+      }
+    }
+  }
+}
+

@@ -1,0 +1,138 @@
+package main
+
+import (
+	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
+	"math"
+	"net"
+	"os"
+	"path"
+	"time"
+)
+
+// GetAppConf method to get the app's configuration
+func GetAppConf() AppConfig {
+	return appConf
+}
+
+// AppConfig struct to wrap the app's configuration
+type AppConfig struct {
+	Debug                        bool     `yaml:"Debug,omitempty"`
+	ProfilingEnabled             bool     `yaml:"ProfilingEnabled,omitempty"`
+	ForceUpdate                  bool     `yaml:"ForceUpdate"`
+	TimeToRefreshInMinutes       int32    `yaml:"TimeToRefreshInMinutes"`
+	DaysInPast                   uint     `yaml:"DaysInPast"`
+	DaysInFuture                 uint     `yaml:"DaysInFuture"`
+	EnableARD                    bool     `yaml:"EnableARD"`
+	EnableZDF                    bool     `yaml:"EnableZDF"`
+	EnableORF                    bool     `yaml:"EnableORF"`
+	EnableSRF                    bool     `yaml:"EnableSRF"`
+	EnableTVShowCollection       bool     `yaml:"EnableTVShowCollection"`
+	EnableProgramEntryCollection bool     `yaml:"EnableProgramEntryCollection"`
+	ProxyURL                     string   `yaml:"ProxyUrl"`
+	ServerHost                   string   `yaml:"ServerHost"`
+	ServerPort                   uint16   `yaml:"ServerPort"`
+	ClientEnabled                bool     `yaml:"ClientEnabled"`
+	TimeZone                     string   `yaml:"TimeZone"`
+	DbType                       string   `yaml:"DbType"`
+	DbHost                       string   `yaml:"DbHost"`
+	DbPort                       uint32   `yaml:"DbPort"`
+	DbName                       string   `yaml:"DbName"`
+	DbUser                       string   `yaml:"DbUser"`
+	DbPassword                   string   `yaml:"DbPassword"`
+	DbSSLEnabled                 bool     `yaml:"DbSSLEnabled"`
+	SearchKeywords               []string `yaml:"SearchKeywords"`
+	SearchSkipChannels           []string `yaml:"SearchSkipChannels"`
+	SearchDaysInFuture           uint     `yaml:"SearchDaysInFuture"`
+}
+
+func verifyConfiguration() bool {
+	// check time zone is valid
+	_, err := time.LoadLocation(GetAppConf().TimeZone)
+	if err != nil {
+		log.Printf("Invalid time zone '%s' given!\n", GetAppConf().TimeZone)
+		return false
+	}
+	// check db type is valid/supported
+	if len(GetAppConf().DbType) == 0 {
+		log.Printf("Invalid empty DbType given in configuration!\n")
+		return false
+	}
+	dbType := GetAppConf().DbType
+	if dbType != "postgres" {
+		log.Printf("Invalid DbType '%s' given!\n", GetAppConf().DbType)
+		return false
+	}
+	// check backend server configuration
+	serverHost := GetAppConf().ServerHost
+	ip := net.ParseIP(serverHost)
+	if ip == nil {
+		log.Printf("Invalid ServerHost provided in configuration!\n")
+		return false
+	}
+	serverPort := GetAppConf().ServerPort
+	if serverPort == 0 || serverPort > uint16(math.Pow(2, 16)-2) {
+		log.Printf("Invalid port number for server provided in configuration!\n")
+		return false
+	}
+	return true
+}
+
+func loadYaml(path string) {
+	f, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	var appConfLoaded AppConfig
+	yamlErr := yaml.UnmarshalStrict(f, &appConfLoaded)
+
+	if yamlErr != nil {
+		log.Fatal(yamlErr)
+	}
+	appConf = appConfLoaded
+}
+
+func loadConfiguration(inputPath string, allowFail bool) *string {
+	// at first take the provided path - if possible
+	var cleanedPath = path.Clean(inputPath)
+	if len(cleanedPath) > 0 {
+		providedFilePath, err := os.Stat(cleanedPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if providedFilePath.Mode().IsRegular() {
+			log.Printf("Loading configuration from file '%s'.\n", cleanedPath)
+			loadYaml(cleanedPath)
+			return &cleanedPath
+		}
+	}
+	// then look in current directory for config.yaml
+	homeDir, err := os.UserHomeDir()
+	homeDir = path.Clean(homeDir)
+	if err != nil {
+		log.Fatalf("Home dir cannot be accessed - error: %v", err)
+	}
+	// then look in ~/.oerc.yaml
+	homeDirConfigFile := fmt.Sprintf("%s/%s", homeDir, ".oerc.yaml")
+	homeDirCfgFileStat, errHomeDir := os.Stat(homeDirConfigFile)
+	if errHomeDir != nil {
+		if allowFail {
+			log.Fatalf("Could not find configuration file at '%s'", homeDirConfigFile)
+		} else {
+			return &homeDirConfigFile
+		}
+	} else {
+		if verboseGlobal {
+			log.Printf("Loading configuration from file '%s'.\n", homeDirConfigFile)
+		}
+		if homeDirCfgFileStat.Mode().IsRegular() {
+			loadYaml(homeDirConfigFile)
+		} else {
+			log.Fatalf("Path '%s' is not a valid regular file.", homeDirConfigFile)
+		}
+	}
+	return nil
+}

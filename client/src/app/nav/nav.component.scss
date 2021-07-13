@@ -1,0 +1,35 @@
+.app-navbar {
+  background-color: #d73e48;
+
+  .icon-search {
+    margin-right: 0.33rem;
+  }
+}
+
+.navbar-indicator {
+  margin-right: 1.5rem;
+  &::after {
+    border-left-color: white;
+    border-bottom-color: white;
+  }
+}
+
+.credits-action-item {
+  color: white;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  font-size: 1rem;
+  margin: 0 1rem;
+}
+
+.navbar-section {
+  em, img {
+    margin-right: 0.5rem;
+  }
+  img {
+    height: auto;
+    width: 1rem;
+    display: inline-block;
+  }
+}

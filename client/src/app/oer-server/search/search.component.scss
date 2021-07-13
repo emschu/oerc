@@ -1,0 +1,23 @@
+.search_table {
+  .channel_label {
+    // TODO use primary red color
+    color: #d73e48;
+    font-size: 125%;
+  }
+  td {
+    border-bottom: lightgray 3px dotted;
+  }
+  .col_start_date {
+    width: 10%;
+    font-weight: bold;
+  }
+  .col_title {
+    width: 25%;
+    font-weight: bold;
+    font-size: 110%;
+  }
+  .col_description {
+    width: 55%;
+    font-size: 90%;
+  }
+}

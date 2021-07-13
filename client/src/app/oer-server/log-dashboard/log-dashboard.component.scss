@@ -1,0 +1,21 @@
+.log_table {
+  max-height: 10vh;
+  table {
+    overflow: scroll;
+    tr {
+      padding: 0;
+      td {
+        margin: 0;
+        border-bottom: #d73e48 1px dotted;
+      }
+    }
+  }
+
+  .col_date {
+    width: 10%;
+  }
+  .col_message {
+    width: 75%;
+  }
+  margin-bottom: 3rem;
+}

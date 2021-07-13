@@ -1,0 +1,25 @@
+.app-navbar {
+  background-color: #d73e48;
+}
+
+.navbar-indicator {
+  margin-right: 1.5rem;
+}
+
+.no-connection-modal {
+  .modal-header {
+    .modal-title {
+      font-size: 1.33rem;
+    }
+  }
+  .modal-body {
+    .content {
+      font-size: 1.1rem;
+      img {
+        max-width: 250px;
+        display: inline-block;
+        margin-bottom: 1rem;
+      }
+    }
+  }
+}

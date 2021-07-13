@@ -1,0 +1,16 @@
+<table *ngIf="currentStatus" class="table">
+  <tbody>
+  <tr>
+    <td><strong>Program entries</strong></td>
+    <td>{{ currentStatus.program_entry_count }}</td>
+
+    <td><strong>Image links</strong></td>
+    <td>{{ currentStatus.image_links_count }}</td>
+
+    <td><strong>TV shows</strong></td>
+    <td>{{ currentStatus.tv_show_count }}</td>
+    <td><strong>Data time range</strong></td>
+    <td *ngIf="currentStatus != null">{{ currentStatus.data_start_time | date }} - {{ currentStatus.data_end_time | date }}</td><td *ngElse></td>
+  </tr>
+  </tbody>
+</table>

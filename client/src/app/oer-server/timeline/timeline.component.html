@@ -1,0 +1,59 @@
+<div id="program_timeline">
+  <div class="btn-group btn-group-block menu">
+    <button id="moveLeft" class="btn btn-primary btn-sm"><i class="icon icon-arrow-left"></i> Move left</button>
+    <button id="zoomIn" class="btn btn-primary btn-sm"><i class="icon icon-plus"></i> Zoom In</button>
+    <button id="nowTimeline" class="btn btn-primary btn-sm"><i class="icon icon-caret"></i> Now</button>
+    <button id="zoomOut" class="btn btn-primary btn-sm"><i class="icon icon-minus"></i> Zoom out</button>
+    <button id="moveRight" class="btn btn-primary btn-sm">Move right <i class="icon icon-arrow-right"></i></button>
+  </div>
+</div>
+
+<div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}" *ngIf="currentProgramEntry != null">
+  <a href="#close" class="modal-overlay" aria-label="Close" (click)="isModalOpen = false"></a>
+  <div class="modal-container scroll-cont">
+    <div class="modal-header">
+      <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isModalOpen = false"></a>
+      <div class="modal-title h5">Details: '{{ currentProgramEntry.title }}'</div>
+    </div>
+    <div class="modal-body">
+      <div class="content">
+        <table class="table">
+          <tr>
+            <td>
+              <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | date:'d.MM.y - HH:mm'}}
+              - {{ currentProgramEntry.end_date_time | date:'HH:mm'}}
+              ({{ currentProgramEntry.duration_in_minutes }} Minutes)
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Channel:</strong> {{ apiService.getChannelById(currentProgramEntry.channel_id)?.title }}</td>
+          </tr>
+          <tr *ngIf="currentProgramEntry.homepage">
+            <td><strong>Homepage:</strong>&nbsp;<a href="{{ currentProgramEntry.homepage }}"
+                                                   target="_blank">{{ currentProgramEntry.homepage }}</a></td>
+          </tr>
+          <tr *ngIf="currentProgramEntry.url">
+            <td><strong>URL:</strong>&nbsp;<a href="{{ currentProgramEntry.url }}"
+                                              target="_blank">{{ currentProgramEntry.url }}</a></td>
+          </tr>
+          <tr *ngIf="currentProgramEntry.image_links && currentProgramEntry.image_links.length > 0">
+            <td><strong>Preview image:</strong> <img class="img-responsive img-fit-contain" src="{{currentProgramEntry.image_links[0].url}}"/></td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Description:</strong>
+              <p class="text-normal" [innerHTML]="currentProgramEntry.description">
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="text-gray"><strong>ID:</strong> {{ currentProgramEntry.id }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+    </div>
+  </div>
+</div>

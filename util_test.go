@@ -1,0 +1,247 @@
+package main
+
+import (
+	"strings"
+	"testing"
+	"time"
+)
+
+func TestGenerateDateRange(t *testing.T) {
+	if len(*generateDateRange(0, 0)) != 1 {
+		t.Error("invalid date range generated")
+	}
+	if len(*generateDateRange(1, 0)) != 2 {
+		t.Error("invalid date range generated")
+	}
+	if len(*generateDateRange(0, 1)) != 2 {
+		t.Error("invalid date range generated")
+	}
+	if len(*generateDateRange(1, 1)) != 3 {
+		t.Error("invalid date range generated")
+	}
+	if len(*generateDateRange(10, 10)) != 21 {
+		t.Error("invalid date range generated")
+	}
+}
+
+func TestTrim(t *testing.T) {
+	in := "\n\t\t\t\t\t\t\tZDX-Morgenmagazin\t\t\t\t\t\tn\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tModeration: X Y, Z D und F A\t\t\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+	trimString := trimAndSanitizeString(in)
+	if strings.Contains(trimString, "\t") {
+		t.Error("Invalid tab found!")
+	}
+	if strings.Contains(trimString, "\n") {
+		t.Error("Invalid newline found!")
+	}
+}
+
+func TestIcal(t *testing.T) {
+	content, err := handleIcal("https://programm.ard.de/ICalendar/iCal---Sendung?sendung=281063652013560")
+	if err != nil {
+		t.Errorf("Error during fetch of ical content '%s'", err)
+	}
+	if content == nil {
+		t.Error("Invalid ical content response")
+	}
+}
+
+func TestTrimAndSanitizeString(t *testing.T) {
+	// they should all evaluate to "test"
+	var inputStrings = []string{" test", "test ", "test", "   test", "test   ", "  test  "}
+	for _, v := range inputStrings {
+		if "test" != trimAndSanitizeString(v) {
+			t.Error("Invalid trim and sanitizing function")
+		}
+	}
+	var maliciousStrings = []string{"test<script></script>", "test<script>", "<script>alert('hello')</script>test"}
+	for _, v := range maliciousStrings {
+		if "test" != trimAndSanitizeString(v) {
+			t.Errorf("Invalid return value of trim and sanitizing function. input: '%s', output: '%s'", v, trimAndSanitizeString(v))
+		}
+	}
+	if "<b>test</b>" != trimAndSanitizeString("<b>test</b> ") {
+		t.Errorf("Invalid return value of trim and sanitizing function.")
+	}
+}
+
+func TestGetProxy(t *testing.T) {
+	// invalid proxy settings -> fallback to http.ProxyFromEnvironment expected
+	appConf.ProxyURL = ""
+	if getHTTPProxy() == nil {
+		t.Errorf("proxy should NOT be nil")
+	}
+	appConf.ProxyURL = " "
+	if getHTTPProxy() == nil {
+		t.Errorf("proxy should NOT be nil")
+	}
+	appConf.ProxyURL = "test"
+	if getHTTPProxy() == nil {
+		t.Error("proxy should NOT be nil")
+	}
+	// missing port
+	appConf.ProxyURL = "http://localhost"
+	if getHTTPProxy() == nil {
+		t.Error("proxy should NOT be nil")
+	}
+	// valid example, happy case
+	appConf.ProxyURL = "http://localhost:7676"
+	if getHTTPProxy() == nil {
+		t.Error("proxy should NOT be nil")
+	}
+	// invalid port number
+	appConf.ProxyURL = "http://localhost:767676"
+	if getHTTPProxy() == nil {
+		t.Error("proxy should NOT be nil")
+	}
+}
+
+func TestGetBaseCollector(t *testing.T) {
+	host := []string{"example.com"}
+	collector := baseCollector(host)
+	if collector == nil {
+		t.Error("Collector should not be nil")
+	}
+	if len(collector.AllowedDomains) == 0 || collector.AllowedDomains[0] != host[0] {
+		t.Error("Allowed collector does not allow specified domain")
+	}
+}
+
+func TestConnectivity(t *testing.T) {
+	check, err := connectivityCheck()
+	if err != nil || !check {
+		t.Error("Basic connection test failed")
+	}
+}
+
+func TestErrorRegistering(t *testing.T) {
+	resetErr()
+	if errorCounter != 0 {
+		t.Error("Error counter is expected to be 0!")
+	}
+	incrErr()
+	if errorCounter != 1 {
+		t.Error("Error counter is expected to be 1")
+	}
+	resetErr()
+	checkErr() // should do nothing, because 1 < errorThreshold
+	if errorCounter != 0 {
+		t.Error("Error counter is expected to be 0!")
+	}
+}
+
+func TestHash(t *testing.T) {
+	got := buildHash([]string{"3", "2"})
+	if got == "" {
+		t.Errorf("empty hash! %s", got)
+	}
+	if len(got) != 32 {
+		t.Errorf("invalid length != 32 of hash")
+	}
+}
+
+func TestAppLog(t *testing.T) {
+	setupInMemoryDbForTesting()
+	appLog("Test example")
+
+	db, _ := getDb()
+	var entry LogEntry
+	db.Model(&LogEntry{}).Last(&entry)
+	if entry.Message != "Test example" {
+		t.Fatalf("Simple app log test failed")
+	}
+}
+
+func TestIsRecentlyUpdated(t *testing.T) {
+	if isRecentlyUpdated(&ProgramEntry{LastCheck: nil}) || isRecentlyUpdated(&ProgramEntry{LastCheck: &time.Time{}}) {
+		t.Fatalf("cannot be updated if last check is nil")
+	}
+	const i = 15
+	appConf.TimeToRefreshInMinutes = i
+	appConf.ForceUpdate = false
+	fakeLastCheckTime := time.Now().Add(-i*time.Minute - 1*time.Second)
+	fakeLastCheckTime2 := time.Now().Add(-i * time.Minute)
+	fakeLastCheckTime3 := time.Now().Add(-i*time.Minute + 1*time.Second)
+	if isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime}) ||
+		isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime2}) ||
+		!isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime3}) {
+		t.Fatalf("time range check failed")
+	}
+	appConf.ForceUpdate = true
+	if isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime}) ||
+		isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime2}) ||
+		isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime3}) {
+		t.Fatalf("force-update check failed")
+	}
+}
+
+func TestIsRecentlyFetched(t *testing.T) {
+	setupInMemoryDbForTesting()
+	appConf.ForceUpdate = true
+	if isRecentlyFetched() {
+		t.Fatalf("Expected recent fetch is forced")
+	}
+	appConf.ForceUpdate = false
+	if isRecentlyFetched() {
+		t.Fatalf("Expected recent fetch did not take place")
+	}
+	setSetting(settingKeyLastFetch, time.Now().Format(time.RFC3339))
+	if !isRecentlyFetched() {
+		t.Fatalf("Expected recent fetch took place")
+	}
+}
+
+func TestClearOldRecommendations(t *testing.T) {
+	setupInMemoryDbForTesting()
+
+	db, _ := getDb()
+	oldRec := time.Now().Add(-1 * time.Minute)
+	newRec := time.Now().Add(20 * time.Minute)
+	db.Create(&Recommendation{ProgramEntryID: 123, ChannelID: 4, StartDateTime: &oldRec})
+	db.Create(&Recommendation{ProgramEntryID: 123, ChannelID: 4, StartDateTime: &newRec})
+
+	var counter int64
+	db.Model(&Recommendation{}).Count(&counter)
+	if counter != 2 {
+		t.Fatalf("Test logic fail")
+	}
+	ClearOldRecommendations()
+	db.Model(&Recommendation{}).Count(&counter)
+	if counter != 1 {
+		t.Fatalf("One entry should be deleted")
+	}
+	ClearRecommendations()
+	db.Model(&Recommendation{}).Count(&counter)
+	if counter != 0 {
+		t.Fatalf("There should be zero entries after cleanup")
+	}
+}
+
+func TestConsiderTagExists(t *testing.T) {
+	setupInMemoryDbForTesting()
+	verboseGlobal = true
+
+	var pe ProgramEntry
+	if pe.Tags != "" {
+		t.Fatalf("There should be no tags in a new program entry!")
+	}
+
+	emptyStr := ""
+	testTag := "test"
+	considerTagExists(&pe, &emptyStr)
+	if pe.Tags != "" {
+		t.Fatalf("Empty string is not a tag")
+	}
+	considerTagExists(&pe, &testTag)
+	if pe.Tags != "test" {
+		t.Fatalf("There should be a new tag 'test'")
+	}
+	considerTagExists(&pe, &testTag)
+	if pe.Tags != "test" {
+		t.Fatalf("There should be a new tag 'test'")
+	}
+	testTag2 := "test2"
+	considerTagExists(&pe, &testTag2)
+	if pe.Tags != "test;test2" {
+		t.Fatalf("There should be a new tag 'test2'")
+	}
+}

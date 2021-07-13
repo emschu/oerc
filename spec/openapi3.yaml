@@ -1,0 +1,707 @@
+openapi: 3.0.1
+info:
+  title: oerc-api
+  description: 'This API provides access to the oerc database'
+  contact:
+    name: emschu
+    url: https://github.com/emschu/oerc
+    email: look@github.com
+  license:
+    name: AGPL
+    url: http://www.gnu.org/licenses/agpl-3.0.de.html
+  version: v2
+servers:
+  - url: http://127.0.0.1:8080/api/v2
+paths:
+  /ping:
+    get:
+      operationId: pingGET
+      responses:
+        200:
+          description: OK
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+
+  /status:
+    get:
+      operationId: statusGET
+      responses:
+        200:
+          description: OK
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /channels:
+    get:
+      operationId: channelsGET
+      responses:
+        200:
+          description: get all channels
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ChannelResponse'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /channel/{channel_id}:
+    get:
+      operationId: singleChannelGET
+      parameters:
+        - name: channel_id
+          in: path
+          description: channel id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: get a single channel
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Channel'
+        400:
+          description: invalid id
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: channel not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program:
+    get:
+      operationId: programGET
+      parameters:
+        - name: channel_id
+          in: query
+          description: channel_id must be valid or empty, 0 = all
+          allowEmptyValue: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: from, RFC3339 format
+          allowEmptyValue: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          description: to, RFC3339 format
+          allowEmptyValue: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: Program
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        400:
+          description: Invalid request
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Channel id does not exist
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/daily/{channel_id}:
+    get:
+      operationId: programDailyByChannelGET
+      parameters:
+        - name: channel_id
+          in: path
+          description: channel_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: get daily program by channel
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        400:
+          description: invalid channel id
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: channel not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/daily:
+    get:
+      operationId: programDailyGET
+      responses:
+        200:
+          description: get daily program
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/tomorrow/{channel_id}:
+    get:
+      operationId: programTomorrowByChannelGET
+      parameters:
+        - name: channel_id
+          in: path
+          description: channel_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: get daily program
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        400:
+          description: invalid channel id
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: channel not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/tomorrow:
+    get:
+      operationId: programTomorrowGET
+      responses:
+        200:
+          description: get daily program
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/yesterday/{channel_id}:
+    get:
+      operationId: programYesterdayByChannelGET
+      parameters:
+        - name: channel_id
+          in: path
+          description: channel_id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: get daily program
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        400:
+          description: invalid channel id
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: channel not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/yesterday:
+    get:
+      operationId: programYesterdayGET
+      responses:
+        200:
+          description: get daily program
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /program/entry/{id}:
+    get:
+      operationId: ProgramEntryByIdGET
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: program entry id
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Get Program Entry by ID
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ProgramEntry'
+        404:
+          description: Program Entry not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: 500 message
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /log:
+    get:
+      operationId: logGET
+      responses:
+        200:
+          description: Get log entries
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/LogEntryResponse'
+
+  /log/entry/{id}:
+    get:
+      operationId: singleLogGET
+      parameters:
+        - in: path
+          name: id
+          description: log entry id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: get a single log entry
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/LogEntry'
+        404:
+          description: log entry not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: singleLogDELETE
+      parameters:
+        - in: path
+          name: id
+          description: delete a single log entry
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: log entry cleared
+          content:
+            'application/json':
+              schema:
+                type: string
+        404:
+          description: log entry not found
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /log/clear:
+    delete:
+      operationId: logClearAllDELETE
+      responses:
+        200:
+          description: OK all cleared
+          content:
+            'application/json':
+              schema:
+                type: string
+
+  /recommendations:
+    get:
+      operationId: recommendationsGET
+      parameters:
+          - name: from
+            in: query
+            description: from, RFC3339 format, default start of today
+            allowEmptyValue: true
+            schema:
+              type: string
+      responses:
+        200:
+          description: get recommendations in given time range
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recommendation'
+        400:
+          description: Error, bad request, a query string must be provided
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /search:
+    get:
+      operationId: searchGET
+      parameters:
+        - name: query
+          in: query
+          description: query string
+          allowEmptyValue: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: result limit, default is 250
+          allowEmptyValue: true
+          schema:
+            type: integer
+            format: uint64
+        - name: offset
+          in: query
+          description: result offset, useful for result pagination, default is 0
+          allowEmptyValue: true
+          schema:
+            type: integer
+            format: uint64
+      responses:
+        200:
+          description: OK query
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProgramEntry'
+        400:
+          description: Error, bad request, a query string must be provided
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    StatusResponse:
+      title: StatusResponse
+      type: object
+      properties:
+        channel_family_count:
+          type: integer
+          format: int64
+        channel_count:
+          type: integer
+          format: int64
+        program_entry_count:
+          type: integer
+          format: int64
+        tv_show_count:
+          type: integer
+          format: int64
+        image_links_count:
+          type: integer
+          format: int64
+        problem_count:
+          type: integer
+          format: int64
+        recommendation_count:
+          type: integer
+          format: int64
+        version:
+          type: string
+        server_date_time:
+          type: string
+        data_start_time:
+          type: string
+        data_end_time:
+          type: string
+        tv_channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Channel'
+        tv_channel_families:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelFamily'
+
+    ChannelResponse:
+      title: ChannelResponse
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Channel'
+
+    ProgramResponse:
+      title: ProgramResponse
+      required:
+        - size
+        - from
+        - to
+        - program_list
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+        from:
+          type: string
+        to:
+          type: string
+        channel_id:
+          type: integer
+          format: int64
+        program_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramEntry'
+
+    Error:
+      title: Error
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+
+    ChannelFamily:
+      title: ChannelFamily
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+
+    Channel:
+      title: Channel
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        hash:
+          type: string
+        technical_id:
+          type: string
+        homepage:
+          type: string
+        channel_family_id:
+          type: integer
+          format: int64
+
+    ImageLink:
+      title: ImageLink
+      type: object
+      properties:
+        createdAt:
+          type: string
+        id:
+          type: integer
+          format: int64
+        url:
+          type: string
+
+    ProgramEntry:
+      title: ProgramEntry
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        channel_family_id:
+          type: integer
+          format: int64
+        channel_id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        duration_in_minutes:
+          type: integer
+          format: int32
+        end_date_time:
+          type: string
+        start_date_time:
+          type: string
+        last_check:
+          type: string
+        homepage:
+          type: string
+        image_links:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ImageLink'
+        tags:
+          type: string
+        technical_id:
+          type: string
+        url:
+          type: string
+        hash:
+          type: string
+
+    PingResponse:
+      title: PingResponse
+      type: object
+      properties:
+        data:
+          type: string
+        date:
+          type: string
+
+    LogEntry:
+      title: LogEntry
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        message:
+          type: string
+
+    LogEntryResponse:
+      title: LogEntryResponse
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+
+    Recommendation:
+      title: Recommendation
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        keywords:
+          type: string
+        start_date_time:
+          type: string
+        program_entry:
+          $ref: '#/components/schemas/ProgramEntry'
