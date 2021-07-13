@@ -30,7 +30,7 @@ header:
     - '**/go.sum'
     - 'LICENSE'
     - 'NOTICE'
-    - 'config/.oerc_*.yaml'
+    - 'config/**.yaml'
     - '**/**.json'
     - '**/**.svg'
     - '**/**.gitkeep'
@@ -40,6 +40,7 @@ header:
     - '**/**.licenserc.yaml'
     - 'client/karma.conf.js'
     - 'client/e2e/protractor.conf.js'
+    - 'client/e2e/src/app.po.ts'
     - 'client/e2e/src/app.e2e-spec.ts'
 
   comment: on-failure
