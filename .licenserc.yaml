@@ -1,0 +1,50 @@
+header:
+  license:
+    spdx-id: AGPL-3.0-or-later
+    copyright-owner: Emschu emschu[aet]mailbox.org
+    content: |
+      oerc, alias oer-collector
+      Copyright (C) 2021 emschu[aet]mailbox.org
+
+      This program is free software: you can redistribute it and/or modify
+      it under the terms of the GNU Affero General Public License as
+      published by the Free Software Foundation, either version 3 of the
+      License, or (at your option) any later version.
+
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      GNU Affero General Public License for more details.
+
+      You should have received a copy of the GNU Affero General Public
+      License along with this program.
+      If not, see <https://www.gnu.org/licenses/>.
+
+  paths:
+    - '**'
+
+  paths-ignore:
+    - 'spec/**'
+    - '**/*.md'
+    - '**/go.mod'
+    - '**/go.sum'
+    - 'LICENSE'
+    - 'NOTICE'
+    - 'config/.oerc_*.yaml'
+    - '**/**.json'
+    - '**/**.svg'
+    - '**/**.gitkeep'
+    - '**/**.gitignore'
+    - '**/**.editorconfig'
+    - '**/**.browserslistrc'
+    - '**/**.licenserc.yaml'
+    - 'client/karma.conf.js'
+    - 'client/e2e/protractor.conf.js'
+    - 'client/e2e/src/app.e2e-spec.ts'
+
+  comment: on-failure
+
+dependency:
+  files:
+    - go.mod
+    - client/package.json
