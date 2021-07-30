@@ -42,6 +42,7 @@ header:
     - 'client/e2e/protractor.conf.js'
     - 'client/e2e/src/app.po.ts'
     - 'client/e2e/src/app.e2e-spec.ts'
+    - '.github/workflows/**.yaml'
 
   comment: on-failure
 

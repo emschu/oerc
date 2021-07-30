@@ -66,11 +66,16 @@ lint-fix:
 test: ## run unit, integration and api tests
 	@$(GO) test -v -race ./...
 	@$(GO) test -v -trace=/dev/null .
-	@$(GO_RICE) embed-go
+
+.PHONY: integration-test-prepare
+integration-test-prepare: ## start (local) oerc server to run integration tests against
 	@$(GO) build -race -o bin/oerc
 	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 	@bin/oerc -c config/.oerc.dist.yaml server & echo $$! > server.PID
 	-sleep 5
+
+.PHONY: integration-test
+integration-test: test ## run OpenAPI schema conformity HTTP tests
 	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
 	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
