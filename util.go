@@ -479,8 +479,8 @@ func sanitizeContent(content *string) string {
 
 // error handling vars
 var (
-	appInError            = false
-	errorCounter   uint64 = 0
+	appInError     = false
+	errorCounter   uint64
 	errorThreshold uint64 = 20
 )
 

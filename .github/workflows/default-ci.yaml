@@ -10,18 +10,21 @@ jobs:
   check-license-eye:
     name: Default integration check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 14.x ]
+        python-version: [ 3.8 ]
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
           go-version: 1.14
-      - name: Cache node modules
-        uses: actions/cache@v1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node
+          python-version: ${{ matrix.python-version }}
 
       - name: Node ${{ matrix.node-version }}
         uses: actions/setup-node@v1
@@ -30,6 +33,17 @@ jobs:
 
       - name: Build Codebase
         run: make install
+
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.npm
+            ~/.cache/pip
+            client/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node
 
       - name: npm install and npm run build
         run: |

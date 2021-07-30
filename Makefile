@@ -22,6 +22,8 @@ GO_PATH = $(shell $(GO) env GOPATH)
 GO_REVIVE = $(GO_PATH)/bin/revive
 GO_RICE = $(GO_PATH)/bin/rice
 
+SCHEMATHESIS_BIN = ~/.local/bin/schemathesis
+
 OPENAPI_TOOLS_VERSION = 5.1.1
 
 # TODO: add spec conversion script
@@ -40,6 +42,7 @@ help: ## show this help
 install: ## install required project and (dev) dependencies
 	$(GO) mod download
 	$(GO) get -u github.com/GeertJohan/go.rice
+	$(GO) get -u github.com/GeertJohan/go.rice/rice
 	$(GO) get -u github.com/mgechev/revive
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
@@ -52,8 +55,8 @@ build: ## build dev version of application
 
 .PHONY: lint
 lint: ## linting the code
-	$(GO) fmt ./...
-	$(GO_REVIVE) .
+	@$(GO) fmt ./...
+	@$(GO_REVIVE) .
 
 .PHONY: lint-fix
 lint-fix:
@@ -61,14 +64,14 @@ lint-fix:
 
 .PHONY: test
 test: ## run unit, integration and api tests
-	$(GO) test -v -race ./...
-	$(GO) test -v -trace=/dev/null .
-	$(GO_RICE) embed-go
-	$(GO) build -o bin/oerc
-	if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
-	bin/oerc -c ./config/.oerc.dist.yaml server & echo $$! > server.PID
-	schemathesis run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
-	if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
+	@$(GO) test -v -race ./...
+	@$(GO) test -v -trace=/dev/null .
+	@$(GO_RICE) embed-go
+	@$(GO) build -o bin/oerc
+	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
+	@bin/oerc -c ./config/.oerc.dist.yaml server & echo $$! > server.PID
+	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
+	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover
 cover: ## run unit tests with coverage output
