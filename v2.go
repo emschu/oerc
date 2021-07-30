@@ -183,6 +183,9 @@ func getProgramHandler(c *gin.Context) {
 		})
 		return
 	}
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	start = start.In(location)
+
 	end, err = time.Parse(time.RFC3339, to)
 	if err != nil || end.IsZero() {
 		c.JSON(http.StatusBadRequest, Error{
@@ -191,6 +194,8 @@ func getProgramHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	end.In(location)
 	if end.Before(start) || end.Equal(start) {
 		c.JSON(http.StatusBadRequest, Error{
 			Status:  "400",

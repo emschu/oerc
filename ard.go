@@ -558,7 +558,7 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 		if !hasStart && strings.HasPrefix(line, "DTSTART;") {
 			startDate := strings.Replace(line, "DTSTART;TZID=Europe/Berlin:", "", 1)
 			content.startDate, err = time.Parse(iCalDateLayout, startDate)
-			content.startDate.In(location)
+			content.startDate = content.startDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.\n", icalContent, err))
 			} else {
@@ -568,7 +568,7 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 		if !hasEnd && strings.HasPrefix(line, "DTEND;") {
 			endDate := strings.Replace(line, "DTEND;TZID=Europe/Berlin:", "", 1)
 			content.endDate, err = time.Parse(iCalDateLayout, endDate)
-			content.endDate.In(location)
+			content.endDate = content.endDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.\n", icalContent, err))
 			} else {

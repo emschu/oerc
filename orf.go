@@ -184,6 +184,8 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		return
 	}
 
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+
 	c.OnHTML("li.broadcast", func(element *colly.HTMLElement) {
 		title := trimAndSanitizeString(element.DOM.Find("div.series-title").Text())
 		subTitle := trimAndSanitizeString(element.DOM.Find("div.episode-title").Text())
@@ -227,6 +229,7 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 			appLog(fmt.Sprint("Problem with parsing start date time in orf program entry.\n"))
 			return
 		}
+		startDateTime = startDateTime.In(location)
 
 		// handle end date time
 		endDateTime, err := time.Parse(time.RFC3339, endTimeStr)
@@ -238,6 +241,8 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 			appLog(fmt.Sprint("Problem with parsing start date time in orf program entry.\n"))
 			return
 		}
+		endDateTime = endDateTime.In(location)
+
 		programEntry.StartDateTime = &startDateTime
 		programEntry.EndDateTime = &endDateTime
 		programEntry.DurationMinutes = int16(programEntry.EndDateTime.Sub(*programEntry.StartDateTime).Minutes())

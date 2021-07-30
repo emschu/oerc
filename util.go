@@ -387,6 +387,9 @@ func isRecentlyFetched() bool {
 			log.Printf("Could not parse '%s' as date", set.Value)
 			return false
 		}
+
+		location, _ := time.LoadLocation(GetAppConf().TimeZone)
+		lastUpdateTime = lastUpdateTime.In(location)
 		minDiff := time.Since(lastUpdateTime).Minutes()
 		if minDiff < float64(GetAppConf().TimeToRefreshInMinutes) {
 			return true
