@@ -15,21 +15,6 @@ jobs:
         node-version: [ 14.x ]
         python-version: [ 3.8 ]
 
-    services:
-      postgres:
-        image: postgres:12.3
-        env:
-          POSTGRES_PASSWORD: root
-          POSTGRES_DB: oer_server_dev
-          POSTGRES_USER: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -53,6 +38,7 @@ jobs:
             ~/.npm
             ~/.cache/pip
             client/node_modules
+            openapi-generator-cli.jar
           key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-cache-oerc

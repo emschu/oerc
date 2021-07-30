@@ -1,0 +1,54 @@
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  oerc-linting:
+    name: Schemathesis Integration Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.8 ]
+
+    services:
+      postgres:
+        image: postgres:12.3
+        env:
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: oer_server_dev
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Caching...
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-cache-oerc
+      - name: Schemathesis Test Run
+        run: |
+          make install
+          make integration-test-prepare
+          sleep 10
+          make integration-test
