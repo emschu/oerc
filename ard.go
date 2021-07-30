@@ -456,7 +456,7 @@ func linkTagsToEntriesDaily(db *gorm.DB, day time.Time) {
 			tagURLPart,
 			formattedDate,
 		)
-		eidList := getEIDsOfUrls(&[]string{dailyURL})
+		eidList := getEIDsOfUrls([]string{dailyURL})
 
 		var programEntry ProgramEntry
 		if len(eidList) > 0 {
@@ -481,7 +481,7 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 	for subTagName, tagURLPart := range ardSubTags {
 		previewURL := fmt.Sprintf("%s%s%s?ajaxPageLoad=1", ardHostWithPrefix, ardMainTagPage, tagURLPart)
 		archiveURL := fmt.Sprintf("%s&archiv=1", previewURL)
-		eidList := getEIDsOfUrls(&[]string{previewURL, archiveURL})
+		eidList := getEIDsOfUrls([]string{previewURL, archiveURL})
 
 		var programEntry ProgramEntry
 		if len(eidList) > 0 {
@@ -509,7 +509,7 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 }
 
 // getEIDsOfUrls get eid of urls, these urls should be checked to be not malicious
-func getEIDsOfUrls(urls *[]string) []string {
+func getEIDsOfUrls(urls []string) []string {
 	c := ardCollector()
 	var eidList []string
 
@@ -518,7 +518,7 @@ func getEIDsOfUrls(urls *[]string) []string {
 		eidList = append(eidList, eid)
 	})
 
-	for _, url := range *urls {
+	for _, url := range urls {
 		urlErr := c.Visit(url)
 		if urlErr != nil {
 			errMsg := fmt.Sprintf("Problem fetching URL '%s'. %v.", url, urlErr)
