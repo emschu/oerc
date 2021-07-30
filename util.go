@@ -37,6 +37,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -144,7 +145,9 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 	for attempt := -1; attempt <= int(retries); attempt++ {
 		req, err := http.NewRequest("GET", target, nil)
 		// increment global request counter
-		status.TotalRequests++
+
+		atomic.AddUint64(&status.TotalRequests, 1)
+
 		if err != nil {
 			lastErr = err
 			incrErr()
@@ -304,7 +307,8 @@ func saveProgramEntryRecord(db *gorm.DB, programEntry *ProgramEntry) {
 			"Homepage":        programEntry.Homepage,
 			"LastCheck":       time.Now(),
 		}).Association("ImageLinks")
-		status.TotalUpdatedPE++
+
+		atomic.AddUint64(&status.TotalUpdatedPE, 1)
 	} else {
 		now := time.Now()
 		programEntry.LastCheck = &now
@@ -315,7 +319,9 @@ func saveProgramEntryRecord(db *gorm.DB, programEntry *ProgramEntry) {
 				programEntry.StartDateTime.Format(time.RFC3339))
 		}
 		db.Create(&programEntry)
-		status.TotalCreatedPE++
+
+		atomic.AddUint64(&status.TotalCreatedPE, 1)
+
 		if db.Error != nil {
 			log.Println(db.Error)
 		}
@@ -340,7 +346,9 @@ func saveTvShowRecord(db *gorm.DB, tvShow *TvShow) {
 	if tvShow.ID == 0 {
 		// create new tv show
 		db.Create(&tvShow)
-		status.TotalCreatedTVS++
+
+		atomic.AddUint64(&status.TotalCreatedTVS, 1)
+
 		if verboseGlobal {
 			log.Printf("create tv show #%d \n", tvShow.ID)
 		}
@@ -353,7 +361,9 @@ func saveTvShowRecord(db *gorm.DB, tvShow *TvShow) {
 				Homepage: tvShow.Homepage,
 			},
 		})
-		status.TotalUpdatedTVS++
+
+		atomic.AddUint64(&status.TotalUpdatedTVS, 1)
+
 		if verboseGlobal {
 			log.Printf("update tv show #%d \n", tvShow.ID)
 		}
@@ -469,14 +479,14 @@ func sanitizeContent(content *string) string {
 
 // error handling vars
 var (
-	appInError     = false
-	errorCounter   = 0
-	errorThreshold = 20
+	appInError            = false
+	errorCounter   uint64 = 0
+	errorThreshold uint64 = 20
 )
 
 // incrErr: global error counter increment
 func incrErr() {
-	errorCounter++
+	atomic.AddUint64(&errorCounter, 1)
 }
 
 // checkErr: global error check method, if counter is too high, exit application with error exit code 1
@@ -492,7 +502,7 @@ func checkErr() {
 
 // resetErr: global error counter reset method
 func resetErr() {
-	errorCounter = 0
+	atomic.StoreUint64(&errorCounter, 0)
 }
 
 // general connectivity check, should be called on startup of the fetch process
@@ -550,7 +560,7 @@ func baseCollector(allowedHost []string) *colly.Collector {
 		if verboseGlobal {
 			log.Printf("Visiting '%s'\n", r.URL)
 		}
-		status.TotalRequests++
+		atomic.AddUint64(&status.TotalRequests, 1)
 	})
 	c.OnResponse(func(response *colly.Response) {
 		resetErr()

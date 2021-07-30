@@ -28,6 +28,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -193,7 +194,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Find(&entry)
 		if entry.ID != 0 {
 			if isRecentlyUpdated(&entry) {
-				status.TotalSkippedPE++
+				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
 			programEntry.ID = entry.ID

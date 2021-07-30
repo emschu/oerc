@@ -30,6 +30,7 @@ import (
 	url2 "net/url"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -188,7 +189,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
 		if entry.ID != 0 {
 			if isRecentlyUpdated(&entry) {
-				status.TotalSkippedPE++
+				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
 			programEntry = entry
@@ -242,7 +243,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 	}
 
 	c2 := c.Clone()
-	var programEntry *ProgramEntry = nil
+	var programEntry *ProgramEntry
 
 	// this is called for each single program detail page
 	c2.OnHTML("body .program-con", func(element *colly.HTMLElement) {
