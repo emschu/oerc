@@ -51,7 +51,7 @@ install: ## install required project and (dev) dependencies
 build: ## build dev version of application
 	cd client; npm run build-prod
 	$(GO_RICE) embed-go
-	$(GO) build -race -o bin/oerc
+	$(GO) build -o bin/oerc
 
 .PHONY: lint
 lint: ## linting the code
@@ -67,9 +67,10 @@ test: ## run unit, integration and api tests
 	@$(GO) test -v -race ./...
 	@$(GO) test -v -trace=/dev/null .
 	@$(GO_RICE) embed-go
-	@$(GO) build -o bin/oerc
+	@$(GO) build -race -o bin/oerc
 	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
-	@bin/oerc -c ./config/.oerc.dist.yaml server & echo $$! > server.PID
+	@bin/oerc -c config/.oerc.dist.yaml server & echo $$! > server.PID
+	-sleep 5
 	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
 	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
