@@ -51,7 +51,7 @@ install: ## install required project and (dev) dependencies
 build: ## build dev version of application
 	cd client; npm run build-prod
 	$(GO_RICE) embed-go
-	$(GO) build -o bin/oerc
+	$(GO) build -race -o bin/oerc
 
 .PHONY: lint
 lint: ## linting the code
