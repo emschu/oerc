@@ -43,7 +43,7 @@ jobs:
           docker-compose -f docker-compose-ci.yaml up -d --build
 
       - name: Run Schemathesis
-        run: sleep 5 && make integration-test
+        run: docker ps && sleep 10 && make integration-test
 
       - name: Shutdown containers
         if: always()
