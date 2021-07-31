@@ -14,9 +14,3 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check License Headers
         uses: apache/skywalking-eyes@main
-        with:
-          args:
-            - -v
-            - info
-            - header
-            - check
