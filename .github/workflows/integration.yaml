@@ -14,21 +14,6 @@ jobs:
       matrix:
         python-version: [ 3.8 ]
 
-    services:
-      postgres:
-        image: postgres:12.3
-        env:
-          POSTGRES_PASSWORD: root
-          POSTGRES_DB: oer_server_dev
-          POSTGRES_USER: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -43,6 +28,8 @@ jobs:
         with:
           path: |
             ~/.cache/pip
+            ~/.npm
+            client/node_modules
             openapi-generator-cli.jar
           key: ${{ runner.os }}-pip
           restore-keys: |
@@ -50,6 +37,8 @@ jobs:
       - name: Schemathesis Test Run
         run: |
           make install
+          cd client; npm i
+          make build
           docker-compose -f docker-compose-ci.yaml up -d
           make integration-test
           docker-compose -f docker-compose-ci.yaml down
