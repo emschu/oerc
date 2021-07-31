@@ -1,4 +1,4 @@
-name: OERC
+name: OERC-CI
 
 on:
   pull_request:

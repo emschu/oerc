@@ -1,4 +1,4 @@
-name: Integration Tests
+name: OERC-Integration
 
 on:
   pull_request:
@@ -40,5 +40,6 @@ jobs:
           cd client; npm ci; cd ..
           make build
           docker-compose -f docker-compose-ci.yaml up -d
+          sleep 5
           make integration-test
           docker-compose -f docker-compose-ci.yaml down

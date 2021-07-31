@@ -1,4 +1,4 @@
-name: Linting and Formatting
+name: OERC - Linting and Formatting
 
 on:
   pull_request:

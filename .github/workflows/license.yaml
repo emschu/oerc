@@ -1,4 +1,4 @@
-name: License Check
+name: OERC - License Check
 
 on:
   pull_request:
