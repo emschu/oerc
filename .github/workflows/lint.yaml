@@ -1,0 +1,21 @@
+name: OERC - Linting and Formatting
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  oerc-linting:
+    name: Code linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Linting
+        run: |
+          go get -u github.com/mgechev/revive
+          make lint

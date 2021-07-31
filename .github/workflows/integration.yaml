@@ -1,0 +1,56 @@
+name: OERC-Integration
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  oerc-integration:
+    name: Schemathesis Integration Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.9 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Caching...
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.npm
+            client/node_modules
+            openapi-generator-cli.jar
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-cache-oerc
+
+      - name: Build oerc and startup server
+        run: |
+          make setup
+          make build
+          docker-compose -f docker-compose-ci.yaml up -d --build
+
+      - name: Run Schemathesis
+        run: |
+          until [ "`docker inspect -f {{.State.Health.Status}} oerc-db`"=="healthy" ]; do
+              sleep 0.2;
+          done;
+          until [ "`docker inspect -f {{.State.Health.Status}} oerc-server`"=="healthy" ]; do
+              sleep 0.2;
+          done;
+          make integration-test
+
+      - name: Shutdown containers
+        if: always()
+        run: docker-compose -f docker-compose-ci.yaml down

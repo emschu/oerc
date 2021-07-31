@@ -38,7 +38,7 @@ var (
 	status        Status
 	verboseGlobal = false
 	// internal var to store a function which is - if not nil - executed right before the app stops, used by profiling feature only
-	shutdownCb func() = nil
+	shutdownCb func()
 )
 
 // main entry point of oerc
@@ -113,7 +113,7 @@ func main() {
 					if err != nil {
 						currentRequestsTotal = 0
 					}
-					setSetting(settingKeyRequestsTotal, strconv.Itoa(int(uint(currentRequestsTotal)+status.TotalRequests)))
+					setSetting(settingKeyRequestsTotal, strconv.Itoa(int(currentRequestsTotal+status.TotalRequests)))
 					log.Printf("HTTP request counter of this fetch process: %d\n", status.TotalRequests)
 					sub := time.Now().Sub(startTime)
 					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", sub.Seconds(), sub.Minutes())
@@ -382,10 +382,10 @@ func isProfilingEnabled() bool {
 
 // Status struct to wrap app's status
 type Status struct {
-	TotalRequests   uint
-	TotalUpdatedPE  uint
-	TotalUpdatedTVS uint
-	TotalCreatedPE  uint
-	TotalCreatedTVS uint
-	TotalSkippedPE  uint
+	TotalRequests   uint64
+	TotalUpdatedPE  uint64
+	TotalUpdatedTVS uint64
+	TotalCreatedPE  uint64
+	TotalCreatedTVS uint64
+	TotalSkippedPE  uint64
 }

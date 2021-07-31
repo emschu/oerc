@@ -1,0 +1,66 @@
+#
+# oerc, alias oer-collector
+# Copyright (C) 2021 emschu[aet]mailbox.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public
+# License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+version: "3"
+
+services:
+  db:
+    image: postgres:12.3
+    container_name: oerc-db
+    environment:
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: oer_server_dev
+      TZ: Europe/Berlin
+      PGTZ: Europe/Berlin
+    restart: unless-stopped
+    user: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: .
+    image: emschu/oerc
+    command: server
+    container_name: oerc-server
+    ports:
+    - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: 'nc -zv 127.0.0.1 8080'
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  fetcher:
+    build: .
+    image: emschu/oerc
+    command: fetch
+    container_name: oerc-fetcher
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    restart: "no"
+    healthcheck:
+      test: 'exit 0'

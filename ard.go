@@ -30,6 +30,7 @@ import (
 	url2 "net/url"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -188,7 +189,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
 		if entry.ID != 0 {
 			if isRecentlyUpdated(&entry) {
-				status.TotalSkippedPE++
+				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
 			programEntry = entry
@@ -242,7 +243,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 	}
 
 	c2 := c.Clone()
-	var programEntry *ProgramEntry = nil
+	var programEntry *ProgramEntry
 
 	// this is called for each single program detail page
 	c2.OnHTML("body .program-con", func(element *colly.HTMLElement) {
@@ -455,7 +456,7 @@ func linkTagsToEntriesDaily(db *gorm.DB, day time.Time) {
 			tagURLPart,
 			formattedDate,
 		)
-		eidList := getEIDsOfUrls(&[]string{dailyURL})
+		eidList := getEIDsOfUrls([]string{dailyURL})
 
 		var programEntry ProgramEntry
 		if len(eidList) > 0 {
@@ -480,7 +481,7 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 	for subTagName, tagURLPart := range ardSubTags {
 		previewURL := fmt.Sprintf("%s%s%s?ajaxPageLoad=1", ardHostWithPrefix, ardMainTagPage, tagURLPart)
 		archiveURL := fmt.Sprintf("%s&archiv=1", previewURL)
-		eidList := getEIDsOfUrls(&[]string{previewURL, archiveURL})
+		eidList := getEIDsOfUrls([]string{previewURL, archiveURL})
 
 		var programEntry ProgramEntry
 		if len(eidList) > 0 {
@@ -508,7 +509,7 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 }
 
 // getEIDsOfUrls get eid of urls, these urls should be checked to be not malicious
-func getEIDsOfUrls(urls *[]string) []string {
+func getEIDsOfUrls(urls []string) []string {
 	c := ardCollector()
 	var eidList []string
 
@@ -517,7 +518,7 @@ func getEIDsOfUrls(urls *[]string) []string {
 		eidList = append(eidList, eid)
 	})
 
-	for _, url := range *urls {
+	for _, url := range urls {
 		urlErr := c.Visit(url)
 		if urlErr != nil {
 			errMsg := fmt.Sprintf("Problem fetching URL '%s'. %v.", url, urlErr)
@@ -558,7 +559,7 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 		if !hasStart && strings.HasPrefix(line, "DTSTART;") {
 			startDate := strings.Replace(line, "DTSTART;TZID=Europe/Berlin:", "", 1)
 			content.startDate, err = time.Parse(iCalDateLayout, startDate)
-			content.startDate.In(location)
+			content.startDate = content.startDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.\n", icalContent, err))
 			} else {
@@ -568,7 +569,7 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 		if !hasEnd && strings.HasPrefix(line, "DTEND;") {
 			endDate := strings.Replace(line, "DTEND;TZID=Europe/Berlin:", "", 1)
 			content.endDate, err = time.Parse(iCalDateLayout, endDate)
-			content.endDate.In(location)
+			content.endDate = content.endDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.\n", icalContent, err))
 			} else {

@@ -1,0 +1,62 @@
+name: OERC-CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  default-oerc-ci:
+    name: Default integration check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 14.x ]
+        python-version: [ 3.9 ]
+        go-version: [ 1.14, 1.15, 1.16 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Caching...
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.npm
+            ~/.cache/pip
+            client/node_modules
+            openapi-generator-cli.jar
+          key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-cache-oerc
+
+      - name: Build Codebase
+        run: make setup
+
+      - name: npm install and npm run build
+        run: |
+          cd client
+          npm ci
+
+      - name: Build Codebase
+        run: make build
+
+      - name: Unit Tests
+        run: make test
+
+      - name: Unit Tests coverage
+        run: make cover

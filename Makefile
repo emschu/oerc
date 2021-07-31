@@ -17,6 +17,15 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
+GO := GO111MODULE=on go
+GO_PATH = $(shell $(GO) env GOPATH)
+GO_REVIVE = $(GO_PATH)/bin/revive
+GO_RICE = $(GO_PATH)/bin/rice
+
+SCHEMATHESIS_BIN = ~/.local/bin/schemathesis
+
+OPENAPI_TOOLS_VERSION = 5.1.1
+
 # TODO: add spec conversion script
 # TODO add clean target
 
@@ -29,57 +38,78 @@ all: help
 help: ## show this help
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-.PHONY: install
-install: ## install required project and (dev) dependencies
-	go mod download
-	go install github.com/GeertJohan/go.rice
-	go install golang.org/x/lint/golint
+.PHONY: clean
+clean: ## clean up project
+	-rm -rf bin
+	-mkdir -p bin
+
+.PHONY: setup
+setup: ## install required project and (dev) dependencies
+	$(GO) mod download
+	$(GO) get -u github.com/GeertJohan/go.rice
+	$(GO) get -u github.com/GeertJohan/go.rice/rice
+	$(GO) get -u github.com/mgechev/revive
+	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
-	curl -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.1.1/openapi-generator-cli-5.1.1.jar
+
+.PHONY: build-frontend
+frontend: ## build the frontend and the static rice box file
+	cd client; npm run build-prod
+	$(GO_RICE) embed-go
 
 .PHONY: build
 build: ## build dev version of application
-	cd client; npm run build-prod
-	rice embed-go
-	go build -o bin/oerc
+	$(GO) build -race -o bin/oerc
+	export CGO_ENABLED=0 ; export GOOS=linux ; $(GO) build -o bin/oerc-docker
 
 .PHONY: lint
 lint: ## linting the code
-	go fmt ./...
-	~/go/bin/golint .
+	@$(GO) fmt ./...
+	@$(GO_REVIVE) .
+
+.PHONY: lint-fix
+lint-fix:
+	$(GO) fix ./...
 
 .PHONY: test
 test: ## run unit, integration and api tests
-	go test -v -race ./...
-	go test -v -trace=/dev/null .
-	rice embed-go
-	go build -o bin/oerc
-	if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
-	./bin/oerc -c ./config/.oerc.dist.yaml server & echo $$! > server.PID
-	schemathesis run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
-	if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
+	@$(GO) test -v -race ./...
+	@$(GO) test -v -trace=/dev/null .
+
+.PHONY: integration-test-prepare
+integration-test-prepare: ## start (local) oerc server to run integration tests against
+	@$(GO) build -race -o bin/oerc
+	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
+	@bin/oerc -c config/.oerc.dist.yaml server & echo $$! > server.PID
+	-sleep 5
+
+.PHONY: integration-test
+integration-test: ## run OpenAPI schema conformity HTTP tests
+	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
+	-if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover
 cover: ## run unit tests with coverage output
-	go test -race -coverprofile=cover.out -coverpkg=./ ./
-	go tool cover -html=cover.out -o cover.html
+	$(GO) test -race -coverprofile=cover.out -coverpkg=./ ./
+	$(GO) tool cover -html=cover.out -o cover.html
 
 .PHONY: spec
 spec: ## run openapi spec converter from yaml -> json
-	bash ./convert_spec.sh
+	bash convert_spec.sh
 
 # TODO
 # CGO_ENABLED=0 go build -ldflags "-w" -a -o oerc .
 
 # TODO add client compilation
 .PHONY: release
-release: ## build release packages for multiple platforms
-	GOOS=windows GOARCH=amd64 go build -o bin/oerc-windows-amd64.exe -ldflags "-s -w"
-	GOOS=linux GOARCH=arm go build -o bin/oerc-linux-arm -ldflags "-s -w"
-	GOOS=linux GOARCH=arm64 go build -o bin/oerc-linux-arm64 -ldflags "-s -w"
-	GOOS=linux GOARCH=arm GOARM=7 go build -o bin/oerc-linux-armv7 -ldflags "-s -w"
-	GOOS=linux GOARCH=386 go build -o bin/oerc-linux-386 -ldflags "-s -w"
-	GOOS=linux GOARCH=amd64 go build -o bin/oerc-linux-amd64 -ldflags "-s -w"
+release: clean ## build release packages for multiple platforms
+	mkdir -p bin/windows; mkdir -p bin/linux-arm; mkdir -p bin/linux-arm64; mkdir -p bin/linux-armv7; mkdir -p bin/linux-386; mkdir -p bin/linux-amd64
+	GOOS=windows GOARCH=amd64 $(GO) build -o bin/windows/oerc.exe -ldflags "-s -w"
+	GOOS=linux GOARCH=arm $(GO) build -o bin/linux-arm/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=arm64 $(GO) build -o bin/linux-arm64/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=arm GOARM=7 $(GO) build -o bin/linux-armv7/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=386 $(GO) build -o bin/linux-386/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=amd64 $(GO) build -o bin/linux-amd64/oerc -ldflags "-s -w"
 
 .PHONY: sonarscan
 sonarscan: ## run sonar scanner against local sonarqube

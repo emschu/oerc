@@ -28,6 +28,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -155,7 +156,7 @@ func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		db.Model(ProgramEntry{}).Where("hash = ?", hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&programEntry)
 		programEntry.Hash = hash
 		if programEntry.ID >= 0 && isRecentlyUpdated(&programEntry) {
-			status.TotalSkippedPE++
+			atomic.AddUint64(&status.TotalSkippedPE, 1)
 			continue
 		}
 		_, ok := pendingHashes.Load(hash)

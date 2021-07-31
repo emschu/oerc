@@ -183,6 +183,9 @@ func getProgramHandler(c *gin.Context) {
 		})
 		return
 	}
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	start = start.In(location)
+
 	end, err = time.Parse(time.RFC3339, to)
 	if err != nil || end.IsZero() {
 		c.JSON(http.StatusBadRequest, Error{
@@ -191,6 +194,8 @@ func getProgramHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	end.In(location)
 	if end.Before(start) || end.Equal(start) {
 		c.JSON(http.StatusBadRequest, Error{
 			Status:  "400",
@@ -295,20 +300,27 @@ func getStatusObject() *StatusResponse {
 	db, _ := getDb()
 
 	var firstEntry time.Time
-	errMin := db.Raw("SELECT MIN(start_date_time) from program_entries LIMIT 1").Row().Scan(&firstEntry)
-	if errMin != nil {
-		log.Fatal("error querying database")
+	var peCount int64
+	var lastEntry time.Time
+
+	db.Model(&ProgramEntry{}).Count(&peCount)
+
+	if peCount > 0 {
+		errMin := db.Raw("SELECT MIN(start_date_time) from program_entries LIMIT 1").Row().Scan(&firstEntry)
+		if errMin != nil {
+			log.Fatal("error querying database for MIN(start_date_time)")
+		}
+		errMax := db.Raw("SELECT MAX(end_date_time) from program_entries LIMIT 1").Row().Scan(&lastEntry)
+		if errMax != nil {
+			log.Fatal("error querying database for MAX(end_date_time)")
+		}
 	}
+
 	var firstEntryStr string
 	if firstEntry.IsZero() {
 		firstEntryStr = "-"
 	} else {
 		firstEntryStr = firstEntry.Format(time.RFC3339)
-	}
-	var lastEntry time.Time
-	errMax := db.Raw("SELECT MAX(start_date_time) from program_entries LIMIT 1").Row().Scan(&lastEntry)
-	if errMax != nil {
-		log.Fatal("error querying database")
 	}
 	var lastEntryStr string
 	if lastEntry.IsZero() {

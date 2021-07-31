@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 #
 # oerc, alias oer-collector
 # Copyright (C) 2021 emschu[aet]mailbox.org
@@ -16,15 +15,19 @@
 # You should have received a copy of the GNU Affero General Public
 # License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
+FROM golang:1.16-alpine
 
-cd "$(dirname "$0")"
-cd spec
+MAINTAINER emschu <emschu@mailbox.org>
 
-# type "make setup" if openapi-generator-cli.jar is missing
-java -jar ../openapi-generator-cli.jar generate -i openapi3.yaml -g openapi
-mv openapi.json openapi3.json
+RUN mkdir /app
+ENV TZ=Europe/Berlin
 
-rm -rf ./../.hypothesis
-rm -rf ./.openapi-generator
-rm -rf ./.openapi-generator-ignore
-rm README.md
+ADD config/.oerc.docker.yaml /app/.oerc.yaml
+ADD bin/oerc-docker /app/oerc
+RUN apk add --no-cache tzdata; chmod +x /app/oerc
+
+WORKDIR /app
+
+EXPOSE 8080
+
+ENTRYPOINT ["/app/oerc", "-c", "/app/.oerc.yaml"]

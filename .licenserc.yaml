@@ -24,6 +24,8 @@ header:
     - '**'
 
   paths-ignore:
+    - '**/.idea/**'
+    - 'rice-box.go'
     - 'spec/**'
     - '**/*.md'
     - '**/go.mod'
@@ -31,7 +33,9 @@ header:
     - 'LICENSE'
     - 'NOTICE'
     - 'config/**.yaml'
+    - 'spec/**.yaml'
     - '**/**.json'
+    - '**/**.jar'
     - '**/**.svg'
     - '**/**.gitkeep'
     - '**/**.gitignore'
@@ -42,6 +46,9 @@ header:
     - 'client/e2e/protractor.conf.js'
     - 'client/e2e/src/app.po.ts'
     - 'client/e2e/src/app.e2e-spec.ts'
+    - 'client/node_modules/**'
+    - 'client/dist/**'
+    - '.github/workflows/**.yaml'
 
   comment: on-failure
 

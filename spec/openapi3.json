@@ -15,7 +15,11 @@
     "version" : "v2"
   },
   "servers" : [ {
+    "description" : "Ipv4 localhost server",
     "url" : "http://127.0.0.1:8080/api/v2"
+  }, {
+    "description" : "IPv6 localhost server",
+    "url" : "http://[::]:8080/api/v2"
   } ],
   "paths" : {
     "/ping" : {
