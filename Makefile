@@ -52,6 +52,7 @@ build: ## build dev version of application
 	cd client; npm run build-prod
 	$(GO_RICE) embed-go
 	$(GO) build -race -o bin/oerc
+	export CGO_ENABLED=0 ; export GOOS=linux ; $(GO) build -o bin/oerc-docker
 
 .PHONY: lint
 lint: ## linting the code

@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:12.3
+    container_name: oerc-db
+    environment:
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: oer_server_dev
+      TZ: Europe/Berlin
+      PGTZ: Europe/Berlin
+    restart: unless-stopped
+    user: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: .
+    image: emschu/oerc
+    command: server
+    container_name: oerc-server
+    ports:
+    - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: 'nc -zv 127.0.0.1 8080'
+      interval: 5s
+      timeout: 5s
+      retries: 10

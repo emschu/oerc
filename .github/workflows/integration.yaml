@@ -43,12 +43,13 @@ jobs:
         with:
           path: |
             ~/.cache/pip
+            openapi-generator-cli.jar
           key: ${{ runner.os }}-pip
           restore-keys: |
             ${{ runner.os }}-pip-cache-oerc
       - name: Schemathesis Test Run
         run: |
           make install
-          make integration-test-prepare
-          sleep 10
+          docker-compose -f docker-compose-ci.yaml up -d
           make integration-test
+          docker-compose -f docker-compose-ci.yaml down

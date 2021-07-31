@@ -33,7 +33,7 @@ func setupPersistence() {
 	if GetAppConf().TimeZone != "" {
 		db.Exec(fmt.Sprintf("SET TIME ZONE '%s'", GetAppConf().TimeZone))
 		if GetAppConf().DbName != "" {
-			db.Exec(fmt.Sprintf("ALTER DATABASE '%s' SET timezone TO '%s'", GetAppConf().DbName, GetAppConf().TimeZone))
+			db.Exec(fmt.Sprintf("ALTER DATABASE %s SET timezone TO '%s'", GetAppConf().DbName, GetAppConf().TimeZone))
 		} else {
 			log.Printf("Warning: No DbName is configured!\n")
 		}
