@@ -43,7 +43,11 @@ jobs:
           docker-compose -f docker-compose-ci.yaml up -d --build
 
       - name: Run Schemathesis
-        run: docker ps && sleep 10 && make integration-test
+        run: |
+          until [ "`docker inspect -f {{.State.Health.Status}} oerc-server`"=="healthy" ]; do
+              sleep 0.5;
+          done;
+          docker ps && sleep 10 && make integration-test
 
       - name: Shutdown containers
         if: always()
