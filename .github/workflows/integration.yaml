@@ -37,7 +37,7 @@ jobs:
       - name: Schemathesis Test Run
         run: |
           make install
-          cd client; npm i
+          cd client; npm ci; cd ..
           make build
           docker-compose -f docker-compose-ci.yaml up -d
           make integration-test
