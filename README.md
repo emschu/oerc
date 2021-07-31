@@ -1,35 +1,38 @@
 # OERC
 
-... is a short name for **OER-Collector**, which is a software project to store, view and search the program data of public-law ("öffentlich-rechtliche") TV stations in Germany, Austria and Switzerland.
+... is a short name for **OER-Collector**, which is a software project to store, view and search the program data of 
+public-law ("öffentlich-rechtliche") TV stations in Germany, Austria and Switzerland.
 
-This tool needs an external PostgreSQL database and some configuration parameters, then you can:
-- **Collecting TV program data** of 28 channels (`oerc fetch`)
+This tool needs an external PostgreSQL database and some configuration parameters to do:
+- **Collecting TV program data** of 28 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
 - Running an **HTTP backend server** to access program data in JSON format (`oerc server`)
-- Running an HTTP server to serve a **client web application** to view the program data and 
-  your personal recommendations (`oerc server`)
+- Running a (local) HTTP server to serve a **client web application** in your browser to view the program data and 
+  your personal program recommendations (`oerc server`)
 
-With the help of `oerc` you can build and use your own, private, TV program recommendation tool while ALL
-information is processed locally.
+With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
+information is processed and kept locally.
 
-This project is written in Go and it is *AGPL v3* licensed. You are encouraged to participate and improve functionality. 
-[Just create an issue!](https://github.com/emschu/oerc/issues)
+This project is written in Golang and it is *AGPL v3* licensed. You are encouraged to participate and improve functionality. 
+[Just create a Github issue!](https://github.com/emschu/oerc/issues)
 
-The focus of this project lies in providing program data for individuals - ready to be enriched or analysed as long as there is no Open Data policy of the public-law sector.
+The focus of this project lies in providing program data for individuals - ready to be enriched, searched or analysed 
+as long as there is no (real) Open Data policy of the public-law sector.
 
-At the moment its not intended to create links between program data and media(thek) data.
+At the moment it's not intended to create links between program data and Media(thek) information.
 If you are looking for this have a look at [similar projects](#similar-projects).
 
 *Note 1:* This server and client software is not ready to be used directly in the internet without further changes.
 It is recommended to use it locally only or in protected environments and don't expose it to the internet.
 
-*Note 2*: Unfortunately the public-law web pages this software needs to access are restricted to certain geographic IP regions in general.
+*Note 2*: Unfortunately the public-law web pages this software needs to access are restricted to certain geographic IP 
+regions in general.
 
 **Current software quality: Beta**
 
 ![oer-collector logo](./docs/logo.png)
 
-# Install
+## Install
 
 1. Get this application
 ```shell
@@ -37,16 +40,17 @@ go get -u github.com/emschu/oerc
 ```
 **OR** download the latest release for your platform from the [GitHub release page](https://github.com/emschu/oerc/releases).
 
-2. Set up a PostgreSQL database and run it
+2. Set up a PostgreSQL database (12+), configure a database and start it
 3. Run `oerc init`.
 This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
-   You have to change some of the values, at least you have to replace `<db_name>`, `<db_user>`, `<db_password>` in the 
-   configuration file to reach the database.
+   You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`, 
+   `<db_user>`, `<db_password>` in the configuration file to reach the database.
 4. Run `oerc fetch` for the first time and wait until the first program data is collected for you.
+5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (with the default configuration)
 
-# Description
+## Description
 
-```shell
+```text
 NAME:
    oerc - Command line tool to manage the oerc application
 
@@ -54,7 +58,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.0, License: AGPLv3, https://github.com/emschu/oer-collector
+   1.0.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -65,7 +69,7 @@ COMMANDS:
    init, i     Initial database and configuration setup check
    search, sc  Search program data and create recommendations
    server, sv  Start API HTTP backend server
-   status, s   show status
+   status, s   show app's status
    help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -73,9 +77,10 @@ GLOBAL OPTIONS:
    --verbose                 Verbose log output (default: false)
    --help, -h                show help (default: false)
    --version, -v             print the version (default: false)
+                                              
 ```
 
-## Configuration options
+### Configuration options
 
 The following preferences are important to understand your possibilities to control this software.
 You can find this file [here](./config/.oerc_default.dist.yaml) and if you run `oerc init` this file will be created at
@@ -119,15 +124,15 @@ DbPassword: <db_password>
 DbSSLEnabled: false
 # search settings
 # only search for recommendations in the next 4 days
-SearchDaysInFuture: 4
+SearchDaysInFuture: 5
 # these are example values. Feel free to create you own list of keywords :)
 SearchKeywords:
-  - Stromberg
   - Die Anstalt
   - Max Uthoff
   - Claus von Wagner
   - Loriot
   - Zapp
+  - Stromberg
   - Kroymann
   - James Bond
   - Satire
@@ -135,25 +140,26 @@ SearchKeywords:
 SearchSkipChannels:
   - KIKA
   - ORF Sport +
+Debug: false
+ProfilingEnabled: false
 ```
 
-# Run and use
+## Usage
 
 After installing `oerc` and setting it up, you should run at least one time the `oerc fetch` command.
 
-It is recommended to update the program data regularly, e.g. daily, by using a **cron job** which runs `oerc fetch` 
+It is recommended to update the program data regularly, e.g. daily, by using a (unix) **cron job** which runs `oerc fetch` 
 and `oerc search`.
 
 While it is possible to run `oerc server` in a user session, you should consider to create a systemd
 service to run and control the web server (backend + frontend) in the background persistently. 
 
-The following two systemd service files
-are simple examples for you to integrate `oerc` with systemd:
+The following systemd service file is a simple example to integrate `oerc` with systemd in a Linux system:
 
 **oerc.service:**
 ```
 [Unit]
-Description=oer-collector service
+Description=oerc service
 After=network.target
 
 [Service]
@@ -178,6 +184,7 @@ After the last command you can use
 `$ sudo systemctl [start|stop] oerc` 
 
 to start (or stop) the services. 
+
 If you want to get the servers up after system (re-)boot, you need to execute 
 
 `$ sudo systemctl [enable|disable] oerc`.
@@ -185,11 +192,11 @@ If you want to get the servers up after system (re-)boot, you need to execute
 If you do so (enabling both services by default), please keep in mind that the PostgreSQL database needs 
 to be available, too, so use systemctl to enable the postgres service as well.
 
-## Containerized run
+### Containerized run
 Will be added in future releases.
 
 
-## Channel list
+### Channel list
 
 Note: The first column does not necessarily have to correspond to the channel id in the database.
 
@@ -224,7 +231,7 @@ Note: The first column does not necessarily have to correspond to the channel id
 |27| SRF-zwei         |   v2 |
 |28| SRF-info         |   v2 |
 
-## Data import limits
+### Data import limits
 
 | Channel family | Earliest date       | Latest date     |
 | ---------------| ------------------- | --------------- |
@@ -232,7 +239,7 @@ Note: The first column does not necessarily have to correspond to the channel id
 | ORF            | Today - 14 days     | Today + 22 days |
 | SRF            | Today - 14 days     | Today + 29 days |
 
-# Project guidelines
+## Project guidelines
 - This project is non-commercial.
 - Private/commercial sector TV or radio stations will *never* be part of this project.
 - This project shall be an instrument mainly to analyze the program and constructively
@@ -243,23 +250,23 @@ Note: The first column does not necessarily have to correspond to the channel id
 - All parts of the software should work on "low-resource" platforms, e.g. a Raspberry Pi 3b+
 
 <a name="similar-projects"></a>
-## Similar projects:
+### Similar projects:
 - [cemrich/zapp-backend](https://github.com/mediathekview/zapp-backend)
 - [MediathekView(Web)-Project](https://github.com/mediathekview)
 - [MediathekDirekt](https://mediathekdirekt.de/) + [Sources](https://gitlab.com/mediathekdirekt/mediathekdirekt)
 - [EPG Scraper for ARD TV Stations to Use With tvheadend External XMLTV Grabber](https://projects.webvoss.de/2019/04/14/legal-epg-scraper-for-ard-tv-stations-to-use-with-tvheadend-external-xmltv-grabber/)
 
-## OpenApi 3 specification
+### OpenApi 3 specification
 If you run the (backend) server (just run `oerc server`) an OpenApi 3 specification is shipped at
-`/spec/openapi3.json`, respectively `/spec/openapi3.yaml`. Or - alternatively - have a look at the spec 
-files in [this directory](./docs).
+`http://localhost:8080/spec/openapi3.json`, respectively `/spec/openapi3.yaml`. Or - alternatively - have a look at the 
+spec  files in [this directory](./docs).
 
 Please notify the maintainer of this project if you build something around the JSON HTTP API oerc
 offers (for the mail address see below in `License` section).
 
-# License
+## License
 
-This project is licensed under [GNU Affero General Public License or later](./LICENSE).
+This project is licensed under [GNU Affero General Public License 3 or later](./LICENSE).
 
 ```text
 oerc, alias oer-collector
@@ -280,7 +287,7 @@ License along with this program.
 If not, see <https://www.gnu.org/licenses/>.
 ```
 
-## Used libraries
+### Used libraries
 
 - [Urfave/cli v2](https://github.com/urfave/cli/) – CLI is a simple, fast, and fun package for building command line apps in Go.
 - [Gorm](https://gorm.io/) – The fantastic ORM library for Golang
@@ -288,12 +295,13 @@ If not, see <https://www.gnu.org/licenses/>.
 - [Gin](https://github.com/gin-gonic/gin) – Gin is a HTTP web framework
 - [Bluemonday](https://github.com/microcosm-cc/bluemonday) – A fast golang HTML sanitizer
 
-# Development
-This project is shipped with a `Makefile` to ease the development and testing process. Be sure to run `make build` before
-filing a pull request.
+## Development
+This project is shipped with a `Makefile` to ease the development and testing process. 
+At first you should run `make setup` and you need the usual Golang/Python/Node/Java toolchains. 
+Be sure to run `make build` and `make spec` (if you updated something there) before filing a pull request.
 
-## Database
-### Development postgres container
+### Database
+#### Development postgres container
 ```console
 # docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:12.3
 
@@ -301,10 +309,10 @@ filing a pull request.
 $ psql -U postgres -h 127.0.0.1 -W 
 ```
 
-## Contributing
+### Contributing
 - File issues on GitHub to request and discuss new features or bugs there.
 - You need a new feature/improvement? -> File an issue.
 - Contribute code through pull requests or submit patch files.
 
-# More information
+## More information
 - [German] [Die Vermessung des TV-Programms auf datenjournalist.de](https://www.datenjournalist.de/die-vermessung-des-tv-programms/)

@@ -1,6 +1,14 @@
 # Changelog oerc
 
-## 1.0.0 - 05/2021
+## 0.9.11 - 2021/07/31
+- Integration of GitHub CI
+- Fix of server status request - if there are no program entries
+- Multiple small fixes
+- Polished `Makefile` and integration of [license-eye check tool](https://github.com/apache/skywalking-eyes)
+- More information added to README
+- `docker-compose` and `Dockerfile` integration to support the containerized usage of oerc.
+
+## 0.9.10 - 2021/05
 - Complete rewrite in Golang, mostly functionally equivalent, but no mass mode fetch.
 - Frontend is included
 
