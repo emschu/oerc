@@ -34,12 +34,17 @@ jobs:
           key: ${{ runner.os }}-pip
           restore-keys: |
             ${{ runner.os }}-pip-cache-oerc
-      - name: Schemathesis Test Run
+
+      - name: Startup Server
         run: |
           make install
           cd client; npm ci; cd ..
           make build
-          docker-compose -f docker-compose-ci.yaml up -d
-          sleep 5
-          make integration-test
-          docker-compose -f docker-compose-ci.yaml down
+          docker-compose -f docker-compose-ci.yaml up -d --build
+
+      - name: Run Schemathesis
+        run: sleep 5 && make integration-test
+
+      - name: Shutdown containers
+        if: always()
+        run: docker-compose -f docker-compose-ci.yaml down
