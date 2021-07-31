@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  integrate-oerc:
+  default-oerc-ci:
     name: Default integration check
     runs-on: ubuntu-latest
     strategy:
@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-cache-oerc
 
       - name: Build Codebase
-        run: make install
+        run: make setup
 
       - name: npm install and npm run build
         run: |
@@ -55,5 +55,8 @@ jobs:
       - name: Build Codebase
         run: make build
 
-      - name: Test
+      - name: Unit Tests
         run: make test
+
+      - name: Unit Tests coverage
+        run: make cover

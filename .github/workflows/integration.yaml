@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  oerc-linting:
+  oerc-integration:
     name: Schemathesis Integration Tests
     runs-on: ubuntu-latest
     strategy:
@@ -37,21 +37,19 @@ jobs:
 
       - name: Build oerc and startup server
         run: |
-          make install
-          cd client; npm ci; cd ..
+          make setup
           make build
           docker-compose -f docker-compose-ci.yaml up -d --build
 
       - name: Run Schemathesis
         run: |
           until [ "`docker inspect -f {{.State.Health.Status}} oerc-db`"=="healthy" ]; do
-              sleep 0.5;
+              sleep 0.2;
           done;
           until [ "`docker inspect -f {{.State.Health.Status}} oerc-server`"=="healthy" ]; do
-              sleep 0.5;
+              sleep 0.2;
           done;
-          curl -vvv -0 http://localhost:8080/spec/openapi3.json
-          docker ps && sleep 10 && make integration-test
+          make integration-test
 
       - name: Shutdown containers
         if: always()

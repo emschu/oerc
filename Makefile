@@ -38,8 +38,13 @@ all: help
 help: ## show this help
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-.PHONY: install
-install: ## install required project and (dev) dependencies
+.PHONY: clean
+clean: ## clean up project
+	-rm -rf bin
+	-mkdir -p bin
+
+.PHONY: setup
+setup: ## install required project and (dev) dependencies
 	$(GO) mod download
 	$(GO) get -u github.com/GeertJohan/go.rice
 	$(GO) get -u github.com/GeertJohan/go.rice/rice
@@ -47,10 +52,13 @@ install: ## install required project and (dev) dependencies
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
 
-.PHONY: build
-build: ## build dev version of application
+.PHONY: build-frontend
+frontend: ## build the frontend and the static rice box file
 	cd client; npm run build-prod
 	$(GO_RICE) embed-go
+
+.PHONY: build
+build: ## build dev version of application
 	$(GO) build -race -o bin/oerc
 	export CGO_ENABLED=0 ; export GOOS=linux ; $(GO) build -o bin/oerc-docker
 
@@ -78,7 +86,7 @@ integration-test-prepare: ## start (local) oerc server to run integration tests 
 .PHONY: integration-test
 integration-test: ## run OpenAPI schema conformity HTTP tests
 	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
-	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
+	-if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover
 cover: ## run unit tests with coverage output
@@ -94,13 +102,14 @@ spec: ## run openapi spec converter from yaml -> json
 
 # TODO add client compilation
 .PHONY: release
-release: ## build release packages for multiple platforms
-	GOOS=windows GOARCH=amd64 $(GO) build -o bin/oerc-windows-amd64.exe -ldflags "-s -w"
-	GOOS=linux GOARCH=arm $(GO) build -o bin/oerc-linux-arm -ldflags "-s -w"
-	GOOS=linux GOARCH=arm64 $(GO) build -o bin/oerc-linux-arm64 -ldflags "-s -w"
-	GOOS=linux GOARCH=arm GOARM=7 $(GO) build -o bin/oerc-linux-armv7 -ldflags "-s -w"
-	GOOS=linux GOARCH=386 $(GO) build -o bin/oerc-linux-386 -ldflags "-s -w"
-	GOOS=linux GOARCH=amd64 $(GO) build -o bin/oerc-linux-amd64 -ldflags "-s -w"
+release: clean ## build release packages for multiple platforms
+	mkdir -p bin/windows; mkdir -p bin/linux-arm; mkdir -p bin/linux-arm64; mkdir -p bin/linux-armv7; mkdir -p bin/linux-386; mkdir -p bin/linux-amd64
+	GOOS=windows GOARCH=amd64 $(GO) build -o bin/windows/oerc.exe -ldflags "-s -w"
+	GOOS=linux GOARCH=arm $(GO) build -o bin/linux-arm/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=arm64 $(GO) build -o bin/linux-arm64/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=arm GOARM=7 $(GO) build -o bin/linux-armv7/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=386 $(GO) build -o bin/linux-386/oerc -ldflags "-s -w"
+	GOOS=linux GOARCH=amd64 $(GO) build -o bin/linux-amd64/oerc -ldflags "-s -w"
 
 .PHONY: sonarscan
 sonarscan: ## run sonar scanner against local sonarqube
