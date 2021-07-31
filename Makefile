@@ -77,7 +77,7 @@ integration-test-prepare: ## start (local) oerc server to run integration tests 
 
 .PHONY: integration-test
 integration-test: ## run OpenAPI schema conformity HTTP tests
-	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://oerc-server:8080/spec/openapi3.json
+	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
 	@if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover
