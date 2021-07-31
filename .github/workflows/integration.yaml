@@ -44,9 +44,13 @@ jobs:
 
       - name: Run Schemathesis
         run: |
+          until [ "`docker inspect -f {{.State.Health.Status}} oerc-db`"=="healthy" ]; do
+              sleep 0.5;
+          done;
           until [ "`docker inspect -f {{.State.Health.Status}} oerc-server`"=="healthy" ]; do
               sleep 0.5;
           done;
+          curl -vvv -0 http://localhost:8080/spec/openapi3.json
           docker ps && sleep 10 && make integration-test
 
       - name: Shutdown containers
