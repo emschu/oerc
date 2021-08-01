@@ -30,6 +30,7 @@ import (
 	url2 "net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -512,10 +513,13 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 func getEIDsOfUrls(urls []string) []string {
 	c := ardCollector()
 	var eidList []string
+	var listMutex sync.Mutex
 
 	c.OnHTML(".event-list li[class^=eid]", func(element *colly.HTMLElement) {
 		eid := strings.Replace(ardEidMatcher.FindString(element.Attr("class")), "eid", "", 1)
+		listMutex.Lock()
 		eidList = append(eidList, eid)
+		listMutex.Unlock()
 	})
 
 	for _, url := range urls {
@@ -526,6 +530,7 @@ func getEIDsOfUrls(urls []string) []string {
 		}
 	}
 	c.Wait()
+
 	return eidList
 }
 
