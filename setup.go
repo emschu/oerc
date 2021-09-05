@@ -24,10 +24,10 @@ import (
 
 // setupPersistence: setup persistence during app's startup process. initializing global db object
 func setupPersistence() {
-	db, err := getDb()
+	db := getDb()
 
-	if db == nil || err != nil {
-		log.Fatalf("Error connecting to database!\nError: %v\n", err)
+	if db == nil {
+		log.Fatalf("Error connecting to database!\n")
 	}
 	// timezone handling
 	if GetAppConf().TimeZone != "" {
@@ -73,7 +73,7 @@ func setupPersistence() {
 
 // handleChannelFamiliesSetup: setup channel families in db, based on hard-coded channel family information
 func handleChannelFamiliesSetup() {
-	db, _ := getDb()
+	db := getDb()
 
 	var families = []string{"ARD", "ZDF", "SRF", "ORF"}
 	for _, f := range families {
@@ -93,7 +93,7 @@ func handleChannelFamiliesSetup() {
 
 // handleChannelsSetup: setup channels in db, based on hard-coded channel information
 func handleChannelsSetup() {
-	db, _ := getDb()
+	db := getDb()
 
 	var channelFamilies []ChannelFamily
 	db.Find(&channelFamilies)

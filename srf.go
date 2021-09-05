@@ -43,7 +43,7 @@ var (
 
 // ParseSRF central method to parse SRF tv show and program data
 func ParseSRF() {
-	db, _ := getDb()
+	db := getDb()
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "SRF")

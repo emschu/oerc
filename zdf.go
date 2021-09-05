@@ -59,7 +59,7 @@ func ParseZDF() {
 		log.Printf("Using ZDF API key: %s\n", *zdfAPIKey)
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "ZDF")
 	if channelFamily.ID == 0 {

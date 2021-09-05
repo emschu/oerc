@@ -29,7 +29,7 @@ import (
 
 // getProgramOf generating a program entry list response for each channel (or if channel = nil for ALL channels) in given time range. returns ProgramResponse
 func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
-	db, _ := getDb()
+	db := getDb()
 	var entries []ProgramEntry
 	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, end).
 		Preload("ImageLinks").
@@ -49,21 +49,21 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramRe
 }
 
 func getChannels() *[]Channel {
-	db, _ := getDb()
+	db := getDb()
 	var channels []Channel
 	db.Model(&Channel{}).Find(&channels)
 	return &channels
 }
 
 func getChannelFamilies() *[]ChannelFamily {
-	db, _ := getDb()
+	db := getDb()
 	families := &[]ChannelFamily{}
 	db.Model(&ChannelFamily{}).Find(families)
 	return families
 }
 
 func getCount(model interface{}) uint64 {
-	db, _ := getDb()
+	db := getDb()
 	var count int64
 	db.Model(model).Count(&count)
 	return uint64(count)
@@ -224,7 +224,7 @@ func getSingleProgramEntryHandler(c *gin.Context) {
 		return
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var programEntry ProgramEntry
 	db.Model(ProgramEntry{}).Preload("ImageLinks").Preload("CollisionEntries").First(&programEntry, pEID)
 	if programEntry.ID == 0 {
@@ -300,7 +300,7 @@ func getStatusObject() *StatusResponse {
 		return nil
 	}
 
-	db, _ := getDb()
+	db := getDb()
 
 	var firstEntry time.Time
 	var peCount int64
@@ -356,7 +356,7 @@ func getChannelsHandler(c *gin.Context) {
 }
 
 func getLogEntriesHandler(context *gin.Context) {
-	db, _ := getDb()
+	db := getDb()
 	var logEntryList []LogEntry
 	db.Model(&LogEntry{}).Limit(500).Order("id desc").Find(&logEntryList)
 	context.JSON(http.StatusOK, LogEntriesResponse{&logEntryList, int64(len(logEntryList)), 0})
@@ -370,7 +370,7 @@ func getSingleLogEntriesHandler(context *gin.Context) {
 		return
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var singleLogEntry LogEntry
 	db.Model(&LogEntry{}).Where("id", logEntryID).Find(&singleLogEntry)
 	if singleLogEntry.ID == 0 {
@@ -388,7 +388,7 @@ func deleteSingleLogEntriesHandler(context *gin.Context) {
 		return
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var singleLogEntry LogEntry
 	db.Model(&LogEntry{}).Where("id", logEntryID).Find(&singleLogEntry)
 	if singleLogEntry.ID == 0 {
@@ -422,7 +422,7 @@ func getRecommendationsHandler(context *gin.Context) {
 	}
 	from = from.In(location)
 
-	db, _ := getDb()
+	db := getDb()
 	var logEntryList []Recommendation
 	db.Model(&Recommendation{}).Where(
 		"start_date_time >= ?", from).Order("start_date_time asc").
@@ -492,7 +492,7 @@ func getSearchHandler(context *gin.Context) {
 		offset = 0
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var programEntryList []ProgramEntry
 	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
 		Offset(int(offset)).Limit(int(limit)).

@@ -46,7 +46,7 @@ var (
 
 // ParseORF central method to parse ORF tv show and program data
 func ParseORF() {
-	db, _ := getDb()
+	db := getDb()
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "ORF")

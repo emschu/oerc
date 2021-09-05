@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	version       = "1.0.0"
+	version       = "0.9.12"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -151,7 +151,7 @@ func main() {
 					startTime := time.Now()
 					Startup(c)
 					defer Shutdown()
-					log.Printf("Trying to start server at %s:%d ...\n", appConf.ServerHost, appConf.ServerPort)
+					log.Printf("Trying to start server at http://%s:%d ...\n", appConf.ServerHost, appConf.ServerPort)
 
 					defer func() {
 						log.Println("Server end")
@@ -341,7 +341,7 @@ func Shutdown() {
 		shutdownCb()
 	}
 	// close db
-	db, _ := getDb()
+	db := getDb()
 	s, err := db.DB()
 	if err != nil {
 		log.Fatal(err)

@@ -116,7 +116,7 @@ var (
 
 // ParseARD central method to parse ARD tv show and program data
 func ParseARD() {
-	db, _ := getDb()
+	db := getDb()
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "ARD")

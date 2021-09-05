@@ -56,7 +56,7 @@ func SearchProgram() {
 	endDate := now.Add(time.Duration(GetAppConf().SearchDaysInFuture+1) * 24 * time.Hour)
 	tEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 3, 0, 0, 0, now.Location())
 
-	db, _ := getDb()
+	db := getDb()
 	var excludedChannelIds = make([]uint, len(GetAppConf().SearchSkipChannels))
 	for _, channel := range GetAppConf().SearchSkipChannels {
 		var channelEntry Channel

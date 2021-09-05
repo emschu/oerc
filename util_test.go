@@ -160,7 +160,7 @@ func TestAppLog(t *testing.T) {
 	setupInMemoryDbForTesting()
 	appLog("Test example")
 
-	db, _ := getDb()
+	db := getDb()
 	var entry LogEntry
 	db.Model(&LogEntry{}).Last(&entry)
 	if entry.Message != "Test example" {
@@ -210,7 +210,7 @@ func TestIsRecentlyFetched(t *testing.T) {
 func TestClearOldRecommendations(t *testing.T) {
 	setupInMemoryDbForTesting()
 
-	db, _ := getDb()
+	db := getDb()
 	oldRec := time.Now().Add(-1 * time.Minute)
 	newRec := time.Now().Add(20 * time.Minute)
 	db.Create(&Recommendation{ProgramEntryID: 123, ChannelID: 4, StartDateTime: &oldRec})
@@ -260,5 +260,35 @@ func TestConsiderTagExists(t *testing.T) {
 	considerTagExists(&pe, &testTag2)
 	if pe.Tags != "test;test2" {
 		t.Fatalf("There should be a new tag 'test2'")
+	}
+}
+
+func TestChunkStringSlice(t *testing.T) {
+	slice1 := []string{}
+	if len(chunkStringSlice(slice1, 0)) != 0 {
+		t.Fatalf("Invalid handling of empty slice of chunk size 0")
+	}
+	if len(chunkStringSlice(slice1, 1)) != 0 {
+		t.Fatalf("Invalid handling of empty slice of chunk size 1")
+	}
+	slice2 := []string{"", ""}
+	if len(chunkStringSlice(slice2, 0)) != 0 {
+		t.Fatalf("Invalid handling of slice(2) of chunk size 0")
+	}
+	if len(chunkStringSlice(slice2, 1)) != 2 {
+		t.Fatalf("Invalid handling of slice with two elements")
+	}
+	if len(chunkStringSlice(slice2, 2)) != 1 {
+		t.Fatalf("Invalid handling of slice with two elements")
+	}
+	slice3 := []string{"", "", ""}
+	if len(chunkStringSlice(slice3, 0)) != 0 {
+		t.Fatalf("Invalid handling of slice(3) of chunk size 0")
+	}
+	if len(chunkStringSlice(slice3, 1)) != 3 {
+		t.Fatalf("Invalid handling of slice with three elements")
+	}
+	if len(chunkStringSlice(slice3, 2)) != 2 {
+		t.Fatalf("Invalid handling of slice with three elements")
 	}
 }

@@ -68,7 +68,7 @@ lint: ## linting the code
 	@$(GO_REVIVE) .
 
 .PHONY: lint-fix
-lint-fix:
+lint-fix: ## lint-fix the code
 	$(GO) fix ./...
 
 .PHONY: test

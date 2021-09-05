@@ -69,7 +69,7 @@ const (
 var dBReference *gorm.DB
 
 // connection closing logic should be handled by another part of the application, it's not implicit
-func getDb() (*gorm.DB, error) {
+func getDb() *gorm.DB {
 	if dBReference == nil {
 		conf := GetAppConf()
 
@@ -100,13 +100,13 @@ func getDb() (*gorm.DB, error) {
 			if err != nil {
 				log.Printf("Error connecting to the database. Is it running and configured correctly?\n")
 				log.Fatal(err)
-				return nil, err
+				return nil
 			}
 			s, err := db.DB()
 			if err != nil {
 				log.Printf("Error connecting to the database. Is it running and configured correctly?\n")
 				log.Fatal(err)
-				return nil, err
+				return nil
 			}
 			s.SetMaxOpenConns(50)
 
@@ -115,7 +115,7 @@ func getDb() (*gorm.DB, error) {
 			log.Fatalf("DbType '%s' is not implemented.", appConf.DbType)
 		}
 	}
-	return dBReference, nil
+	return dBReference
 }
 
 // getHTTPProxy: method to get the http proxy of the app or nil of none configured
@@ -274,7 +274,7 @@ func trimAndSanitizeString(rawString string) string {
 
 // appLog this function should be used to write log entries to the db log
 func appLog(msg string) {
-	db, _ := getDb()
+	db := getDb()
 	parsingError := &LogEntry{}
 	parsingError.Message = trimAndSanitizeString(msg)
 	db.Save(parsingError)
@@ -449,7 +449,7 @@ func getSetting(key string) *Settings {
 }
 
 func getOrCreateSetting(key string) *Settings {
-	db, _ := getDb()
+	db := getDb()
 
 	var setting Settings
 	db.Model(&Settings{}).Where("setting_key = ?", key).Find(&setting)
@@ -468,7 +468,7 @@ func getOrCreateSetting(key string) *Settings {
 
 func setSetting(key string, val string) {
 	setting := getOrCreateSetting(key)
-	db, _ := getDb()
+	db := getDb()
 	db.Model(&setting).Update("value", val)
 }
 
@@ -574,7 +574,7 @@ func baseCollector(allowedHost []string) *colly.Collector {
 
 // ClearLogs method to clear the application's logs
 func ClearLogs() {
-	db, _ := getDb()
+	db := getDb()
 
 	db.Where("id > 0").Delete(&LogEntry{})
 }
@@ -584,7 +584,7 @@ func ClearAll() {
 	ClearLogs()
 	ClearRecommendations()
 
-	db, _ := getDb()
+	db := getDb()
 	db.Where("id > 0").Delete(&TvShow{})
 	db.Where("id > 0").Delete(&ImageLink{})
 	db.Where("id > 0").Delete(&ProgramEntry{})
@@ -593,14 +593,37 @@ func ClearAll() {
 
 // ClearRecommendations method to clear ALL the recommendations from the database
 func ClearRecommendations() {
-	db, _ := getDb()
+	db := getDb()
 
 	db.Where("id > 0").Delete(&Recommendation{})
 }
 
 // ClearOldRecommendations method to clear all the OLD(=past) recommendations
 func ClearOldRecommendations() {
-	db, _ := getDb()
+	db := getDb()
 
 	db.Where("start_date_time < ?", time.Now()).Delete(&Recommendation{})
+}
+
+// get chunks out of a single string slice
+func chunkStringSlice(slice []string, size int) [][]string {
+	var chunks [][]string
+	if size == 0 {
+		log.Printf("Warning: Invalid zero size for slice chunking")
+		return chunks
+	}
+	if len(slice) == 0 {
+		return chunks
+	}
+	for {
+		if len(slice) == 0 {
+			break
+		}
+		if len(slice) < size {
+			size = len(slice)
+		}
+		chunks = append(chunks, append(make([]string, 0), slice[0:size]...))
+		slice = slice[size:]
+	}
+	return chunks
 }
