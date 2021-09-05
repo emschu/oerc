@@ -101,6 +101,11 @@ $link-color-light: lighten($link-color, 10%) !default;
   background-color: lighten($custom-primary-color, 60%);
   opacity: 0.75;
   border-color: $primary-color;
+  &.deprecated-item {
+    background-color: darkred;
+    color: white;
+    opacity: 0.60;
+  }
 }
 
 .read-more {

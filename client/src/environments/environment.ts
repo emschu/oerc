@@ -28,6 +28,7 @@ export const environment = {
   apiRequestTimeoutInSecs: 30,
   timezone: 'Europe/Berlin',
   appVersion: packageInfo.version,
+  defaultSettingShowDeprecatedEntries: false,
 };
 
 /*

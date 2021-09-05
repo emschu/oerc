@@ -32,6 +32,8 @@ import {ReadMorePipe} from './read-more.pipe';
 import {SearchPipe} from './search.pipe';
 import {SearchService} from './search/search.service';
 import {UtilModule} from '../util/util.module';
+import {FormsModule} from '@angular/forms';
+import {StateService} from './state.service';
 
 @NgModule({
   imports: [
@@ -39,6 +41,7 @@ import {UtilModule} from '../util/util.module';
     HttpClientModule,
     BrowserModule,
     UtilModule,
+    FormsModule,
   ],
   declarations: [
     StatusComponent,
@@ -63,6 +66,7 @@ import {UtilModule} from '../util/util.module';
   providers: [
     ApiService,
     SearchService,
+    StateService,
   ]
 })
 export class OercClientModule {

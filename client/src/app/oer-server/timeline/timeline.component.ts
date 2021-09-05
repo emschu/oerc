@@ -22,9 +22,11 @@ import {IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, Timeli
 import {Channel, ChannelResponse, ProgramEntry} from '../entities';
 import {DataSet} from 'vis-data';
 import {DeepPartial} from 'vis-data/declarations/data-interface';
-import {Subscription} from 'rxjs';
+import {BehaviorSubject, Subscription} from 'rxjs';
 import moment, {MomentInput} from 'moment-timezone';
 import {environment} from '../../../environments/environment';
+import {skip} from 'rxjs/operators';
+import {StateService} from '../state.service';
 
 moment.locale('de');
 
@@ -39,11 +41,17 @@ export class TimelineComponent implements OnInit, OnDestroy {
   currentProgramEntry: ProgramEntry | null = null;
   isModalOpen = false;
 
+  // bound to form-switch-control + initial value
+  showDeprecatedEntries = new BehaviorSubject(this.stateService.getShowDeprecatedEntries());
+
+  // subscriptions managed by this component
   channelSubscription: Subscription | null = null;
   programSubscription: Subscription | null = null;
   loadingSubscription: Subscription | null = null;
+  showDeprecatedEntriesSubscription: Subscription | null = null;
 
-  constructor(public apiService: ApiService) {
+  constructor(public apiService: ApiService,
+              private stateService: StateService) {
     this.items = new DataSet<any>();
   }
 
@@ -56,6 +64,8 @@ export class TimelineComponent implements OnInit, OnDestroy {
     this.channelSubscription?.unsubscribe();
     this.loadingSubscription?.unsubscribe();
     this.programSubscription?.unsubscribe();
+    this.showDeprecatedEntriesSubscription?.unsubscribe();
+
     this.timeLine?.destroy();
     this.items.clear();
   }
@@ -67,30 +77,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
       console.error('Missing element #timeline');
       return;
     }
-    const today = moment().tz(environment.timezone).toDate();
-
-    this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
-      if (!programResponse) {
-        return;
-      }
-
-      const timeZoneOffset = moment(new Date()).tz(environment.timezone).utcOffset();
-      const programList: DeepPartial<any> = [];
-      programResponse.program_list.forEach(singleProgramEntry => {
-        programList.push({
-          id: singleProgramEntry.id,
-          group: singleProgramEntry.channel_id,
-          start: moment.parseZone(singleProgramEntry.start_date_time).subtract(timeZoneOffset, 'minutes'),
-          end: moment.parseZone(singleProgramEntry.end_date_time).subtract(timeZoneOffset, 'minutes'),
-          content: singleProgramEntry.title,
-          title: singleProgramEntry.title,
-          type: 'range',
-        });
-      });
-      this.items.update(programList);
-    });
-
-    this.apiService.fetchProgramForDay(today);
+    this.loadProgramItems();
 
     // create groups
     const groups: DataSet<any> = new DataSet({});
@@ -100,13 +87,20 @@ export class TimelineComponent implements OnInit, OnDestroy {
       }
       value.data.forEach(
         (singleChannel: Channel) => {
-          groups.add({id: singleChannel.id, content: singleChannel.title});
+          groups.add({
+            id: singleChannel.id,
+            content: singleChannel.title,
+            editable: false,
+            subgroupStack: false,
+            subgroupOrder: this.orderGroups
+          });
         });
     });
 
     // Configuration for the Timeline
     const options: TimelineOptions = {
       stack: false,
+      stackSubgroups: false,
       start: moment().tz(environment.timezone).toDate(),
       end: moment().tz(environment.timezone).add(2, 'hours').toDate(),
       editable: false,
@@ -144,27 +138,53 @@ export class TimelineComponent implements OnInit, OnDestroy {
     this.timeLine.on('rangechanged', this.rangeChange.bind(this));
     this.timeLine.on('doubleClick', this.itemClicked.bind(this));
 
-    // TODO replace by onClick-handler
-    const zoomInElement = document.getElementById('zoomIn');
-    const zoomOutElement = document.getElementById('zoomOut');
-    const moveLeftElement = document.getElementById('moveLeft');
-    const moveRightElement = document.getElementById('moveRight');
-    const nowTimelineElement = document.getElementById('nowTimeline');
-    if (zoomInElement) {
-      zoomInElement.onclick = this.zoomIn.bind(this);
-    }
-    if (zoomOutElement) {
-      zoomOutElement.onclick = this.zoomOut.bind(this);
-    }
-    if (moveLeftElement) {
-      moveLeftElement.onclick = this.moveLeft.bind(this);
-    }
-    if (moveRightElement) {
-      moveRightElement.onclick = this.moveRight.bind(this);
-    }
-    if (nowTimelineElement) {
-      nowTimelineElement.onclick = this.moveToNow.bind(this);
-    }
+    this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
+      this.stateService.setShowDeprecatedEntries(value);
+
+      this.items.clear();
+      this.loadProgramItems();
+    });
+  }
+
+  private loadProgramItems(): void {
+    this.programSubscription?.unsubscribe();
+
+    const today = moment().tz(environment.timezone).toDate();
+
+    this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
+      if (!programResponse) {
+        return;
+      }
+
+      const timeZoneOffset = moment(new Date()).tz(environment.timezone).utcOffset();
+      const programList: DeepPartial<any> = [];
+      programResponse.program_list.forEach(singleProgramEntry => {
+        if (singleProgramEntry.is_deprecated && !this.showDeprecatedEntries.getValue()) {
+          // skip deprecated entries, if the user wants this
+          return;
+        }
+        let subGroupId = 1;
+        let defaultClass = '';
+        if (singleProgramEntry.is_deprecated) {
+          subGroupId = 2;
+          defaultClass = 'deprecated-item';
+        }
+        programList.push({
+          id: singleProgramEntry.id,
+          group: singleProgramEntry.channel_id,
+          start: moment.parseZone(singleProgramEntry.start_date_time).subtract(timeZoneOffset, 'minutes'),
+          end: moment.parseZone(singleProgramEntry.end_date_time).subtract(timeZoneOffset, 'minutes'),
+          content: singleProgramEntry.title,
+          title: singleProgramEntry.title,
+          type: 'range',
+          subgroup: subGroupId,
+          className: defaultClass
+        });
+      });
+      this.items.update(programList);
+    });
+
+    this.apiService.fetchProgramForDay(today);
   }
 
   zoomIn(): void {
@@ -179,7 +199,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
     this.move(0.25);
   }
 
-  moveRight(e: Event): void {
+  moveRight(): void {
     this.move(-0.25);
   }
 
@@ -187,7 +207,6 @@ export class TimelineComponent implements OnInit, OnDestroy {
     if (!this.timeLine) {
       return;
     }
-
     const range: TimelineWindow = this.timeLine.getWindow();
     const interval: number = range.end.valueOf() - range.start.valueOf();
 
@@ -195,6 +214,10 @@ export class TimelineComponent implements OnInit, OnDestroy {
       range.start.valueOf() - interval * percentage,
       range.end.valueOf() - interval * percentage
     );
+  }
+
+  moveToNow(): void {
+    this.timeLine?.moveTo(new Date(), {animation: true});
   }
 
   private rangeChange(e: Event): void {
@@ -240,7 +263,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
       this.isModalOpen = false;
     }
     if (event.key === 'r' || event.key === 'ArrowRight') {
-      this.moveRight(event);
+      this.moveRight();
     }
     if (event.key === 'l' || event.key === 'ArrowLeft') {
       this.moveLeft();
@@ -253,7 +276,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
     }
   }
 
-  moveToNow(): void {
-    this.timeLine?.moveTo(new Date(), {animation: true});
+  private orderGroups(a: any, b: any): number {
+    return 0;
   }
 }
