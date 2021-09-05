@@ -31,7 +31,10 @@ import (
 func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
 	db, _ := getDb()
 	var entries []ProgramEntry
-	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, end).Preload("ImageLinks").Order("channel_id")
+	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, end).
+		Preload("ImageLinks").
+		Preload("CollisionEntries").
+		Order("channel_id")
 	if channel != nil {
 		order.Where("channel_id", channel.ID)
 	}
@@ -223,7 +226,7 @@ func getSingleProgramEntryHandler(c *gin.Context) {
 
 	db, _ := getDb()
 	var programEntry ProgramEntry
-	db.Model(ProgramEntry{}).Preload("ImageLinks").First(&programEntry, pEID)
+	db.Model(ProgramEntry{}).Preload("ImageLinks").Preload("CollisionEntries").First(&programEntry, pEID)
 	if programEntry.ID == 0 {
 		c.JSON(http.StatusNotFound, Error{Status: "404", Message: "Invalid program entry id"})
 		return
@@ -422,8 +425,11 @@ func getRecommendationsHandler(context *gin.Context) {
 	db, _ := getDb()
 	var logEntryList []Recommendation
 	db.Model(&Recommendation{}).Where(
-		"start_date_time >= ?", from).Order("start_date_time asc").Preload(
-		"ProgramEntry").Preload("ProgramEntry.ImageLinks").Find(&logEntryList)
+		"start_date_time >= ?", from).Order("start_date_time asc").
+		Preload("ProgramEntry").
+		Preload("ProgramEntry.ImageLinks").
+		Preload("ProgramEntry.CollisionEntries").
+		Find(&logEntryList)
 	context.JSON(http.StatusOK, &logEntryList)
 }
 
@@ -488,7 +494,12 @@ func getSearchHandler(context *gin.Context) {
 
 	db, _ := getDb()
 	var programEntryList []ProgramEntry
-	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).Offset(int(offset)).Limit(int(limit)).Order("start_date_time ASC").Preload("ImageLinks").Find(&programEntryList)
+	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
+		Offset(int(offset)).Limit(int(limit)).
+		Order("start_date_time ASC").
+		Preload("ImageLinks").
+		Preload("CollisionEntries").
+		Find(&programEntryList)
 
 	if len(programEntryList) == 0 {
 		context.JSON(http.StatusOK, [0]ProgramEntry{})

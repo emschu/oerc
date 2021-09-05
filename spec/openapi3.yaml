@@ -9,7 +9,7 @@ info:
   license:
     name: AGPL
     url: http://www.gnu.org/licenses/agpl-3.0.de.html
-  version: v2
+  version: v2.1
 servers:
   - url: http://127.0.0.1:8080/api/v2
     description: Ipv4 localhost server
@@ -656,6 +656,13 @@ components:
           type: string
         hash:
           type: string
+        is_deprecated:
+          type: boolean
+        collision_entries:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ProgramEntry'
 
     PingResponse:
       title: PingResponse

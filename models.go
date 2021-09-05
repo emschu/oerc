@@ -66,15 +66,17 @@ type ProgramEntry struct {
 	BaseModel
 	ManagedRecord
 
-	StartDateTime   *time.Time  `gorm:"index,not null" json:"start_date_time"`
-	EndDateTime     *time.Time  `gorm:"index,not null" json:"end_date_time"`
-	LastCheck       *time.Time  `json:"last_check"`
-	DurationMinutes int16       `json:"duration_in_minutes"`
-	Description     string      `gorm:"size:30000" json:"description"`
-	Channel         Channel     `json:"-"`
-	ChannelID       uint        `gorm:"index,not null" json:"channel_id"`
-	Tags            string      `gorm:"size:256" json:"tags"`
-	ImageLinks      []ImageLink `gorm:"foreignKey:ProgramEntryID" json:"image_links"`
+	StartDateTime    *time.Time     `gorm:"index,not null" json:"start_date_time"`
+	EndDateTime      *time.Time     `gorm:"index,not null" json:"end_date_time"`
+	LastCheck        *time.Time     `json:"last_check"`
+	DurationMinutes  int16          `json:"duration_in_minutes"`
+	Description      string         `gorm:"size:30000" json:"description"`
+	Channel          Channel        `json:"-"`
+	ChannelID        uint           `gorm:"index,not null" json:"channel_id"`
+	Tags             string         `gorm:"size:256" json:"tags"`
+	IsDeprecated     bool           `gorm:"default:false;not null" json:"is_deprecated"`
+	ImageLinks       []ImageLink    `gorm:"foreignKey:ProgramEntryID" json:"image_links"`
+	CollisionEntries []ProgramEntry `gorm:"many2many:collision_entries;null" json:"collision_entries"`
 }
 
 // ImageLink entity
