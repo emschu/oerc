@@ -16,7 +16,9 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {NgModule} from '@angular/core';
+import {LOCALE_ID, NgModule} from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeDe from '@angular/common/locales/de';
 import {BrowserModule} from '@angular/platform-browser';
 
 import {AppRoutingModule} from './app-routing.module';
@@ -26,6 +28,8 @@ import {NotFoundComponent} from './not-found/not-found.component';
 import {UtilModule} from './util/util.module';
 import { NavComponent } from './nav/nav.component';
 import { AngularPageVisibilityModule } from 'angular-page-visibility';
+
+registerLocaleData(localeDe);
 
 @NgModule({
   declarations: [
@@ -40,6 +44,7 @@ import { AngularPageVisibilityModule } from 'angular-page-visibility';
     OercClientModule,
     UtilModule,
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  providers: [{provide: LOCALE_ID, useValue: 'de'}]
 })
 export class AppModule { }

@@ -18,6 +18,13 @@
 -->
 <div id="program_timeline">
   <div class="btn-group btn-group-block menu">
+      <span class="date-range">
+      <label for="timeline_date_range_picker"><strong>Point in time</strong>
+        <input type="date" class="form-input date-range-picker" name="range_start_date" id="timeline_date_range_picker"
+               value="{{ now() }}"/>
+      </label>
+    </span>
+    <span class="divider-vert"></span>
     <button id="moveLeft" (click)="moveLeft()" class="btn btn-primary btn-sm"><i class="icon icon-arrow-left"></i> Move
       left
     </button>
@@ -31,8 +38,8 @@
       class="icon icon-arrow-right"></i></button>
     <label class="form-switch">
       <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
-             (ngModelChange)="showDeprecatedEntries.next($event)">
-      <i class="form-icon"></i> Show out-of-date/overlapping entries
+             (ngModelChange)="showDeprecatedEntries.next($event)"/>
+      <i class="form-icon"></i> Show overlapping entries
     </label>
   </div>
 </div>
@@ -51,8 +58,8 @@
         <table class="table">
           <tr>
             <td>
-              <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | date:'d.MM.y - HH:mm'}}
-              - {{ currentProgramEntry.end_date_time | date:'HH:mm'}}
+              <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | momentDate:'full-medium' }}
+              - {{ currentProgramEntry.end_date_time | momentDate:'time-medium' }}
               ({{ currentProgramEntry.duration_in_minutes }} Minutes)
             </td>
           </tr>
@@ -88,15 +95,15 @@
                 </tr>
                 <tr>
                   <td><strong>Created at</strong></td>
-                  <td>{{ currentProgramEntry.created_at  | date:'d.MM.y - HH:mm:ss' }}</td>
+                  <td>{{ currentProgramEntry.created_at  | momentDate: 'full' }}</td>
                 </tr>
                 <tr>
                   <td><strong>Updated at</strong></td>
-                  <td>{{ currentProgramEntry.updated_at  | date:'d.MM.y - HH:mm:ss' }}</td>
+                  <td>{{ currentProgramEntry.updated_at  | momentDate:'full' }}</td>
                 </tr>
                 <tr>
                   <td><strong>Last checked at</strong></td>
-                  <td>{{ currentProgramEntry.last_check  | date:'d.MM.y - HH:mm:ss' }}</td>
+                  <td>{{ currentProgramEntry.last_check  | momentDate:'full' }}</td>
                 </tr>
               </table>
             </td>

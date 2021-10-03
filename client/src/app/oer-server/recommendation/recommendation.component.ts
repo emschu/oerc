@@ -59,12 +59,11 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
     }
   }
 
-  fetchRecommendations(now: string): void {
-    const currentOffset = moment(new Date()).tz(environment.timezone).utcOffset();
-    let from: moment.Moment = moment(new Date()).tz(environment.timezone).utc(true);
+  fetchRecommendations(timeExpression: string): void {
+    let from: moment.Moment = moment().tz(environment.timezone);
     let isNow = false;
 
-    switch (now) {
+    switch (timeExpression) {
       case 'now':
         isNow = true;
         break;

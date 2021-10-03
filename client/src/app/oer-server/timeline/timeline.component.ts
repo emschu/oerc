@@ -27,8 +27,7 @@ import moment, {MomentInput} from 'moment-timezone';
 import {environment} from '../../../environments/environment';
 import {skip} from 'rxjs/operators';
 import {StateService} from '../state.service';
-
-moment.locale('de');
+import flatpickr from 'flatpickr';
 
 @Component({
   selector: 'app-oer-timeline',
@@ -40,6 +39,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
   public items: DataSet<any>;
   currentProgramEntry: ProgramEntry | null = null;
   isModalOpen = false;
+  readonly todayStr = moment.utc().tz(environment.timezone, false).format('yyyy-MM-DD HH:mm');
 
   // bound to form-switch-control + initial value
   showDeprecatedEntries = new BehaviorSubject(this.stateService.getShowDeprecatedEntries());
@@ -50,6 +50,10 @@ export class TimelineComponent implements OnInit, OnDestroy {
   loadingSubscription: Subscription | null = null;
   showDeprecatedEntriesSubscription: Subscription | null = null;
 
+  private static orderGroups(a: any, b: any): number {
+    return 0;
+  }
+
   constructor(public apiService: ApiService,
               private stateService: StateService) {
     this.items = new DataSet<any>();
@@ -58,6 +62,14 @@ export class TimelineComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initTimeLine();
     setTimeout(() => this.moveToNow(), 0);
+
+    flatpickr('#timeline_date_range_picker', {
+      now: this.now(),
+      enableTime: true,
+      allowInput: true,
+      time_24hr: true,
+      clickOpens: true
+    });
   }
 
   ngOnDestroy(): void {
@@ -92,17 +104,18 @@ export class TimelineComponent implements OnInit, OnDestroy {
             content: singleChannel.title,
             editable: false,
             subgroupStack: false,
-            subgroupOrder: this.orderGroups
+            subgroupOrder: TimelineComponent.orderGroups
           });
         });
     });
 
     // Configuration for the Timeline
     const options: TimelineOptions = {
+      locale: 'de',
       stack: false,
       stackSubgroups: false,
       start: moment().tz(environment.timezone).toDate(),
-      end: moment().tz(environment.timezone).add(2, 'hours').toDate(),
+      end: moment().tz(environment.timezone).add(4, 'hours').toDate(),
       editable: false,
       orientation: 'top',
       zoomable: true,
@@ -110,8 +123,9 @@ export class TimelineComponent implements OnInit, OnDestroy {
       clickToUse: false,
       horizontalScroll: false,
       verticalScroll: true,
+      zoomMin: 1000 * 60 * 60 * 2,
       zoomKey: 'ctrlKey',
-      zoomMax: 300000000,
+      zoomMax: 200000000,
       maxHeight: 550,
       minHeight: 450,
       moveable: false,
@@ -156,7 +170,6 @@ export class TimelineComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const timeZoneOffset = moment(new Date()).tz(environment.timezone).utcOffset();
       const programList: DeepPartial<any> = [];
       programResponse.program_list.forEach(singleProgramEntry => {
         if (singleProgramEntry.is_deprecated && !this.showDeprecatedEntries.getValue()) {
@@ -172,8 +185,8 @@ export class TimelineComponent implements OnInit, OnDestroy {
         programList.push({
           id: singleProgramEntry.id,
           group: singleProgramEntry.channel_id,
-          start: moment.parseZone(singleProgramEntry.start_date_time).subtract(timeZoneOffset, 'minutes'),
-          end: moment.parseZone(singleProgramEntry.end_date_time).subtract(timeZoneOffset, 'minutes'),
+          start: moment.parseZone(singleProgramEntry.start_date_time),
+          end: moment.parseZone(singleProgramEntry.end_date_time),
           content: singleProgramEntry.title,
           title: singleProgramEntry.title,
           type: 'range',
@@ -276,7 +289,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
     }
   }
 
-  private orderGroups(a: any, b: any): number {
-    return 0;
+  now(): string {
+    return this.todayStr;
   }
 }

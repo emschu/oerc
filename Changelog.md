@@ -6,6 +6,7 @@
   - `UPDATE program_entries SET start_date_time = start_date_time - interval '2 hours' where channel_family_id = 1;`
 - Package updates
 - Improve recommendation quality
+- Fixing timezone/localization issues in browser client
 
 ## 0.9.11 - 2021/07/31
 - Integration of GitHub CI
