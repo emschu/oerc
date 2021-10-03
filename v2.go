@@ -421,15 +421,22 @@ func getRecommendationsHandler(context *gin.Context) {
 		}
 	}
 	from = from.In(location)
+	threeDaysInFuture := from.Add(48 * time.Hour) // maximum
+	fourHoursBefore := from.Add(-4 * time.Hour)   // minimum
 
 	db := getDb()
 	var logEntryList []Recommendation
-	db.Model(&Recommendation{}).Where(
-		"start_date_time >= ?", from).Order("start_date_time asc").
+	db.Debug().
+		Model(&Recommendation{}).
+		Select("recommendations.*").
+		Joins("LEFT JOIN program_entries ON (recommendations.program_entry_id = program_entries.id)").
+		Where("recommendations.start_date_time >= ? AND recommendations.start_date_time <= ? AND program_entries.start_date_time >= ?", fourHoursBefore, threeDaysInFuture, from).
+		Order("recommendations.start_date_time asc").
 		Preload("ProgramEntry").
 		Preload("ProgramEntry.ImageLinks").
 		Preload("ProgramEntry.CollisionEntries").
 		Find(&logEntryList)
+
 	context.JSON(http.StatusOK, &logEntryList)
 }
 

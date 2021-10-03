@@ -264,7 +264,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		}
 		icalLink := ardHostWithPrefix + icalHref
 
-		icalContent, err := handleIcal(icalLink)
+		icalContent, err := parseStartAndEndDateTimeFromIcal(icalLink)
 		if icalContent == nil || err != nil {
 			appLog(fmt.Sprintf("Problem fetching ical at link '%s'", icalLink))
 			return
@@ -361,7 +361,6 @@ func fetchTvShowsARD(db *gorm.DB, channelFamily *ChannelFamily) {
 	// Create a Collector specifically for Shopify
 	c := ardCollector()
 
-	// var counter = 0
 	// Create a callback on the XPath query searching for the URLs
 	c.OnHTML(".az-slick > .box > a", func(e *colly.HTMLElement) {
 		var link = e.Attr("href")
@@ -540,8 +539,8 @@ type ICalContent struct {
 	endDate   time.Time
 }
 
-// handleIcal method to parse a plain ical file data just for DTSTART and DTEND. Needed for ARD only atm.
-func handleIcal(targetURL string) (*ICalContent, error) {
+// parseStartAndEndDateTimeFromIcal method to parse a plain ical file data just for DTSTART and DTEND. Needed for ARD only atm.
+func parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalContent, error) {
 	requestHeaders := map[string]string{"Accept": "text/html", "Host": "programm.ard.de"}
 
 	icalContent, err := doGetRequest(targetURL, requestHeaders, 3)
@@ -557,14 +556,15 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 	var hasStart = false
 	var hasEnd = false
 	var content = ICalContent{}
+	const iCalDateLayout = "20060102T150405"
+	_, zoneOffsetInSecs := time.Now().In(location).Zone()
+	timeZoneOffset := time.Duration(-zoneOffsetInSecs) * time.Second
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		const iCalDateLayout = "20060102T150405"
 		if !hasStart && strings.HasPrefix(line, "DTSTART;") {
 			startDate := strings.Replace(line, "DTSTART;TZID=Europe/Berlin:", "", 1)
 			content.startDate, err = time.Parse(iCalDateLayout, startDate)
-			content.startDate = content.startDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.\n", icalContent, err))
 			} else {
@@ -574,7 +574,6 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 		if !hasEnd && strings.HasPrefix(line, "DTEND;") {
 			endDate := strings.Replace(line, "DTEND;TZID=Europe/Berlin:", "", 1)
 			content.endDate, err = time.Parse(iCalDateLayout, endDate)
-			content.endDate = content.endDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.\n", icalContent, err))
 			} else {
@@ -582,11 +581,17 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 			}
 		}
 		if hasStart && hasEnd {
+			// its important to subtract this offset and set the correct time zone here
+			content.startDate = content.startDate.Add(timeZoneOffset).In(location)
+			content.endDate = content.endDate.Add(timeZoneOffset).In(location)
 			break
 		}
 	}
+	if !hasStart || !hasEnd {
+		return nil, errors.New("Could not find start and/or end date in supplied ical content")
+	}
 	if content.startDate.IsZero() || content.endDate.IsZero() {
-		return nil, errors.New("Empty dates detected in ical content. Probably a perser error")
+		return nil, errors.New("Empty dates detected in ical content. Probably a parser error")
 	}
 	return &content, nil
 }

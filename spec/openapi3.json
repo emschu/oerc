@@ -655,7 +655,7 @@
         "operationId" : "recommendationsGET",
         "parameters" : [ {
           "allowEmptyValue" : true,
-          "description" : "from, RFC3339 format, default start of today",
+          "description" : "from, RFC3339 format, default start of today, utc is expected serverside",
           "explode" : true,
           "in" : "query",
           "name" : "from",

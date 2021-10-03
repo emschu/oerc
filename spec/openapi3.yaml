@@ -415,7 +415,7 @@ paths:
       parameters:
           - name: from
             in: query
-            description: from, RFC3339 format, default start of today
+            description: from, RFC3339 format, default start of today, utc is expected serverside
             allowEmptyValue: true
             schema:
               type: string

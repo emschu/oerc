@@ -53,7 +53,7 @@ func TestTrim(t *testing.T) {
 }
 
 func TestIcal(t *testing.T) {
-	content, err := handleIcal("https://programm.ard.de/ICalendar/iCal---Sendung?sendung=281063652013560")
+	content, err := parseStartAndEndDateTimeFromIcal("https://programm.ard.de/ICalendar/iCal---Sendung?sendung=281063652013560")
 	if err != nil {
 		t.Errorf("Error during fetch of ical content '%s'", err)
 	}

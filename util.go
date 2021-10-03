@@ -388,11 +388,8 @@ func isRecentlyFetched() bool {
 		return false
 	}
 	set := getSetting(settingKeyLastFetch)
-	if set != nil && set.ID != 0 {
+	if set != nil && set.ID != 0 && len(set.Value) > 0 {
 		lastUpdateTime, err := time.Parse(time.RFC3339, set.Value)
-		if len(set.Value) == 0 {
-			return false
-		}
 		if err != nil {
 			log.Printf("Could not parse '%s' as date", set.Value)
 			return false

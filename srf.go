@@ -213,6 +213,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		response, err := doGetRequest(programEntry.URL, requestHeaders, 3)
 		if response == nil || err != nil {
 			log.Printf("Problem fetching URL '%s' %v.\n", programEntry.URL, err)
+			return
 		}
 		reader := strings.NewReader(*response)
 		doc, err := goquery.NewDocumentFromReader(reader)
