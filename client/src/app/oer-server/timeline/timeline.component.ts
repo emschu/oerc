@@ -19,15 +19,30 @@
 import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
 import {IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
-import {Channel, ChannelResponse, ProgramEntry} from '../entities';
+import {Channel, ChannelResponse, ProgramEntry, ProgramResponse} from '../entities';
 import {DataSet} from 'vis-data';
 import {DeepPartial} from 'vis-data/declarations/data-interface';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import moment, {MomentInput} from 'moment-timezone';
 import {environment} from '../../../environments/environment';
-import {skip} from 'rxjs/operators';
+import {first, skip, take} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
+import FlatPickrInstance = flatpickr.Instance;
+
+interface SubgroupMappingChannelLevel {
+  [key: number]: ProgramEntry[];
+}
+
+interface SubgroupMappingEntryLevel {
+  [key: string]: number;
+}
+
+interface GroupOrder {
+  groupId: number | string;
+  title: string;
+  order: number;
+}
 
 @Component({
   selector: 'app-oer-timeline',
@@ -39,7 +54,6 @@ export class TimelineComponent implements OnInit, OnDestroy {
   public items: DataSet<any>;
   currentProgramEntry: ProgramEntry | null = null;
   isModalOpen = false;
-  readonly todayStr = moment.utc().tz(environment.timezone, false).format('yyyy-MM-DD HH:mm');
 
   // bound to form-switch-control + initial value
   showDeprecatedEntries = new BehaviorSubject(this.stateService.getShowDeprecatedEntries());
@@ -49,10 +63,9 @@ export class TimelineComponent implements OnInit, OnDestroy {
   programSubscription: Subscription | null = null;
   loadingSubscription: Subscription | null = null;
   showDeprecatedEntriesSubscription: Subscription | null = null;
-
-  private static orderGroups(a: any, b: any): number {
-    return 0;
-  }
+  // private latestSelectedDate: Date | null = null;
+  private dateTimePickrInstance: FlatPickrInstance | null = null;
+  private zoneOffset = 0;
 
   constructor(public apiService: ApiService,
               private stateService: StateService) {
@@ -60,16 +73,34 @@ export class TimelineComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.zoneOffset = moment().tz(environment.timezone).utcOffset();
     this.initTimeLine();
     setTimeout(() => this.moveToNow(), 0);
 
-    flatpickr('#timeline_date_range_picker', {
-      now: this.now(),
-      enableTime: true,
-      allowInput: true,
-      time_24hr: true,
-      clickOpens: true
+    this.apiService.statusSubject.pipe(skip(1), take(1)).subscribe(value => {
+      this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
+        now: moment().tz(environment.timezone).toISOString(),
+        enableTime: true,
+        allowInput: true,
+        time_24hr: true,
+        clickOpens: true,
+        altFormat: 'd.m.Y H:m',
+        defaultHour: 18,
+        enableSeconds: false,
+        minuteIncrement: 15,
+        mode: 'single',
+        defaultDate: moment().tz(environment.timezone).toISOString(),
+        minDate: moment(value?.data_start_time).tz(environment.timezone).utcOffset(this.zoneOffset).format(),
+        maxDate: moment(value?.data_end_time).tz(environment.timezone).utcOffset(this.zoneOffset).format(),
+        onChange: (selectedDates: Date[], dateStr: string, instance: FlatPickrInstance) => {
+          if (selectedDates.length === 0) {
+            return;
+          }
+          this.timeLine?.moveTo(selectedDates[0].toISOString(), {animation: true});
+        },
+      }) as FlatPickrInstance;
     });
+    this.apiService.updateStatus();
   }
 
   ngOnDestroy(): void {
@@ -93,7 +124,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
 
     // create groups
     const groups: DataSet<any> = new DataSet({});
-    this.channelSubscription = this.apiService.channels().subscribe((value: ChannelResponse) => {
+    this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (!value) {
         return;
       }
@@ -104,19 +135,25 @@ export class TimelineComponent implements OnInit, OnDestroy {
             content: singleChannel.title,
             editable: false,
             subgroupStack: false,
-            subgroupOrder: TimelineComponent.orderGroups
+            order: this.getGroupOrder(singleChannel),
+            subgroupOrder: () => 0,
           });
         });
     });
 
     // Configuration for the Timeline
+    const now = moment().tz(environment.timezone).utcOffset(this.zoneOffset);
     const options: TimelineOptions = {
+      align: 'center',
       locale: 'de',
       stack: false,
       stackSubgroups: false,
-      start: moment().tz(environment.timezone).toDate(),
-      end: moment().tz(environment.timezone).add(4, 'hours').toDate(),
-      editable: false,
+      start: now.clone().subtract(3, 'hours').format(),
+      end: now.clone().add(3, 'hours').format(),
+      timeAxis: {scale: 'minute', step: 15},
+      moment: (date: MomentInput | undefined) => {
+        return moment(date).tz(environment.timezone).utcOffset(this.zoneOffset);
+      },
       orientation: 'top',
       zoomable: true,
       showCurrentTime: true,
@@ -133,9 +170,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
       multiselectPerGroup: false,
       rtl: false,
       selectable: true,
-      moment: (date: MomentInput) => {
-        return moment.utc(date).tz(environment.timezone, false);
-      },
+      editable: false,
       margin: {
         item: 5,
         axis: 1
@@ -160,6 +195,36 @@ export class TimelineComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * TODO: make configuration option
+   * @param singleChannel
+   * @private
+   */
+  private getGroupOrder(singleChannel: Channel): number {
+    let i = 0;
+    const channelMap = new Map<number, number>([
+      [1, i++],
+      [16, i++],
+      [9, i++],
+      [5, i++],
+      [20, i++],
+      [21, i++],
+      [17, i++],
+      [18, i++],
+      [14, i++],
+      [13, i++],
+      [2, i++],
+      [12, i++],
+      [11, i++],
+      [4, i++],
+      [19, i++],
+    ]);
+    if (channelMap.has(singleChannel.id)) {
+      return channelMap.get(singleChannel.id) as number;
+    }
+    return 100;
+  }
+
   private loadProgramItems(): void {
     this.programSubscription?.unsubscribe();
 
@@ -169,6 +234,13 @@ export class TimelineComponent implements OnInit, OnDestroy {
       if (!programResponse) {
         return;
       }
+      this.apiService.isLoadingSubject.next(true);
+
+      let subgroupMappingOfEntries: SubgroupMappingEntryLevel = {};
+      if (this.showDeprecatedEntries.getValue()) {
+        // this is pretty costly and memory intensive...
+        subgroupMappingOfEntries = this.calculateSubgroupMapping(programResponse);
+      }
 
       const programList: DeepPartial<any> = [];
       programResponse.program_list.forEach(singleProgramEntry => {
@@ -176,17 +248,20 @@ export class TimelineComponent implements OnInit, OnDestroy {
           // skip deprecated entries, if the user wants this
           return;
         }
-        let subGroupId = 1;
+        let subGroupId = 1; // default
         let defaultClass = '';
         if (singleProgramEntry.is_deprecated) {
-          subGroupId = 2;
+          if (subgroupMappingOfEntries[singleProgramEntry.id] === undefined) {
+            console.error('unknown subgroup id for entry with id #' + singleProgramEntry.id);
+          }
+          subGroupId = subgroupMappingOfEntries[singleProgramEntry.id] + 1;
           defaultClass = 'deprecated-item';
         }
         programList.push({
           id: singleProgramEntry.id,
           group: singleProgramEntry.channel_id,
-          start: moment.parseZone(singleProgramEntry.start_date_time),
-          end: moment.parseZone(singleProgramEntry.end_date_time),
+          start: moment(singleProgramEntry.start_date_time).tz(environment.timezone).utcOffset(this.zoneOffset),
+          end: moment(singleProgramEntry.end_date_time).tz(environment.timezone).utcOffset(this.zoneOffset),
           content: singleProgramEntry.title,
           title: singleProgramEntry.title,
           type: 'range',
@@ -195,9 +270,52 @@ export class TimelineComponent implements OnInit, OnDestroy {
         });
       });
       this.items.update(programList);
+      setTimeout(() => {
+        this.apiService.isLoadingSubject.next(false);
+      }, 500);
     });
 
     this.apiService.fetchProgramForDay(today);
+  }
+
+  private calculateSubgroupMapping(programResponse: ProgramResponse): SubgroupMappingEntryLevel {
+    // helper function
+    const groupBy = (xs: any, key: any): {} => {
+      return xs.reduce((rv: any, x: any) => {
+        (rv[x[key]] = rv[x[key]] || []).push(x);
+        return rv;
+      }, {});
+    };
+    const subgroupChannelMap: SubgroupMappingChannelLevel = [];
+    const deprecatedEntries = groupBy(programResponse.program_list.filter(item => item.is_deprecated), 'channel_id');
+    Object.entries(deprecatedEntries).forEach((value) => {
+      subgroupChannelMap[parseInt(value[0], 10)] = (value[1] as ProgramEntry[]).sort((a, b) => {
+        return moment(b.start_date_time).unix() - moment(a.start_date_time).unix();
+      });
+    });
+    const subgroupEntryMap: SubgroupMappingEntryLevel = {};
+
+    for (const key of Object.keys(deprecatedEntries)) {
+      const channelId = parseInt(key, 10);
+      const deprecatedEntriesCountInChannel = subgroupChannelMap[channelId].length;
+      for (let i = 0; i < deprecatedEntriesCountInChannel; i++) {
+        if (!subgroupEntryMap[subgroupChannelMap[channelId][i].id]) {
+          subgroupEntryMap[subgroupChannelMap[channelId][i].id] = 1;
+        } else {
+          subgroupEntryMap[subgroupChannelMap[channelId][i].id] += 1;
+        }
+        if (i + 1 < deprecatedEntriesCountInChannel) {
+          if (subgroupChannelMap[channelId][i].end_date_time > subgroupChannelMap[channelId][i + 1].start_date_time) {
+            if (subgroupEntryMap[subgroupChannelMap[channelId][i].id] > 1) {
+              subgroupEntryMap[subgroupChannelMap[channelId][i + 1].id] = 0;
+            } else {
+              subgroupEntryMap[subgroupChannelMap[channelId][i + 1].id] = 1;
+            }
+          }
+        }
+      }
+    }
+    return subgroupEntryMap;
   }
 
   zoomIn(): void {
@@ -230,7 +348,8 @@ export class TimelineComponent implements OnInit, OnDestroy {
   }
 
   moveToNow(): void {
-    this.timeLine?.moveTo(new Date(), {animation: true});
+    this.dateTimePickrInstance?.setDate(moment().tz(environment.timezone).utcOffset(this.zoneOffset).format());
+    this.dateTimePickrInstance?._debouncedChange();
   }
 
   private rangeChange(e: Event): void {
@@ -287,9 +406,5 @@ export class TimelineComponent implements OnInit, OnDestroy {
     if (event.key === 'o') {
       this.zoomOut();
     }
-  }
-
-  now(): string {
-    return this.todayStr;
   }
 }
