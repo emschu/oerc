@@ -28,8 +28,8 @@
     <td><strong>TV shows</strong></td>
     <td>{{ currentStatus.tv_show_count }}</td>
     <td><strong>Data time range</strong></td>
-    <td *ngIf="currentStatus != null">{{ currentStatus.data_start_time | momentDate: 'full' }}
-      - {{ currentStatus.data_end_time | momentDate : 'full' }}</td><td *ngElse></td>
+    <td *ngIf="currentStatus != null">{{ currentStatus.data_start_time | momentDate: 'full-medium' }}
+      - {{ currentStatus.data_end_time | momentDate : 'full-medium' }}</td><td *ngElse></td>
   </tr>
   </tbody>
 </table>

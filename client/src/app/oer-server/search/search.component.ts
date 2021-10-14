@@ -23,6 +23,7 @@ import {ProgramEntry} from '../entities';
 import {AbstractReadMoreComponent} from '../AbstractReadMoreComponent';
 import {SearchService} from './search.service';
 import {Observable, Subscription} from 'rxjs';
+import {first} from 'rxjs/operators';
 
 @Component({
   selector: 'app-search',
@@ -48,7 +49,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
   }
 
   private initSearch(): void {
-    this.activeRoute.queryParamMap.subscribe((value) => {
+    this.activeRoute.queryParamMap.pipe(first()).subscribe((value) => {
       const searchKey = value.get('query') ?? '';
       this.searchString = searchKey;
       this.searchService.lastSearchStringSubject.next(searchKey);

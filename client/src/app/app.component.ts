@@ -50,6 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     moment.locale('de');
+    this.apiService.init();
     this.isLiveSubscription = this.apiService.isLiveSubject.subscribe(value => {
       if (this.inited && !this.isLive && value !== null) {
         window.location.reload();
