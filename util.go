@@ -96,6 +96,7 @@ func getDb() *gorm.DB {
 				DisableAutomaticPing:   false,
 				Logger:                 gormLogger,
 				PrepareStmt:            true,
+				FullSaveAssociations:   true,
 			})
 			if err != nil {
 				log.Printf("Error connecting to the database. Is it running and configured correctly?\n")
@@ -260,6 +261,16 @@ func generateDateRange(daysInPast, daysInFuture uint) *[]time.Time {
 	sort.Slice(dates, func(i, j int) bool {
 		return dates[i].Before(dates[j])
 	})
+	return &dates
+}
+
+// generateDateRangeBetweenDates: get a slice of dates between a and b
+func generateDateRangeBetweenDates(startDate time.Time, endDate time.Time) *[]time.Time {
+	var dates []time.Time
+	daysBetween := endDate.Sub(startDate).Hours() / 24
+	for i := 1; i <= int(daysBetween); i++ {
+		dates = append(dates, startDate.AddDate(0, 0, i))
+	}
 	return &dates
 }
 

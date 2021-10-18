@@ -48,7 +48,7 @@ var (
 	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
 	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
 	ardIcalLinkMatcher      = regexp.MustCompile(`^/ICalendar/iCal---Sendung\?sendung=[0-9]+`)
-	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9]+\.(jpg|png))|((https?://programm.ard.de)?/files/.*\.(jpg|png)))`)
+	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9]+\.(jpe?g|png))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png)))`)
 	ardMainTags             = map[string]string{
 		"Film":            "Film/Alle-Filme/Alle-Filme",
 		"Dokumentation":   "Dokus--Reportagen/Alle-Dokumentationen/Startseite",

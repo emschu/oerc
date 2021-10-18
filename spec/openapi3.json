@@ -1054,6 +1054,14 @@
             "format" : "int64",
             "type" : "integer"
           },
+          "page_count" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "entry_count" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
           "data" : {
             "items" : {
               "$ref" : "#/components/schemas/LogEntry"

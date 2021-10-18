@@ -321,13 +321,13 @@ func getStatusObject() *StatusResponse {
 
 	var firstEntryStr string
 	if firstEntry.IsZero() {
-		firstEntryStr = "-"
+		firstEntryStr = ""
 	} else {
 		firstEntryStr = firstEntry.Format(time.RFC3339)
 	}
 	var lastEntryStr string
 	if lastEntry.IsZero() {
-		lastEntryStr = "-"
+		lastEntryStr = ""
 	} else {
 		lastEntryStr = lastEntry.Format(time.RFC3339)
 	}
@@ -358,8 +358,11 @@ func getChannelsHandler(c *gin.Context) {
 func getLogEntriesHandler(context *gin.Context) {
 	db := getDb()
 	var logEntryList []LogEntry
+	var entryCount, pageCount int64
+	db.Model(&LogEntry{}).Count(&entryCount)
+	pageCount = int64(math.Ceil(float64(entryCount)))
 	db.Model(&LogEntry{}).Limit(500).Order("id desc").Find(&logEntryList)
-	context.JSON(http.StatusOK, LogEntriesResponse{&logEntryList, int64(len(logEntryList)), 0})
+	context.JSON(http.StatusOK, LogEntriesResponse{&logEntryList, int64(len(logEntryList)), 0, pageCount, entryCount})
 }
 
 func getSingleLogEntriesHandler(context *gin.Context) {

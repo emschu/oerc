@@ -697,6 +697,12 @@ components:
         page:
           type: integer
           format: int64
+        page_count:
+          type: integer
+          format: int64
+        entry_count:
+          type: integer
+          format: int64
         data:
           type: array
           items:
