@@ -24,19 +24,19 @@ import (
 )
 
 func TestGenerateDateRange(t *testing.T) {
-	if len(*generateDateRange(0, 0)) != 1 {
+	if len(*generateDateRangeInPastAndFuture(0, 0)) != 1 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(1, 0)) != 2 {
+	if len(*generateDateRangeInPastAndFuture(1, 0)) != 2 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(0, 1)) != 2 {
+	if len(*generateDateRangeInPastAndFuture(0, 1)) != 2 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(1, 1)) != 3 {
+	if len(*generateDateRangeInPastAndFuture(1, 1)) != 3 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(10, 10)) != 21 {
+	if len(*generateDateRangeInPastAndFuture(10, 10)) != 21 {
 		t.Error("invalid date range generated")
 	}
 }

@@ -41,7 +41,7 @@ type ManagedRecord struct {
 	Title           string        `gorm:"size:500" json:"title"`
 	URL             string        `gorm:"size:1500" json:"url"`
 	Hash            string        `gorm:"type:varchar(32);unique_index;not null" json:"hash"`
-	TechnicalID     string        `gorm:"type:varchar(64);null" json:"technical_id"`
+	TechnicalID     string        `gorm:"index;type:varchar(64);null" json:"technical_id"`
 	Homepage        string        `gorm:"size:1500" json:"homepage"`
 	ChannelFamily   ChannelFamily `json:"-"`
 	ChannelFamilyID uint          `gorm:"index" json:"channel_family_id"`
@@ -66,17 +66,18 @@ type ProgramEntry struct {
 	BaseModel
 	ManagedRecord
 
-	StartDateTime    *time.Time     `gorm:"index,not null" json:"start_date_time"`
-	EndDateTime      *time.Time     `gorm:"index,not null" json:"end_date_time"`
-	LastCheck        *time.Time     `json:"last_check"`
-	DurationMinutes  int16          `json:"duration_in_minutes"`
-	Description      string         `gorm:"size:30000" json:"description"`
-	Channel          Channel        `json:"-"`
-	ChannelID        uint           `gorm:"index,not null" json:"channel_id"`
-	Tags             string         `gorm:"size:256" json:"tags"`
-	IsDeprecated     bool           `gorm:"default:false;not null" json:"is_deprecated"`
-	ImageLinks       []ImageLink    `gorm:"foreignKey:ProgramEntryID" json:"image_links"`
-	CollisionEntries []ProgramEntry `gorm:"many2many:collision_entries;null" json:"collision_entries"`
+	StartDateTime      *time.Time     `gorm:"index;not null" json:"start_date_time"`
+	EndDateTime        *time.Time     `gorm:"index;not null" json:"end_date_time"`
+	LastCheck          *time.Time     `json:"last_check"`
+	DurationMinutes    int16          `json:"duration_in_minutes"`
+	Description        string         `gorm:"size:30000" json:"description"`
+	Channel            Channel        `json:"-"`
+	ChannelID          uint           `gorm:"index;not null" json:"channel_id"`
+	Tags               string         `gorm:"size:256" json:"tags"`
+	IsDeprecated       bool           `gorm:"default:false;not null" json:"is_deprecated"`
+	ImageLinks         []ImageLink    `gorm:"foreignKey:ProgramEntryID" json:"image_links"`
+	CollisionEntries   []ProgramEntry `gorm:"many2many:collision_entries;null" json:"collision_entries"`
+	LastCollisionCheck *time.Time     `gorm:"nullable" json:"-"`
 }
 
 // ImageLink entity
@@ -97,7 +98,7 @@ type LogEntry struct {
 // Settings used to store values
 type Settings struct {
 	ID         uint   `gorm:"primary_key" json:"id"`
-	SettingKey string `gorm:"type:varchar(64)" json:"key"`
+	SettingKey string `gorm:"index,type:varchar(64)" json:"key"`
 	Value      string `gorm:"type:varchar(1024)" json:"value"`
 }
 
@@ -107,7 +108,7 @@ type Recommendation struct {
 	CreatedAt      *time.Time   `json:"created_at"`
 	ProgramEntry   ProgramEntry `json:"program_entry"`
 	ProgramEntryID uint         `gorm:"unique_index;not null" json:"program_entry_id"`
-	ChannelID      uint         `json:"channel_id"`
-	StartDateTime  *time.Time   `json:"start_date_time"`
-	Keywords       string       `gorm:"size:500" json:"keywords"`
+	ChannelID      uint         `gorm:"index;not null" json:"channel_id"`
+	StartDateTime  *time.Time   `gorm:"index;not null" json:"start_date_time"`
+	Keywords       string       `gorm:"size:1024" json:"keywords"`
 }

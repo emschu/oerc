@@ -60,7 +60,7 @@ func ParseORF() {
 		fetchTvShowsORF(db, channelFamily)
 	}
 
-	times := *generateDateRange(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
 
 	// import program entries for the configured date range
 	if GetAppConf().EnableProgramEntryCollection {

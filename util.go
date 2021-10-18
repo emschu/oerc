@@ -240,8 +240,8 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 	return nil, nil
 }
 
-// generateDateRange date range generator for today +- given days
-func generateDateRange(daysInPast, daysInFuture uint) *[]time.Time {
+// generateDateRangeInPastAndFuture date range generator for today +- given days
+func generateDateRangeInPastAndFuture(daysInPast, daysInFuture uint) *[]time.Time {
 	var dates []time.Time
 	year, month, day := time.Now().Date()
 	today, _ := time.Parse("2006-01-02T15:04:05", fmt.Sprintf("%04d-%02d-%02dT00:00:00", year, int8(month), day))

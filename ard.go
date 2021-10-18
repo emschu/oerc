@@ -130,7 +130,7 @@ func ParseARD() {
 		fetchTvShowsARD(db, channelFamily)
 	}
 
-	times := *generateDateRange(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
 
 	if GetAppConf().EnableProgramEntryCollection {
 		// import program entries for the configured date range
@@ -202,6 +202,8 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		// subtitle (nested span) is removed from title and added to description
 		title = trimAndSanitizeString(strings.Replace(title, subtitle, "", 1))
 		programEntry.Title = title
+		// reset description field
+		programEntry.Description = ""
 		if len(subtitle) > 0 {
 			programEntry.Description = subtitle + ". "
 		}
@@ -286,16 +288,15 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		descrSelector := fmt.Sprintf("#mehr-%s .eventText", programEntry.TechnicalID)
 		desc := element.DOM.Find(descrSelector)
 		text := desc.Text()
-		programEntry.Description += trimAndSanitizeString(text)
+		if !strings.HasPrefix(programEntry.Description, "Keine weiteren Informationen") {
+			programEntry.Description += trimAndSanitizeString(text)
+		}
 
 		if len(programEntry.Description) == 0 {
 			// try an alternative description location
 			descr2Selector := fmt.Sprintf("div.detail-top div.eventText")
 			desc = element.DOM.Find(descr2Selector)
-			if !strings.HasPrefix(programEntry.Description, "Keine weiteren Informationen") {
-				programEntry.Description = trimAndSanitizeString(desc.Text())
-			}
-
+			programEntry.Description = trimAndSanitizeString(desc.Text())
 			if len(programEntry.Description) == 0 {
 				programEntry.Description = "Keine weiteren Informationen"
 			}

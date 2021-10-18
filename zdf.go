@@ -67,7 +67,7 @@ func ParseZDF() {
 		return
 	}
 
-	times := *generateDateRange(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
 	if GetAppConf().EnableTVShowCollection {
 		fetchTvShowsZDF(db, channelFamily)
 	}

@@ -68,8 +68,8 @@ func ParseSRF() {
 			appLog(warnMsg)
 			daysInPast = 15
 		}
-		times := *generateDateRange(daysInPast, daysInFuture)
-		pool := pond.New(4, 1000, pond.IdleTimeout(60*60*time.Second))
+		times := *generateDateRangeInPastAndFuture(daysInPast, daysInFuture)
+		pool := pond.New(runtime.NumCPU(), 1000, pond.IdleTimeout(60*60*time.Second))
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
 				if int(time.Since(day).Hours()/24) <= 30 {
