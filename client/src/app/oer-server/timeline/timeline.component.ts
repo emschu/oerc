@@ -16,9 +16,9 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
-import {IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
+import {IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline/esnext';
 import {Channel, ChannelResponse, ProgramEntry, ProgramResponse} from '../entities';
 import {DataSet} from 'vis-data';
 import {DeepPartial} from 'vis-data/declarations/data-interface';
@@ -29,6 +29,7 @@ import {first, skip, take} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import FlatPickrInstance = flatpickr.Instance;
+import {German} from 'flatpickr/dist/l10n/de';
 
 interface SubgroupMappingChannelLevel {
   [key: number]: ProgramEntry[];
@@ -49,7 +50,7 @@ interface GroupOrder {
   templateUrl: './timeline.component.html',
   styleUrls: ['./timeline.component.scss']
 })
-export class TimelineComponent implements OnInit, OnDestroy {
+export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   public timeLine: Timeline | null = null;
   public items: DataSet<any>;
   currentProgramEntry: ProgramEntry | null = null;
@@ -72,33 +73,58 @@ export class TimelineComponent implements OnInit, OnDestroy {
     this.items = new DataSet<any>();
   }
 
+  private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
+
   ngOnInit(): void {
     this.zoneOffset = moment().tz(environment.timezone).utcOffset();
     this.initTimeLine();
-    setTimeout(() => this.moveToNow(), 0);
 
     this.apiService.statusSubject.pipe(skip(1), take(1)).subscribe(value => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
-        now: moment().tz(environment.timezone).toISOString(),
+        locale: German,
+        now: moment().tz(environment.timezone).format(this._datePickerFormat),
         enableTime: true,
         allowInput: true,
         time_24hr: true,
         clickOpens: true,
-        altFormat: 'd.m.Y H:m',
+        dateFormat: this._datePickerFormat,
+        altFormat: this._datePickerFormat,
         defaultHour: 18,
         enableSeconds: false,
         minuteIncrement: 15,
         mode: 'single',
-        defaultDate: moment().tz(environment.timezone).toISOString(),
-        minDate: moment(value?.data_start_time).tz(environment.timezone).utcOffset(this.zoneOffset).format(),
-        maxDate: moment(value?.data_end_time).tz(environment.timezone).utcOffset(this.zoneOffset).format(),
+        defaultDate: moment().tz(environment.timezone).utcOffset(this.zoneOffset).format(this._datePickerFormat),
         onChange: (selectedDates: Date[], dateStr: string, instance: FlatPickrInstance) => {
           if (selectedDates.length === 0) {
             return;
           }
-          this.timeLine?.moveTo(selectedDates[0].toISOString(), {animation: true});
+          if (this.timeLine != null) {
+            this.timeLine.moveTo(moment(selectedDates[0]).toISOString(false), {animation: true});
+          }
+        },
+        parseDate: (dateString, format) => {
+          const timezonedDate = moment(dateString, format).tz(environment.timezone);
+          return new Date(
+            timezonedDate.year(),
+            timezonedDate.month(),
+            timezonedDate.date(),
+            timezonedDate.hours(),
+            timezonedDate.minutes()
+          );
+        },
+        formatDate: (date, format) => {
+          return moment(date).format(format);
         },
       }) as FlatPickrInstance;
+
+      if (value?.data_start_time && value?.data_end_time) {
+        this.dateTimePickrInstance.set({
+          minDate: moment(value?.data_start_time).format(this._datePickerFormat),
+          maxDate: moment(value?.data_end_time).format(this._datePickerFormat),
+        });
+      }
+
+      this.moveToNow();
     });
     this.apiService.updateStatus();
   }
@@ -111,6 +137,11 @@ export class TimelineComponent implements OnInit, OnDestroy {
 
     this.timeLine?.destroy();
     this.items.clear();
+  }
+
+  ngAfterViewInit(): void {
+    // this.moveToNow.bind(this);
+    this.moveToNow();
   }
 
   initTimeLine(): void {
@@ -139,6 +170,14 @@ export class TimelineComponent implements OnInit, OnDestroy {
             subgroupOrder: () => 0,
           });
         });
+      // const groupOrder: GroupOrder[] = [];
+      // groups.stream().toEntryArray().forEach((item, index) => {
+      //   if (item[1].id === 16) {
+      //     index = 2;
+      //   }
+      //   groupOrder.push({groupId: item[1].id, order: index, title: item[1].content});
+      // });
+      // console.log(groupOrder);
     });
 
     // Configuration for the Timeline
@@ -348,8 +387,13 @@ export class TimelineComponent implements OnInit, OnDestroy {
   }
 
   moveToNow(): void {
-    this.dateTimePickrInstance?.setDate(moment().tz(environment.timezone).utcOffset(this.zoneOffset).format());
+    this.dateTimePickrInstance?.setDate(moment().format(this._datePickerFormat), false);
     this.dateTimePickrInstance?._debouncedChange();
+
+    // this.timeLine?.setWindow(
+    //   currentDate.clone().add(3, 'hours').format(),
+    //   currentDate.clone().subtract(3, 'hour').format(),
+    // );
   }
 
   private rangeChange(e: Event): void {

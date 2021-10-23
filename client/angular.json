@@ -43,8 +43,8 @@
             "optimization": false,
             "namedChunks": true,
             "allowedCommonJsDependencies": [
-              "vis-timeline",
-              "moment/locale/de",
+              "xss",
+              "moment",
               "moment-timezone"
             ]
           },
