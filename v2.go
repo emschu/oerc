@@ -52,7 +52,7 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramRe
 func getChannels() *[]Channel {
 	db := getDb()
 	var channels []Channel
-	db.Model(&Channel{}).Find(&channels)
+	db.Model(&Channel{}).Preload("ChannelFamily").Find(&channels)
 	return &channels
 }
 
@@ -414,8 +414,9 @@ func getRecommendationsHandler(context *gin.Context) {
 	fromStr := context.Query("from")
 	var from time.Time
 
+	now := time.Now()
 	if len(fromStr) == 0 {
-		from = time.Now()
+		from = now
 	} else {
 		var err error
 		from, err = time.Parse(time.RFC3339, fromStr)
@@ -425,23 +426,34 @@ func getRecommendationsHandler(context *gin.Context) {
 		}
 	}
 	from = from.In(location)
-	threeDaysInFuture := from.Add(48 * time.Hour) // maximum
-	fourHoursBefore := from.Add(-4 * time.Hour)   // minimum
+	logEntryList := getRecommendationsAt(from)
+
+	context.JSON(http.StatusOK, &logEntryList)
+}
+
+func getRecommendationsAt(at time.Time) []Recommendation {
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	minuteDiff := at.Sub(time.Now().In(location)).Minutes()
 
 	db := getDb()
 	var logEntryList []Recommendation
-	db.Debug().
-		Model(&Recommendation{}).
+	dbQuery := db.Model(&Recommendation{}).
 		Select("recommendations.*").
 		Joins("LEFT JOIN program_entries ON (recommendations.program_entry_id = program_entries.id)").
-		Where("recommendations.start_date_time >= ? AND recommendations.start_date_time <= ? AND program_entries.start_date_time >= ?", fourHoursBefore, threeDaysInFuture, from).
 		Order("recommendations.start_date_time asc").
 		Preload("ProgramEntry").
 		Preload("ProgramEntry.ImageLinks").
-		Preload("ProgramEntry.CollisionEntries").
-		Find(&logEntryList)
+		Preload("ProgramEntry.CollisionEntries")
 
-	context.JSON(http.StatusOK, &logEntryList)
+	if minuteDiff < 15 {
+		// include televised items of this moment, but don't do this for requests of future recommendations
+		dbQuery = dbQuery.Where("((recommendations.start_date_time <= ? AND program_entries.end_date_time >= ?) OR program_entries.start_date_time >= ?)", at, at, at)
+	} else {
+		dbQuery = dbQuery.Where("(recommendations.start_date_time >= ?)", at)
+	}
+	dbQuery.Find(&logEntryList)
+
+	return logEntryList
 }
 
 func getSearchHandler(context *gin.Context) {

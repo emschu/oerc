@@ -103,6 +103,8 @@ func main() {
 						log.Printf("Parsing SRF End\n")
 					}
 
+					FindOverlaps()
+
 					// update counters
 					if status.TotalCreatedPE > 0 || status.TotalCreatedTVS > 0 ||
 						status.TotalUpdatedPE > 0 || status.TotalUpdatedTVS > 0 {
@@ -209,7 +211,7 @@ func main() {
 							if c.Bool("force") {
 								ClearLogs()
 							} else {
-								log.Printf("Please set the '--force true' flag to clean the logs from database.\n")
+								log.Printf("Please set the '--force true' flag to clear the logs from database.\n")
 							}
 
 							return nil
@@ -226,7 +228,7 @@ func main() {
 							if c.Bool("force") {
 								ClearRecommendations()
 							} else {
-								log.Printf("Please set the '--force true' flag to clean ALL recommendations from database.\n")
+								log.Printf("Please set the '--force true' flag to clear ALL recommendations from database.\n")
 							}
 
 							return nil
@@ -243,7 +245,24 @@ func main() {
 							if c.Bool("force") {
 								ClearOldRecommendations()
 							} else {
-								log.Printf("Please set the '--force true' flag to clean old recommendations from database.\n")
+								log.Printf("Please set the '--force true' flag to clear old recommendations from database.\n")
+							}
+
+							return nil
+						},
+					},
+					{
+						Name:  "overlaps",
+						Usage: "Clearing overlap status of all program items",
+						Action: func(c *cli.Context) error {
+							log.Println("clear recommendations-old")
+							Startup(c)
+							defer Shutdown()
+
+							if c.Bool("force") {
+								ClearDeprecations()
+							} else {
+								log.Printf("Please set the '--force true' flag to clear program entries' overlap status from database.\n")
 							}
 
 							return nil
@@ -266,6 +285,19 @@ func main() {
 					} else {
 						log.Printf("Please set the '--force true' flag to confirm cleaning the WHOLE database.\n")
 					}
+
+					return nil
+				},
+			},
+			{
+				Name:   "overlap-check-full",
+				Hidden: true,
+				Usage:  "Run overlap check on all program entries. Could take very long.",
+				Action: func(context *cli.Context) error {
+					Startup(context)
+					defer Shutdown()
+
+					FindOverlapsGlobal()
 
 					return nil
 				},
@@ -300,7 +332,7 @@ func Startup(c *cli.Context) {
 		verboseGlobal = true
 	}
 
-	// do profiling specific stuff
+	// profiling related stuff
 	if isProfilingEnabled() {
 		dateStr := time.Now().Format(time.RFC3339)
 

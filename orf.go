@@ -64,7 +64,7 @@ func ParseORF() {
 
 	// import program entries for the configured date range
 	if GetAppConf().EnableProgramEntryCollection {
-		pool := pond.New(4, 1000, pond.IdleTimeout(60*60*time.Second))
+		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
 				family := *channelFamily

@@ -29,6 +29,7 @@ import (
 	"math"
 	url2 "net/url"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -134,7 +135,7 @@ func ParseARD() {
 
 	if GetAppConf().EnableProgramEntryCollection {
 		// import program entries for the configured date range
-		pool := pond.New(4, 10000, pond.IdleTimeout(120*60*time.Second), pond.PanicHandler(func(i interface{}) {
+		pool := pond.New(runtime.NumCPU(), 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
 			log.Printf("Problem with goroutine pool: %v\n", i)
 		}))
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {

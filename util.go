@@ -22,6 +22,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
 	"github.com/microcosm-cc/bluemonday"
 	"gorm.io/driver/postgres"
@@ -611,6 +612,17 @@ func ClearOldRecommendations() {
 	db := getDb()
 
 	db.Where("start_date_time < ?", time.Now()).Delete(&Recommendation{})
+}
+
+// ClearDeprecations method to clear deprecation status of all program entries (= reset overlap status)
+func ClearDeprecations() {
+	db := getDb()
+
+	db.Model(&ProgramEntry{}).Update("is_deprecated = ?", false).Set("last_collision_check", "NULL").Where("is_deprecated = true")
+}
+
+func getWorkerPoolIdleTimeout() pond.Option {
+	return pond.IdleTimeout(1 * time.Minute)
 }
 
 // get chunks out of a single string slice

@@ -1,5 +1,5 @@
 # general fetch settings
-Debug: false
+Debug: true
 ProfilingEnabled: false
 ForceUpdate: false
 TimeToRefreshInMinutes: 360

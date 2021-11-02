@@ -1,5 +1,4 @@
 # oerc configuration file
-# general fetch settings
 ForceUpdate: false
 TimeToRefreshInMinutes: 360
 DaysInPast: 2
@@ -26,7 +25,8 @@ DbUser: <db_user>
 DbPassword: <db_password>
 DbSSLEnabled: false
 # search settings
-SearchDaysInFuture: 3
+SearchDaysInFuture: 5
+# feel free to compose the following list of keywords as you want. They are used case-insensitive.
 SearchKeywords:
   - Die Anstalt
   - Max Uthoff
