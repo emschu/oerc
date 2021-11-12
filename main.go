@@ -24,12 +24,15 @@ import (
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
-	"runtime"
-	"runtime/pprof"
 	"sort"
 	"strconv"
 	"time"
+
+	_ "net/http/pprof"
+
+	"github.com/pkg/profile"
 )
 
 var (
@@ -105,7 +108,7 @@ func main() {
 
 					FindOverlaps()
 
-					// update counters
+					// update counters if something has happened
 					if status.TotalCreatedPE > 0 || status.TotalCreatedTVS > 0 ||
 						status.TotalUpdatedPE > 0 || status.TotalUpdatedTVS > 0 {
 						setSetting(settingKeyLastFetch, time.Now().Format(time.RFC3339))
@@ -183,6 +186,7 @@ func main() {
 				Aliases: []string{"sc"},
 				Usage:   "Search program data and create recommendations",
 				Action: func(c *cli.Context) error {
+					log.Printf("Starting search process...")
 					startTime := time.Now()
 					Startup(c)
 					defer Shutdown()
@@ -255,7 +259,7 @@ func main() {
 						Name:  "overlaps",
 						Usage: "Clearing overlap status of all program items",
 						Action: func(c *cli.Context) error {
-							log.Println("clear recommendations-old")
+							log.Println("clear overlaps")
 							Startup(c)
 							defer Shutdown()
 
@@ -276,11 +280,12 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					log.Printf("Clear\n")
+					log.Printf("Clearing all data...\n")
 					Startup(c)
 					defer Shutdown()
 
 					if c.Bool("force") {
+						log.Printf("This could take a while...\n")
 						ClearAll()
 					} else {
 						log.Printf("Please set the '--force true' flag to confirm cleaning the WHOLE database.\n")
@@ -290,15 +295,17 @@ func main() {
 				},
 			},
 			{
-				Name:   "overlap-check-full",
-				Hidden: true,
-				Usage:  "Run overlap check on all program entries. Could take very long.",
+				Name:  "full-overlap-check",
+				Usage: "Run overlap check on all program entries. Could take very long.",
 				Action: func(context *cli.Context) error {
+					startTime := time.Now()
 					Startup(context)
 					defer Shutdown()
 
 					FindOverlapsGlobal()
 
+					duration := time.Now().Sub(startTime)
+					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())
 					return nil
 				},
 			},
@@ -334,32 +341,16 @@ func Startup(c *cli.Context) {
 
 	// profiling related stuff
 	if isProfilingEnabled() {
-		dateStr := time.Now().Format(time.RFC3339)
-
-		f, err := ioutil.TempFile("", fmt.Sprintf("oerc-profiling-cpu-%s-*.pprof", dateStr))
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		log.Printf("Profiling (CPU) output is stored in %s\n", f.Name())
-
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-		shutdownCb = func() {
-			defer f.Close()
-			defer pprof.StopCPUProfile()
-
-			memF, err := ioutil.TempFile("", fmt.Sprintf("oerc-profiling-mem-%s-*.pprof", dateStr))
+		go func() {
+			err := http.ListenAndServe("127.0.0.1:9999", nil)
 			if err != nil {
-				log.Fatal("could not create memory profile: ", err)
+				log.Fatalf("Could not start profiling endpoint: '%v'\n", err)
 			}
-			log.Printf("Profiling (Memory) output is stored in %s\n", memF.Name())
+			log.Printf("Profiling endpoint started at 127.0.0.1:9999")
+		}()
 
-			runtime.GC() // get up-to-date statistics
-			if err := pprof.WriteHeapProfile(memF); err != nil {
-				log.Fatal("could not write memory profile: ", err)
-			}
-			defer memF.Close()
+		shutdownCb = func() {
+			defer profile.Start(profile.MemProfile).Stop()
 		}
 	}
 }

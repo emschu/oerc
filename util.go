@@ -413,8 +413,6 @@ func isRecentlyFetched() bool {
 		if minDiff < float64(GetAppConf().TimeToRefreshInMinutes) {
 			return true
 		}
-	} else {
-		log.Printf("Could not find setting value of last fetch\n")
 	}
 	return false
 }
@@ -470,7 +468,7 @@ func getOrCreateSetting(key string) *Settings {
 	}
 	// FIXME!
 	if setting.ID == 0 {
-		log.Fatal("Cannot find setting object in db")
+		log.Fatalf("Cannot find setting object in db: %s", key)
 	}
 	return &setting
 }
@@ -596,6 +594,8 @@ func ClearAll() {
 	db := getDb()
 	db.Where("id > 0").Delete(&TvShow{})
 	db.Where("id > 0").Delete(&ImageLink{})
+
+	db.Exec("DELETE FROM collision_entries;")
 	db.Where("id > 0").Delete(&ProgramEntry{})
 	db.Where("id > 0").Delete(&Settings{})
 }

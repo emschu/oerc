@@ -19,26 +19,29 @@ package main
 
 import (
 	"fmt"
-	"github.com/alitto/pond"
+	"gorm.io/gorm"
 	"log"
 	"math"
-	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 // FindOverlaps central method to find, store and process overlapping program entries with same range as "fetch" command
 func FindOverlaps() {
+	var wg sync.WaitGroup
 	for _, channel := range *getChannels() {
 		if isChannelFamilyExcluded(&channel.ChannelFamily) {
 			continue
 		}
 		times := generateDateRangeInPastAndFuture(GetAppConf().DaysInPast-1, GetAppConf().DaysInFuture+1)
 		for _, dayToCheck := range *times {
-			handleOverlaps(&channel, dayToCheck)
+			wg.Add(1)
+			handleOverlapsByDay(&wg, &channel, dayToCheck)
 		}
 	}
+	wg.Wait()
 }
 
 // FindOverlapsGlobal recalcalate all overlaps in database
@@ -56,108 +59,109 @@ func FindOverlapsGlobal() {
 		return
 	}
 
-	var pool = pond.New(int(math.RoundToEven(float64(runtime.NumCPU())*1.5)), 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
-		log.Printf("Problem with goroutine pool: %v\n", i)
-	}))
 	times := generateDateRangeBetweenDates(dataStartTime.Add(-24*time.Hour), dataEndTime.Add(24*time.Hour))
 	log.Printf("Check %d days for each channel\n", len(*times))
+
+	var wg sync.WaitGroup
 	for _, channel := range *getChannels() {
 		chn := channel
-		pool.Submit(func() {
-			for _, dayToCheck := range *times {
-				handleOverlaps(&chn, dayToCheck)
-			}
-		})
-	}
 
-	// wait for finish
-	pool.StopAndWait()
+		for _, dayToCheck := range *times {
+			day := dayToCheck
+			wg.Add(1)
+			go handleOverlapsByDay(&wg, &chn, day)
+		}
+	}
+	wg.Wait()
 }
 
 // central method to find, store and process overlapping program entries
-func handleOverlaps(channel *Channel, day time.Time) {
+func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
+	defer wg.Done()
 	var dailyProgramEntries []ProgramEntry
 
-	collisionMap := findOverlaps(channel, day, &dailyProgramEntries)
-	if len(collisionMap) == 0 {
+	db := getDb()
+	collisionMap := findOverlaps(db, channel, day, &dailyProgramEntries)
+	if len(*collisionMap) == 0 {
 		return
 	}
 
-	overlapIDs := storeOverlaps(&collisionMap)
+	overlapIDs := storeOverlaps(db, collisionMap)
 
 	log.Printf("Processing %d program entry collisions of channel '%s' on day '%s'.\n", len(overlapIDs), channel.Title, day.Format("2006-01-02"))
 
 	for _, programEntryID := range overlapIDs {
-		processOverlaps(&programEntryID)
+		processOverlaps(db, &programEntryID)
 	}
 }
 
-func processOverlaps(programEntryID *uint) {
-	db := getDb()
-	var programEntryWithCollisions ProgramEntry
-	db.Model(&ProgramEntry{}).Preload("CollisionEntries").Find(&programEntryWithCollisions, programEntryID)
-	if programEntryWithCollisions.ID == 0 {
+func processOverlaps(db *gorm.DB, programEntryID *uint) {
+	var programEntry ProgramEntry
+	db.Model(&ProgramEntry{}).Preload("CollisionEntries").Preload("Channel").Find(&programEntry, programEntryID)
+	if programEntry.ID == 0 {
 		log.Printf("Warning: Could not find program entry with id #%d. Skipping...\n", *programEntryID)
 		return
 	}
-	if len(programEntryWithCollisions.CollisionEntries) == 0 {
+	if len(programEntry.CollisionEntries) == 0 {
 		return
 	}
 	// assume the current entry is the most recent one, until we know it better from collision entries
-	isEntryDeprecated := isProgramEntryPossiblyDeprecated(&programEntryWithCollisions)
+	isEntryDeprecated := isProgramEntryPossiblyDeprecated(&programEntry)
 	// update entry - if needed
-	if isEntryDeprecated != programEntryWithCollisions.IsDeprecated {
-		programEntryWithCollisions.IsDeprecated = isEntryDeprecated
+	if isEntryDeprecated != programEntry.IsDeprecated {
+		programEntry.IsDeprecated = isEntryDeprecated
 		if verboseGlobal {
 			if isEntryDeprecated {
-				log.Printf("Set program entry #%d as deprecated.\n", programEntryWithCollisions.ID)
+				log.Printf("Set program entry #%d as deprecated.\n", programEntry.ID)
 			} else {
-				log.Printf("Set program entry #%d as NOT deprecated.\n", programEntryWithCollisions.ID)
+				log.Printf("Set program entry #%d as NOT deprecated.\n", programEntry.ID)
 			}
 		}
 		now := time.Now()
-		programEntryWithCollisions.LastCollisionCheck = &now
-		db.Save(&programEntryWithCollisions)
+		programEntry.LastCollisionCheck = &now
+		db.Save(&programEntry)
 	}
 }
 
-func isProgramEntryPossiblyDeprecated(programEntryWithCollisions *ProgramEntry) bool {
-	if programEntryWithCollisions.IsDeprecated {
+func isProgramEntryPossiblyDeprecated(programEntry *ProgramEntry) bool {
+	if programEntry.IsDeprecated {
 		// TODO what to do?
 		return true
 	}
 
 	const changeTimeTolerance = 3600 // one hour
 	isEntryDeprecated := false
-	for _, collisionEntry := range programEntryWithCollisions.CollisionEntries {
+	for _, collisionEntry := range programEntry.CollisionEntries {
 		if collisionEntry.IsDeprecated {
 			// skip overlapping entries which are already deprecated
 			continue
 		}
-		createdAtDiffSecs := int64(programEntryWithCollisions.CreatedAt.Sub(collisionEntry.CreatedAt) / time.Second)
-		lastCheckAtDiffSecs := int64(programEntryWithCollisions.LastCheck.Sub(*collisionEntry.LastCheck) / time.Second)
+		createdAtDiffSecs := int64(programEntry.CreatedAt.Sub(collisionEntry.CreatedAt) / time.Second)
+		var lastCheckAtDiffSecs int64
+		if programEntry.LastCheck == nil || programEntry.LastCheck.IsZero() {
+			lastCheckAtDiffSecs = 0
+		} else {
+			lastCheckAtDiffSecs = int64(programEntry.LastCheck.Sub(*collisionEntry.LastCheck) / time.Second)
+		}
 		if math.Abs(float64(createdAtDiffSecs)) < changeTimeTolerance && math.Abs(float64(lastCheckAtDiffSecs)) < changeTimeTolerance {
 			// we cannot decide something here
 			continue
 		}
 		if math.Abs(float64(lastCheckAtDiffSecs)) < changeTimeTolerance {
 			// decide by created at diff only
-			if programEntryWithCollisions.CreatedAt.Before(collisionEntry.CreatedAt) {
+			if programEntry.CreatedAt.Before(collisionEntry.CreatedAt) {
 				isEntryDeprecated = true
 				break
 			}
-			continue
 		}
 		if math.Abs(float64(createdAtDiffSecs)) < changeTimeTolerance {
 			// decide by last checked at diff only
-			if programEntryWithCollisions.LastCheck.Before(*collisionEntry.LastCheck) {
+			if programEntry.LastCheck.Before(*collisionEntry.LastCheck) {
 				isEntryDeprecated = true
 				break
-			} else {
-				continue
 			}
 		}
-		if programEntryWithCollisions.LastCheck.Before(*collisionEntry.LastCheck) {
+		if programEntry.LastCheck.Before(*collisionEntry.LastCheck) {
 			isEntryDeprecated = true
 			break
 		}
@@ -165,13 +169,14 @@ func isProgramEntryPossiblyDeprecated(programEntryWithCollisions *ProgramEntry) 
 	return isEntryDeprecated
 }
 
-func storeOverlaps(collisionMap *map[uint][]uint) []uint {
+func storeOverlaps(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 	var affectedIds = make([]uint, 0)
-	db := getDb()
+
+	tx := db.Session(&gorm.Session{PrepareStmt: true})
 
 	for programEntryID, collisions := range *collisionMap {
 		var programEntry ProgramEntry
-		db.Model(ProgramEntry{}).Preload("CollisionEntries").Find(&programEntry, programEntryID)
+		tx.Model(ProgramEntry{}).Preload("Channel").Preload("CollisionEntries").Find(&programEntry, programEntryID)
 		if programEntry.ID == 0 {
 			// entry not found
 			log.Printf("Warning: Could not fetch program entry record #%d\n", programEntryID)
@@ -189,19 +194,23 @@ func storeOverlaps(collisionMap *map[uint][]uint) []uint {
 		programEntry.CollisionEntries = make([]ProgramEntry, 0)
 		for _, collisionEntryID := range collisions {
 			if collisionEntryID != 0 {
-				var linkedProgramEntry ProgramEntry
-				linkedProgramEntry.ID = collisionEntryID
-				programEntry.CollisionEntries = append(programEntry.CollisionEntries, linkedProgramEntry)
+				relatedIDs = append(relatedIDs, collisionEntryID)
 			}
 		}
-		db.Save(&programEntry)
+		var relatedItems []ProgramEntry
+		if len(relatedIDs) > 0 {
+			db.Model(&ProgramEntry{}).Where("id IN(?)", relatedIDs).Find(&relatedItems)
+		}
+		if len(relatedItems) > 0 {
+			programEntry.CollisionEntries = relatedItems
+			db.Save(&programEntry)
+		}
 		affectedIds = append(affectedIds, programEntry.ID)
 	}
 	return affectedIds
 }
 
-func findOverlaps(channel *Channel, day time.Time, dailyProgramEntries *[]ProgramEntry) map[uint][]uint {
-	db := getDb()
+func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntries *[]ProgramEntry) *map[uint][]uint {
 	startOfDay := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location())
 	endOfDay := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, day.Location())
 
@@ -227,11 +236,12 @@ func findOverlaps(channel *Channel, day time.Time, dailyProgramEntries *[]Progra
 		}
 	}
 
+	tx := db.Session(&gorm.Session{PrepareStmt: true})
 	var collisionMap = make(map[uint][]uint)
 	chunks := chunkStringSlice(queries, 25)
 	for _, singleChunk := range chunks {
 		var result []map[string]interface{}
-		db.Raw(fmt.Sprintf("SELECT %s", strings.Join(singleChunk, ","))).Scan(&result)
+		tx.Raw(fmt.Sprintf("SELECT %s", strings.Join(singleChunk, ","))).Scan(&result)
 
 		if len(result) == 0 || len(result[0]) == 0 {
 			continue
@@ -256,5 +266,5 @@ func findOverlaps(channel *Channel, day time.Time, dailyProgramEntries *[]Progra
 			}
 		}
 	}
-	return collisionMap
+	return &collisionMap
 }
