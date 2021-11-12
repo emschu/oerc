@@ -50,7 +50,7 @@ jobs:
       - name: npm install and npm run build
         run: |
           cd client
-          npm ci --no-optional
+          npm install --no-optional
 
       - name: Build Codebase
         run: make build

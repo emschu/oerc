@@ -1,6 +1,6 @@
 # Changelog oerc
 
-## 0.9.12 - 2021/10/03
+## 0.9.12 - 2021/11/12
 - New Feature: Auto-detection of overlapping program items is added to the `fetch` command and the web client.
 - New Command: `oerc full-overlap-check`. It will calculate the overlaps on ALL of the program entries 
   in the database. It could take some while.
