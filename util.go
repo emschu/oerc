@@ -468,7 +468,7 @@ func getOrCreateSetting(key string) *Settings {
 	}
 	// FIXME!
 	if setting.ID == 0 {
-		log.Fatalf("Cannot find setting object in db: %s", key)
+		return nil
 	}
 	return &setting
 }

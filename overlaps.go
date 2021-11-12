@@ -182,20 +182,9 @@ func storeOverlaps(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 			log.Printf("Warning: Could not fetch program entry record #%d\n", programEntryID)
 			continue
 		}
-		// Clean up existing collisions
-		if len(programEntry.CollisionEntries) > 0 {
-			// clear old collision entries
-			err := getDb().Model(&programEntry).Association("CollisionEntries").Clear()
-			if err != nil {
-				log.Printf("Warning: Problem with deleting collision entries: %v\n", err)
-				continue
-			}
-		}
-		programEntry.CollisionEntries = make([]ProgramEntry, 0)
+		var relatedIDs = make([]uint, 0)
 		for _, collisionEntryID := range collisions {
-			if collisionEntryID != 0 {
-				relatedIDs = append(relatedIDs, collisionEntryID)
-			}
+			relatedIDs = append(relatedIDs, collisionEntryID)
 		}
 		var relatedItems []ProgramEntry
 		if len(relatedIDs) > 0 {
@@ -260,7 +249,8 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntr
 				}
 				programEntryID, err := strconv.ParseUint(entries[0], 10, 64)
 				if err != nil {
-					log.Printf("Error")
+					log.Printf("Error parsing collision sql response")
+					continue
 				}
 				collisionMap[uint(programEntryID)] = append(collisionMap[uint(programEntryID)], uint(collisionID))
 			}
