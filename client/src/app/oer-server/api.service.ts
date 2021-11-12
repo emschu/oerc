@@ -177,7 +177,7 @@ export class ApiService {
 
     this.fetchedDays.push(new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate()));
 
-    const fromDate: Date = new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate() - 1, 0, 0, 0, 0);
+    const fromDate: Date = new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate(), 0, 0, 0, 0);
     const toDate: Date = new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate() + 1, 23, 59, 59, 999);
 
     this.program(fromDate, toDate).pipe(first()).subscribe((value: ProgramResponse) => {

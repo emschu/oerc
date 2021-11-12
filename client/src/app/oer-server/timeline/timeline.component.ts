@@ -18,9 +18,16 @@
  */
 import {AfterViewInit, Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
-import {IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline/esnext';
-import {Channel, ChannelResponse, ProgramEntry, ProgramResponse} from '../entities';
-import {DataSet} from 'vis-data';
+import {
+  DataGroup,
+  IdType,
+  Timeline,
+  TimelineEventPropertiesResult,
+  TimelineItem,
+  TimelineOptions,
+  TimelineWindow
+} from 'vis-timeline/esnext';
+import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential, ProgramResponse} from '../entities';
 import {DeepPartial} from 'vis-data/declarations/data-interface';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import moment, {MomentInput} from 'moment-timezone';
@@ -30,20 +37,21 @@ import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import FlatPickrInstance = flatpickr.Instance;
 import {German} from 'flatpickr/dist/l10n/de';
+import {DataSet} from 'vis-data';
 
 interface SubgroupMappingChannelLevel {
-  [key: number]: ProgramEntry[];
+  [key: string]: ProgramEntry[];
 }
 
 interface SubgroupMappingEntryLevel {
   [key: string]: number;
 }
 
-interface GroupOrder {
-  groupId: number | string;
-  title: string;
-  order: number;
-}
+// interface GroupOrder {
+//   groupId: number | string;
+//   title: string;
+//   order: number;
+// }
 
 @Component({
   selector: 'app-oer-timeline',
@@ -51,8 +59,33 @@ interface GroupOrder {
   styleUrls: ['./timeline.component.scss']
 })
 export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
+
+  constructor(public apiService: ApiService,
+              private stateService: StateService) {
+    this.items = new DataSet<TimelineItem>();
+    this.zoneOffset = moment().tz(environment.timezone).utcOffset();
+  }
+
+  private static i = 0;
+  static channelMap = new Map<number, number>([
+    [1, TimelineComponent.i++],
+    [16, TimelineComponent.i++],
+    [9, TimelineComponent.i++],
+    [5, TimelineComponent.i++],
+    [20, TimelineComponent.i++],
+    [21, TimelineComponent.i++],
+    [17, TimelineComponent.i++],
+    [18, TimelineComponent.i++],
+    [14, TimelineComponent.i++],
+    [13, TimelineComponent.i++],
+    [2, TimelineComponent.i++],
+    [12, TimelineComponent.i++],
+    [11, TimelineComponent.i++],
+    [4, TimelineComponent.i++],
+    [19, TimelineComponent.i++],
+  ]);
+  public readonly items: DataSet<TimelineItem>;
   public timeLine: Timeline | null = null;
-  public items: DataSet<any>;
   currentProgramEntry: ProgramEntry | null = null;
   isModalOpen = false;
 
@@ -66,17 +99,23 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   showDeprecatedEntriesSubscription: Subscription | null = null;
   // private latestSelectedDate: Date | null = null;
   private dateTimePickrInstance: FlatPickrInstance | null = null;
-  private zoneOffset = 0;
-
-  constructor(public apiService: ApiService,
-              private stateService: StateService) {
-    this.items = new DataSet<any>();
-  }
+  private readonly zoneOffset: number;
 
   private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
 
+  /**
+   * TODO: make configuration option
+   * @param singleChannelID an id
+   * @private
+   */
+  private static getGroupOrder(singleChannelID: number): number {
+    if (TimelineComponent.channelMap.has(singleChannelID)) {
+      return TimelineComponent.channelMap.get(singleChannelID) as number;
+    }
+    return 100;
+  }
+
   ngOnInit(): void {
-    this.zoneOffset = moment().tz(environment.timezone).utcOffset();
     this.initTimeLine();
 
     this.apiService.statusSubject.pipe(skip(1), take(1)).subscribe(value => {
@@ -84,7 +123,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         locale: German,
         now: moment().tz(environment.timezone).format(this._datePickerFormat),
         enableTime: true,
-        allowInput: true,
+        allowInput: false,
         time_24hr: true,
         clickOpens: true,
         dateFormat: this._datePickerFormat,
@@ -99,7 +138,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
             return;
           }
           if (this.timeLine != null) {
-            this.timeLine.moveTo(moment(selectedDates[0]).toISOString(false), {animation: true});
+            this.timeLine.moveTo(moment(selectedDates[0]).utc(true).toISOString(true), {animation: false});
           }
         },
         parseDate: (dateString, format) => {
@@ -134,13 +173,12 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadingSubscription?.unsubscribe();
     this.programSubscription?.unsubscribe();
     this.showDeprecatedEntriesSubscription?.unsubscribe();
+    this.showDeprecatedEntries.unsubscribe();
 
     this.timeLine?.destroy();
-    this.items.clear();
   }
 
   ngAfterViewInit(): void {
-    // this.moveToNow.bind(this);
     this.moveToNow();
   }
 
@@ -154,7 +192,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadProgramItems();
 
     // create groups
-    const groups: DataSet<any> = new DataSet({});
+    const groups: DataSet<DataGroup> = new DataSet({fieldId: 'id'});
     this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (!value) {
         return;
@@ -164,20 +202,10 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
           groups.add({
             id: singleChannel.id,
             content: singleChannel.title,
-            editable: false,
-            subgroupStack: false,
-            order: this.getGroupOrder(singleChannel),
+            subgroupStack: true,
             subgroupOrder: () => 0,
           });
         });
-      // const groupOrder: GroupOrder[] = [];
-      // groups.stream().toEntryArray().forEach((item, index) => {
-      //   if (item[1].id === 16) {
-      //     index = 2;
-      //   }
-      //   groupOrder.push({groupId: item[1].id, order: index, title: item[1].content});
-      // });
-      // console.log(groupOrder);
     });
 
     // Configuration for the Timeline
@@ -186,9 +214,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       align: 'center',
       locale: 'de',
       stack: false,
-      stackSubgroups: false,
-      start: now.clone().subtract(3, 'hours').format(),
-      end: now.clone().add(3, 'hours').format(),
+      stackSubgroups: true,
+      start: now.clone().subtract(1, 'hour').toISOString(),
+      end: now.clone().add(3, 'hour').toISOString(),
       timeAxis: {scale: 'minute', step: 15},
       moment: (date: MomentInput | undefined) => {
         return moment(date).tz(environment.timezone).utcOffset(this.zoneOffset);
@@ -210,6 +238,12 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       rtl: false,
       selectable: true,
       editable: false,
+      groupOrder(a: DataGroup, b: DataGroup): number {
+        if (a.id === b.id ) {
+          return 0;
+        }
+        return TimelineComponent.getGroupOrder(a.id as number) > TimelineComponent.getGroupOrder(b.id as number) ? 1 : -1;
+      },
       margin: {
         item: 5,
         axis: 1
@@ -225,6 +259,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.timeLine.on('rangechanged', this.rangeChange.bind(this));
     this.timeLine.on('doubleClick', this.itemClicked.bind(this));
+    // TODO
+    // this.timeLine?.addCustomTime(moment().hour(20).minute(15).toDate());
 
     this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
       this.stateService.setShowDeprecatedEntries(value);
@@ -234,127 +270,96 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  /**
-   * TODO: make configuration option
-   * @param singleChannel
-   * @private
-   */
-  private getGroupOrder(singleChannel: Channel): number {
-    let i = 0;
-    const channelMap = new Map<number, number>([
-      [1, i++],
-      [16, i++],
-      [9, i++],
-      [5, i++],
-      [20, i++],
-      [21, i++],
-      [17, i++],
-      [18, i++],
-      [14, i++],
-      [13, i++],
-      [2, i++],
-      [12, i++],
-      [11, i++],
-      [4, i++],
-      [19, i++],
-    ]);
-    if (channelMap.has(singleChannel.id)) {
-      return channelMap.get(singleChannel.id) as number;
-    }
-    return 100;
-  }
-
   private loadProgramItems(): void {
-    this.programSubscription?.unsubscribe();
-
     const today = moment().tz(environment.timezone).toDate();
 
-    this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
-      if (!programResponse) {
-        return;
-      }
-      this.apiService.isLoadingSubject.next(true);
-
-      let subgroupMappingOfEntries: SubgroupMappingEntryLevel = {};
-      if (this.showDeprecatedEntries.getValue()) {
-        // this is pretty costly and memory intensive...
-        subgroupMappingOfEntries = this.calculateSubgroupMapping(programResponse);
-      }
-
-      const programList: DeepPartial<any> = [];
-      programResponse.program_list.forEach(singleProgramEntry => {
-        if (singleProgramEntry.is_deprecated && !this.showDeprecatedEntries.getValue()) {
-          // skip deprecated entries, if the user wants this
+    if (this.programSubscription === null || this.programSubscription.closed) {
+      this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
+        if (!programResponse || programResponse.program_list?.length === 0) {
           return;
         }
-        let subGroupId = 1; // default
-        let defaultClass = '';
-        if (singleProgramEntry.is_deprecated) {
-          if (subgroupMappingOfEntries[singleProgramEntry.id] === undefined) {
-            console.error('unknown subgroup id for entry with id #' + singleProgramEntry.id);
-          }
-          subGroupId = subgroupMappingOfEntries[singleProgramEntry.id] + 1;
-          defaultClass = 'deprecated-item';
-        }
-        programList.push({
-          id: singleProgramEntry.id,
-          group: singleProgramEntry.channel_id,
-          start: moment(singleProgramEntry.start_date_time).tz(environment.timezone).utcOffset(this.zoneOffset),
-          end: moment(singleProgramEntry.end_date_time).tz(environment.timezone).utcOffset(this.zoneOffset),
-          content: singleProgramEntry.title,
-          title: singleProgramEntry.title,
-          type: 'range',
-          subgroup: subGroupId,
-          className: defaultClass
+        this.apiService.isLoadingSubject.next(true);
+
+        const showDeprecatedEntries = this.showDeprecatedEntries.getValue();
+        const programEntriesSmall = programResponse.program_list.flatMap((value): ProgramEntryEssential => {
+          return {
+            id: value.id,
+            created_at: value.created_at,
+            start_date_time: value.start_date_time,
+            end_date_time: value.end_date_time,
+            channel_id: value.channel_id,
+            is_deprecated: value.is_deprecated,
+            title: value.title,
+            hash: value.hash,
+          };
         });
+
+        const programList: DeepPartial<TimelineItem[]> = [];
+        programEntriesSmall.forEach(singleProgramEntry => {
+          if (!showDeprecatedEntries && singleProgramEntry.is_deprecated) {
+            return;
+          }
+          programList.push({
+            id: singleProgramEntry.id,
+            group: singleProgramEntry.channel_id,
+            start: singleProgramEntry.start_date_time,
+            end: singleProgramEntry.end_date_time,
+            content: singleProgramEntry.title,
+            title: singleProgramEntry.title,
+            type: 'range',
+            subgroup: 1,
+            className: ''
+          });
+        });
+        this.items.update(programList);
+
+        if (showDeprecatedEntries) {
+          const deprecatedEntries: DeepPartial<TimelineItem[]> = [];
+          programEntriesSmall.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
+            const overlaps = this.items.get({
+              filter: item => {
+                if (item.group !== singleProgramEntry.channel_id) {
+                  return false;
+                }
+                if (item.id === singleProgramEntry.id) {
+                  return false;
+                }
+                return (singleProgramEntry.start_date_time < item.start) && (singleProgramEntry.end_date_time > (item.end as Date));
+              }
+            }).sort((a, b) => a.id < b.id ? 1 : -1);
+
+            let subgroupID = 2;
+            if (overlaps.length > 0) {
+              const affectedIDs = overlaps.flatMap(value => value.id);
+              affectedIDs.push(singleProgramEntry.id);
+              const newIndex = affectedIDs.sort((a, b) => {
+                return a < b ? 1 : -1;
+              }).findIndex(value => value === singleProgramEntry.id);
+              subgroupID += newIndex;
+            }
+
+            deprecatedEntries.push({
+              id: singleProgramEntry.id,
+              group: singleProgramEntry.channel_id,
+              start: singleProgramEntry.start_date_time,
+              end: singleProgramEntry.end_date_time,
+              content: singleProgramEntry.title,
+              title: singleProgramEntry.title,
+              type: 'range',
+              subgroup: subgroupID,
+              className: 'deprecated-item'
+            });
+          });
+          this.items.updateOnly(deprecatedEntries);
+        }
+
+        setTimeout(() => {
+          this.apiService.isLoadingSubject.next(false);
+        }, 500);
       });
-      this.items.update(programList);
-      setTimeout(() => {
-        this.apiService.isLoadingSubject.next(false);
-      }, 500);
-    });
+    }
 
     this.apiService.fetchProgramForDay(today);
-  }
-
-  private calculateSubgroupMapping(programResponse: ProgramResponse): SubgroupMappingEntryLevel {
-    // helper function
-    const groupBy = (xs: any, key: any): {} => {
-      return xs.reduce((rv: any, x: any) => {
-        (rv[x[key]] = rv[x[key]] || []).push(x);
-        return rv;
-      }, {});
-    };
-    const subgroupChannelMap: SubgroupMappingChannelLevel = [];
-    const deprecatedEntries = groupBy(programResponse.program_list.filter(item => item.is_deprecated), 'channel_id');
-    Object.entries(deprecatedEntries).forEach((value) => {
-      subgroupChannelMap[parseInt(value[0], 10)] = (value[1] as ProgramEntry[]).sort((a, b) => {
-        return moment(b.start_date_time).unix() - moment(a.start_date_time).unix();
-      });
-    });
-    const subgroupEntryMap: SubgroupMappingEntryLevel = {};
-
-    for (const key of Object.keys(deprecatedEntries)) {
-      const channelId = parseInt(key, 10);
-      const deprecatedEntriesCountInChannel = subgroupChannelMap[channelId].length;
-      for (let i = 0; i < deprecatedEntriesCountInChannel; i++) {
-        if (!subgroupEntryMap[subgroupChannelMap[channelId][i].id]) {
-          subgroupEntryMap[subgroupChannelMap[channelId][i].id] = 1;
-        } else {
-          subgroupEntryMap[subgroupChannelMap[channelId][i].id] += 1;
-        }
-        if (i + 1 < deprecatedEntriesCountInChannel) {
-          if (subgroupChannelMap[channelId][i].end_date_time > subgroupChannelMap[channelId][i + 1].start_date_time) {
-            if (subgroupEntryMap[subgroupChannelMap[channelId][i].id] > 1) {
-              subgroupEntryMap[subgroupChannelMap[channelId][i + 1].id] = 0;
-            } else {
-              subgroupEntryMap[subgroupChannelMap[channelId][i + 1].id] = 1;
-            }
-          }
-        }
-      }
-    }
-    return subgroupEntryMap;
   }
 
   zoomIn(): void {
@@ -387,13 +392,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   moveToNow(): void {
-    this.dateTimePickrInstance?.setDate(moment().format(this._datePickerFormat), false);
+    this.dateTimePickrInstance?.setDate(moment().tz(environment.timezone).utc(false).format(this._datePickerFormat), false);
     this.dateTimePickrInstance?._debouncedChange();
-
-    // this.timeLine?.setWindow(
-    //   currentDate.clone().add(3, 'hours').format(),
-    //   currentDate.clone().subtract(3, 'hour').format(),
-    // );
   }
 
   private rangeChange(e: Event): void {

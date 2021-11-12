@@ -137,6 +137,18 @@ export interface ProgramEntry {
   is_deprecated: boolean;
 }
 
+// "smaller" interface to deal with big program entry lists
+export interface ProgramEntryEssential {
+  id: number;
+  created_at: Date;
+  start_date_time: Date;
+  end_date_time: Date;
+  title: string;
+  hash: string;
+  channel_id: number;
+  is_deprecated: boolean;
+}
+
 export interface ImageLink {
   createdAt?: string;
   id: number;
