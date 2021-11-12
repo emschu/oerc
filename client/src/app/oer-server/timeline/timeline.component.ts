@@ -239,7 +239,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       selectable: true,
       editable: false,
       groupOrder(a: DataGroup, b: DataGroup): number {
-        if (a.id === b.id ) {
+        if (a.id === b.id) {
           return 0;
         }
         return TimelineComponent.getGroupOrder(a.id as number) > TimelineComponent.getGroupOrder(b.id as number) ? 1 : -1;
@@ -297,6 +297,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         const programList: DeepPartial<TimelineItem[]> = [];
         programEntriesSmall.forEach(singleProgramEntry => {
           if (!showDeprecatedEntries && singleProgramEntry.is_deprecated) {
+            // just ignore them
             return;
           }
           programList.push({
@@ -308,7 +309,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
             title: singleProgramEntry.title,
             type: 'range',
             subgroup: 1,
-            className: ''
+            className: singleProgramEntry.is_deprecated ? 'deprecated-item' : '',
           });
         });
         this.items.update(programList);
@@ -324,15 +325,61 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
                 if (item.id === singleProgramEntry.id) {
                   return false;
                 }
-                return (singleProgramEntry.start_date_time < item.start) && (singleProgramEntry.end_date_time > (item.end as Date));
+                if (item.className !== 'deprecated-item') {
+                  return false;
+                }
+                const t1 = singleProgramEntry.start_date_time;
+                const t2 = singleProgramEntry.end_date_time;
+                const t3 = item.start as Date;
+                const t4 = item.end as Date;
+
+                if ((t1 <= t3 && t2 <= t3)
+                  || (t1 > t4)
+                  || (t2 === t3)
+                  || (t1 === t4)
+                ) {
+                  return false;
+                }
+                if ((t1 === t3 && t2 === t4)
+                  || (t1 === t3 && t2 < t4)
+                  || (t1 === t3 && t2 > t4)
+                  || (t1 > t3 && t2 === t4)
+                  || (t1 < t3 && t2 === t4)
+                  || (t1 > t3 && t2 < t4)
+                  || (t1 < t3 && t2 > t4)
+                  || (t1 > t3 && t2 > t4)
+                  || (t1 < t3 && t2 < t4)
+                ) {
+                  return true;
+                }
+                return false;
               }
             }).sort((a, b) => a.id < b.id ? 1 : -1);
 
+            // this mechanism tries to find direct neighbours to exclude them from subgroup calculation
+            const excludedOverlaps: Set<IdType> = new Set<IdType>();
+            overlaps.forEach(singleItem => {
+              overlaps.forEach(otherItem => {
+                if (singleItem === otherItem) {
+                  return;
+                }
+                if (singleItem.end === otherItem.start) {
+                  excludedOverlaps.add(singleItem.id);
+                  return;
+                }
+              });
+            });
+
             let subgroupID = 2;
             if (overlaps.length > 0) {
-              const affectedIDs = overlaps.flatMap(value => value.id);
+              const affectedIDs = overlaps
+                .filter(item => !excludedOverlaps.has(item.id))
+                .flatMap(value => value.id);
               affectedIDs.push(singleProgramEntry.id);
               const newIndex = affectedIDs.sort((a, b) => {
+                if (a === b) {
+                  return 0;
+                }
                 return a < b ? 1 : -1;
               }).findIndex(value => value === singleProgramEntry.id);
               subgroupID += newIndex;
