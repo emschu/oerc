@@ -18,10 +18,10 @@
  */
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {BehaviorSubject, interval, Observable, Subscription} from 'rxjs';
+import {BehaviorSubject, Observable, Subscription} from 'rxjs';
 import {Channel, ChannelResponse, LogEntryResponse, Pong, ProgramEntry, ProgramResponse, Recommendation, StatusResponse} from './entities';
 import {IdType} from 'vis-timeline';
-import {catchError, tap, timeout} from 'rxjs/operators';
+import {catchError, first, tap, timeout} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Moment} from 'moment-timezone';
 
@@ -37,31 +37,36 @@ export class ApiService {
   private _isLoadingSubject = new BehaviorSubject<boolean>(true);
   private _isInErrorsSubject = new BehaviorSubject<boolean>(false);
   private _isWindowOpenedSubject = new BehaviorSubject<boolean>(true);
+  private _statusSubject = new BehaviorSubject<StatusResponse | null>(null);
 
   private channelStore: Channel[] = [];
   private fetchedDays: Date[] = [];
   private isFetchingChannels = false;
 
   constructor(public http: HttpClient) {
-    // initial fetch of channels
     this.liveCheck();
 
     this.fetchChannels();
 
-    interval(10000).subscribe(() => {
+    this.updateStatus();
+  }
+
+  public init(): void {
+    setInterval(() => {
       if (this._isWindowOpenedSubject.getValue()) {
         this.liveCheck.bind(this);
       }
-    });
+    }, 10000);
+    this.liveCheck();
   }
 
   public liveCheck(): Subscription {
-    return this.ping().subscribe(
+    return this.ping().pipe(first()).subscribe(
       data => {
-        if (!data) {
-          this._isLiveSubject.next(false);
-        } else {
+        if (data) {
           this._isLiveSubject.next(true);
+        } else {
+          this._isLiveSubject.next(false);
         }
       },
       error => {
@@ -76,14 +81,14 @@ export class ApiService {
       return;
     }
     this.isFetchingChannels = true;
-    this.isLoadingSubject.next(true);
-    this.channels().subscribe((value: ChannelResponse) => {
+    this._isLoadingSubject.next(true);
+    this.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (value) {
         this._channelSubjectVar.next(value);
         this.channelStore = value.data;
       }
       this.isFetchingChannels = false;
-      setTimeout(() => this.isLoadingSubject.next(false), 250);
+      setTimeout(() => this._isLoadingSubject.next(false), 250);
     });
   }
 
@@ -163,20 +168,24 @@ export class ApiService {
     return this._isWindowOpenedSubject;
   }
 
+  get statusSubject(): BehaviorSubject<StatusResponse | null> {
+    return this._statusSubject;
+  }
+
   fetchProgramForDay(dateToFetch: Date): void {
-    this.isLoadingSubject.next(true);
+    this._isLoadingSubject.next(true);
 
     this.fetchedDays.push(new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate()));
 
-    const fromDate: Date = new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate() - 1, 0, 0, 0, 0);
+    const fromDate: Date = new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate(), 0, 0, 0, 0);
     const toDate: Date = new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate() + 1, 23, 59, 59, 999);
 
-    this.program(fromDate, toDate).subscribe((value: ProgramResponse) => {
+    this.program(fromDate, toDate).pipe(first()).subscribe((value: ProgramResponse) => {
       if (!value) {
         return;
       }
       this._programSubject.next(value);
-      setTimeout(() => this.isLoadingSubject.next(false), 1500);
+      setTimeout(() => this._isLoadingSubject.next(false), 1500);
     });
   }
 
@@ -192,8 +201,17 @@ export class ApiService {
   }
 
   search(searchKey: string): Observable<ProgramEntry[]> {
-    this.isLoadingSubject.next(true);
+    this._isLoadingSubject.next(true);
     return this.get<ProgramEntry[]>(this.apiEndpoint + '/search?query=' + encodeURIComponent(searchKey));
+  }
+
+  updateStatus(): void {
+    this.statusResponse().pipe(first()).subscribe(statusResponse => {
+      if (!statusResponse) {
+        return;
+      }
+      this._statusSubject.next(statusResponse);
+    });
   }
 
   /**

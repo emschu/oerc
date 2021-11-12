@@ -9,7 +9,7 @@ info:
   license:
     name: AGPL
     url: http://www.gnu.org/licenses/agpl-3.0.de.html
-  version: v2
+  version: v2.1
 servers:
   - url: http://127.0.0.1:8080/api/v2
     description: Ipv4 localhost server
@@ -415,7 +415,7 @@ paths:
       parameters:
           - name: from
             in: query
-            description: from, RFC3339 format, default start of today
+            description: from, RFC3339 format, default start of today, utc is expected serverside
             allowEmptyValue: true
             schema:
               type: string
@@ -656,6 +656,13 @@ components:
           type: string
         hash:
           type: string
+        is_deprecated:
+          type: boolean
+        collision_entries:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ProgramEntry'
 
     PingResponse:
       title: PingResponse
@@ -688,6 +695,12 @@ components:
           type: integer
           format: int64
         page:
+          type: integer
+          format: int64
+        page_count:
+          type: integer
+          format: int64
+        entry_count:
           type: integer
           format: int64
         data:

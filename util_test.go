@@ -24,19 +24,19 @@ import (
 )
 
 func TestGenerateDateRange(t *testing.T) {
-	if len(*generateDateRange(0, 0)) != 1 {
+	if len(*generateDateRangeInPastAndFuture(0, 0)) != 1 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(1, 0)) != 2 {
+	if len(*generateDateRangeInPastAndFuture(1, 0)) != 2 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(0, 1)) != 2 {
+	if len(*generateDateRangeInPastAndFuture(0, 1)) != 2 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(1, 1)) != 3 {
+	if len(*generateDateRangeInPastAndFuture(1, 1)) != 3 {
 		t.Error("invalid date range generated")
 	}
-	if len(*generateDateRange(10, 10)) != 21 {
+	if len(*generateDateRangeInPastAndFuture(10, 10)) != 21 {
 		t.Error("invalid date range generated")
 	}
 }
@@ -53,7 +53,7 @@ func TestTrim(t *testing.T) {
 }
 
 func TestIcal(t *testing.T) {
-	content, err := handleIcal("https://programm.ard.de/ICalendar/iCal---Sendung?sendung=281063652013560")
+	content, err := parseStartAndEndDateTimeFromIcal("https://programm.ard.de/ICalendar/iCal---Sendung?sendung=281063652013560")
 	if err != nil {
 		t.Errorf("Error during fetch of ical content '%s'", err)
 	}
@@ -160,7 +160,7 @@ func TestAppLog(t *testing.T) {
 	setupInMemoryDbForTesting()
 	appLog("Test example")
 
-	db, _ := getDb()
+	db := getDb()
 	var entry LogEntry
 	db.Model(&LogEntry{}).Last(&entry)
 	if entry.Message != "Test example" {
@@ -210,7 +210,7 @@ func TestIsRecentlyFetched(t *testing.T) {
 func TestClearOldRecommendations(t *testing.T) {
 	setupInMemoryDbForTesting()
 
-	db, _ := getDb()
+	db := getDb()
 	oldRec := time.Now().Add(-1 * time.Minute)
 	newRec := time.Now().Add(20 * time.Minute)
 	db.Create(&Recommendation{ProgramEntryID: 123, ChannelID: 4, StartDateTime: &oldRec})
@@ -260,5 +260,35 @@ func TestConsiderTagExists(t *testing.T) {
 	considerTagExists(&pe, &testTag2)
 	if pe.Tags != "test;test2" {
 		t.Fatalf("There should be a new tag 'test2'")
+	}
+}
+
+func TestChunkStringSlice(t *testing.T) {
+	slice1 := []string{}
+	if len(chunkStringSlice(slice1, 0)) != 0 {
+		t.Fatalf("Invalid handling of empty slice of chunk size 0")
+	}
+	if len(chunkStringSlice(slice1, 1)) != 0 {
+		t.Fatalf("Invalid handling of empty slice of chunk size 1")
+	}
+	slice2 := []string{"", ""}
+	if len(chunkStringSlice(slice2, 0)) != 0 {
+		t.Fatalf("Invalid handling of slice(2) of chunk size 0")
+	}
+	if len(chunkStringSlice(slice2, 1)) != 2 {
+		t.Fatalf("Invalid handling of slice with two elements")
+	}
+	if len(chunkStringSlice(slice2, 2)) != 1 {
+		t.Fatalf("Invalid handling of slice with two elements")
+	}
+	slice3 := []string{"", "", ""}
+	if len(chunkStringSlice(slice3, 0)) != 0 {
+		t.Fatalf("Invalid handling of slice(3) of chunk size 0")
+	}
+	if len(chunkStringSlice(slice3, 1)) != 3 {
+		t.Fatalf("Invalid handling of slice with three elements")
+	}
+	if len(chunkStringSlice(slice3, 2)) != 2 {
+		t.Fatalf("Invalid handling of slice with three elements")
 	}
 }

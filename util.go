@@ -22,6 +22,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
 	"github.com/microcosm-cc/bluemonday"
 	"gorm.io/driver/postgres"
@@ -69,7 +70,7 @@ const (
 var dBReference *gorm.DB
 
 // connection closing logic should be handled by another part of the application, it's not implicit
-func getDb() (*gorm.DB, error) {
+func getDb() *gorm.DB {
 	if dBReference == nil {
 		conf := GetAppConf()
 
@@ -96,17 +97,18 @@ func getDb() (*gorm.DB, error) {
 				DisableAutomaticPing:   false,
 				Logger:                 gormLogger,
 				PrepareStmt:            true,
+				FullSaveAssociations:   true,
 			})
 			if err != nil {
 				log.Printf("Error connecting to the database. Is it running and configured correctly?\n")
 				log.Fatal(err)
-				return nil, err
+				return nil
 			}
 			s, err := db.DB()
 			if err != nil {
 				log.Printf("Error connecting to the database. Is it running and configured correctly?\n")
 				log.Fatal(err)
-				return nil, err
+				return nil
 			}
 			s.SetMaxOpenConns(50)
 
@@ -115,7 +117,7 @@ func getDb() (*gorm.DB, error) {
 			log.Fatalf("DbType '%s' is not implemented.", appConf.DbType)
 		}
 	}
-	return dBReference, nil
+	return dBReference
 }
 
 // getHTTPProxy: method to get the http proxy of the app or nil of none configured
@@ -239,8 +241,8 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 	return nil, nil
 }
 
-// generateDateRange date range generator for today +- given days
-func generateDateRange(daysInPast, daysInFuture uint) *[]time.Time {
+// generateDateRangeInPastAndFuture date range generator for today +- given days
+func generateDateRangeInPastAndFuture(daysInPast, daysInFuture uint) *[]time.Time {
 	var dates []time.Time
 	year, month, day := time.Now().Date()
 	today, _ := time.Parse("2006-01-02T15:04:05", fmt.Sprintf("%04d-%02d-%02dT00:00:00", year, int8(month), day))
@@ -263,6 +265,16 @@ func generateDateRange(daysInPast, daysInFuture uint) *[]time.Time {
 	return &dates
 }
 
+// generateDateRangeBetweenDates: get a slice of dates between a and b
+func generateDateRangeBetweenDates(startDate time.Time, endDate time.Time) *[]time.Time {
+	var dates []time.Time
+	daysBetween := endDate.Sub(startDate).Hours() / 24
+	for i := 1; i <= int(daysBetween); i++ {
+		dates = append(dates, startDate.AddDate(0, 0, i))
+	}
+	return &dates
+}
+
 // trimAndSanitizeString this function should be used for all user input (strings)
 func trimAndSanitizeString(rawString string) string {
 	res := newLineMatcher.ReplaceAllString(rawString, "")
@@ -274,7 +286,7 @@ func trimAndSanitizeString(rawString string) string {
 
 // appLog this function should be used to write log entries to the db log
 func appLog(msg string) {
-	db, _ := getDb()
+	db := getDb()
 	parsingError := &LogEntry{}
 	parsingError.Message = trimAndSanitizeString(msg)
 	db.Save(parsingError)
@@ -388,11 +400,8 @@ func isRecentlyFetched() bool {
 		return false
 	}
 	set := getSetting(settingKeyLastFetch)
-	if set != nil && set.ID != 0 {
+	if set != nil && set.ID != 0 && len(set.Value) > 0 {
 		lastUpdateTime, err := time.Parse(time.RFC3339, set.Value)
-		if len(set.Value) == 0 {
-			return false
-		}
 		if err != nil {
 			log.Printf("Could not parse '%s' as date", set.Value)
 			return false
@@ -404,8 +413,6 @@ func isRecentlyFetched() bool {
 		if minDiff < float64(GetAppConf().TimeToRefreshInMinutes) {
 			return true
 		}
-	} else {
-		log.Printf("Could not find setting value of last fetch\n")
 	}
 	return false
 }
@@ -449,7 +456,7 @@ func getSetting(key string) *Settings {
 }
 
 func getOrCreateSetting(key string) *Settings {
-	db, _ := getDb()
+	db := getDb()
 
 	var setting Settings
 	db.Model(&Settings{}).Where("setting_key = ?", key).Find(&setting)
@@ -461,14 +468,14 @@ func getOrCreateSetting(key string) *Settings {
 	}
 	// FIXME!
 	if setting.ID == 0 {
-		log.Fatal("Cannot find setting object in db")
+		return nil
 	}
 	return &setting
 }
 
 func setSetting(key string, val string) {
 	setting := getOrCreateSetting(key)
-	db, _ := getDb()
+	db := getDb()
 	db.Model(&setting).Update("value", val)
 }
 
@@ -574,7 +581,7 @@ func baseCollector(allowedHost []string) *colly.Collector {
 
 // ClearLogs method to clear the application's logs
 func ClearLogs() {
-	db, _ := getDb()
+	db := getDb()
 
 	db.Where("id > 0").Delete(&LogEntry{})
 }
@@ -584,23 +591,59 @@ func ClearAll() {
 	ClearLogs()
 	ClearRecommendations()
 
-	db, _ := getDb()
+	db := getDb()
 	db.Where("id > 0").Delete(&TvShow{})
 	db.Where("id > 0").Delete(&ImageLink{})
+
+	db.Exec("DELETE FROM collision_entries;")
 	db.Where("id > 0").Delete(&ProgramEntry{})
 	db.Where("id > 0").Delete(&Settings{})
 }
 
 // ClearRecommendations method to clear ALL the recommendations from the database
 func ClearRecommendations() {
-	db, _ := getDb()
+	db := getDb()
 
 	db.Where("id > 0").Delete(&Recommendation{})
 }
 
 // ClearOldRecommendations method to clear all the OLD(=past) recommendations
 func ClearOldRecommendations() {
-	db, _ := getDb()
+	db := getDb()
 
 	db.Where("start_date_time < ?", time.Now()).Delete(&Recommendation{})
+}
+
+// ClearDeprecations method to clear deprecation status of all program entries (= reset overlap status)
+func ClearDeprecations() {
+	db := getDb()
+
+	db.Model(&ProgramEntry{}).Update("is_deprecated = ?", false).Set("last_collision_check", "NULL").Where("is_deprecated = true")
+}
+
+func getWorkerPoolIdleTimeout() pond.Option {
+	return pond.IdleTimeout(1 * time.Minute)
+}
+
+// get chunks out of a single string slice
+func chunkStringSlice(slice []string, size int) [][]string {
+	var chunks [][]string
+	if size == 0 {
+		log.Printf("Warning: Invalid zero size for slice chunking")
+		return chunks
+	}
+	if len(slice) == 0 {
+		return chunks
+	}
+	for {
+		if len(slice) == 0 {
+			break
+		}
+		if len(slice) < size {
+			size = len(slice)
+		}
+		chunks = append(chunks, append(make([]string, 0), slice[0:size]...))
+		slice = slice[size:]
+	}
+	return chunks
 }

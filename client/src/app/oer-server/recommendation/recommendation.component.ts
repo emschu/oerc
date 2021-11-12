@@ -23,6 +23,7 @@ import {AbstractReadMoreComponent} from '../AbstractReadMoreComponent';
 import {environment} from '../../../environments/environment';
 import moment from 'moment-timezone';
 import {Subscription} from 'rxjs';
+import {first} from 'rxjs/operators';
 
 @Component({
   selector: 'app-recommendation',
@@ -59,12 +60,11 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
     }
   }
 
-  fetchRecommendations(now: string): void {
-    const currentOffset = moment(new Date()).tz(environment.timezone).utcOffset();
-    let from: moment.Moment = moment(new Date()).tz(environment.timezone).utc(true);
+  fetchRecommendations(timeExpression: string): void {
+    let from: moment.Moment = moment().tz(environment.timezone);
     let isNow = false;
 
-    switch (now) {
+    switch (timeExpression) {
       case 'now':
         isNow = true;
         break;
@@ -93,7 +93,7 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
       from = from.millisecond(0);
     }
     this.apiService.isLoadingSubject.next(true);
-    this.apiService.recommendations(from).subscribe(value => {
+    this.apiService.recommendations(from).pipe(first()).subscribe(value => {
       this.recommendations = value;
       setTimeout(() => {
         this.apiService.isLoadingSubject.next(false);

@@ -43,7 +43,7 @@ var (
 
 // ParseSRF central method to parse SRF tv show and program data
 func ParseSRF() {
-	db, _ := getDb()
+	db := getDb()
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "SRF")
@@ -68,8 +68,8 @@ func ParseSRF() {
 			appLog(warnMsg)
 			daysInPast = 15
 		}
-		times := *generateDateRange(daysInPast, daysInFuture)
-		pool := pond.New(4, 1000, pond.IdleTimeout(60*60*time.Second))
+		times := *generateDateRangeInPastAndFuture(daysInPast, daysInFuture)
+		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
 				if int(time.Since(day).Hours()/24) <= 30 {
@@ -213,6 +213,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		response, err := doGetRequest(programEntry.URL, requestHeaders, 3)
 		if response == nil || err != nil {
 			log.Printf("Problem fetching URL '%s' %v.\n", programEntry.URL, err)
+			return
 		}
 		reader := strings.NewReader(*response)
 		doc, err := goquery.NewDocumentFromReader(reader)

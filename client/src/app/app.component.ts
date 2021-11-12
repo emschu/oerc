@@ -18,8 +18,10 @@
  */
 import {ApiService} from './oer-server/api.service';
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {Subscription} from 'rxjs';
 import {OnPageHidden, OnPageVisible} from 'angular-page-visibility';
+import moment from 'moment-timezone';
+import 'moment/min/locales';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -47,14 +49,13 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    moment.locale('de');
+    this.apiService.init();
     this.isLiveSubscription = this.apiService.isLiveSubject.subscribe(value => {
-      if (this.inited && !this.isLive && value !== null) {
-        window.location.reload();
-      }
       if (!this.inited && value !== null) {
         this.inited = true;
       }
-      if (value === true || value === false) {
+      if (value !== null) {
         this.isLive = value;
       }
     });

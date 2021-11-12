@@ -118,6 +118,7 @@ export enum ChannelKeyEnum {
 export interface ProgramEntry {
   id: number;
   created_at: Date;
+  updated_at: Date;
   last_check: Date;
   start_date_time: Date;
   end_date_time: Date;
@@ -132,6 +133,20 @@ export interface ProgramEntry {
   technical_id: string;
   channel_family_id: number;
   channel_id: number;
+  collision_entries: ProgramEntry[];
+  is_deprecated: boolean;
+}
+
+// "smaller" interface to deal with big program entry lists
+export interface ProgramEntryEssential {
+  id: number;
+  created_at: Date;
+  start_date_time: Date;
+  end_date_time: Date;
+  title: string;
+  hash: string;
+  channel_id: number;
+  is_deprecated: boolean;
 }
 
 export interface ImageLink {

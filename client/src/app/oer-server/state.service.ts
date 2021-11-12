@@ -16,23 +16,26 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {SpinnerComponent} from './spinner/spinner.component';
-import { MomentDatePipe } from './moment-date.pipe';
+import { Injectable } from '@angular/core';
+import {environment} from '../../environments/environment';
 
-
-@NgModule({
-  declarations: [
-    SpinnerComponent,
-    MomentDatePipe
-  ],
-  imports: [
-    CommonModule
-  ],
-  exports: [
-    SpinnerComponent,
-    MomentDatePipe,
-  ]
+@Injectable({
+  providedIn: 'root'
 })
-export class UtilModule { }
+export class StateService {
+
+  private readonly KEY_SHOW_DEPRECATED = 'show_deprecated_entries';
+
+  constructor() { }
+
+  getShowDeprecatedEntries(): boolean {
+    if (localStorage.getItem(this.KEY_SHOW_DEPRECATED) === null) {
+      this.setShowDeprecatedEntries(environment.defaultSettingShowDeprecatedEntries);
+    }
+    return JSON.parse(localStorage.getItem(this.KEY_SHOW_DEPRECATED) as string);
+  }
+
+  setShowDeprecatedEntries(value: boolean): void {
+    localStorage.setItem(this.KEY_SHOW_DEPRECATED, JSON.stringify(value));
+  }
+}

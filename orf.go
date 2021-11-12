@@ -46,7 +46,7 @@ var (
 
 // ParseORF central method to parse ORF tv show and program data
 func ParseORF() {
-	db, _ := getDb()
+	db := getDb()
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "ORF")
@@ -60,11 +60,11 @@ func ParseORF() {
 		fetchTvShowsORF(db, channelFamily)
 	}
 
-	times := *generateDateRange(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
 
 	// import program entries for the configured date range
 	if GetAppConf().EnableProgramEntryCollection {
-		pool := pond.New(4, 1000, pond.IdleTimeout(60*60*time.Second))
+		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
 				family := *channelFamily
@@ -221,28 +221,16 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		programEntry.URL = trimAndSanitizeString(url)
 
 		// handle start date time
-		startDateTime, err := time.Parse(time.RFC3339, startTimeStr)
-		if err != nil {
-			appLog(fmt.Sprint("Problem with parsing start date time in orf program entry.\n"))
+		startDateTime, fail := parseDate(startTimeStr, location)
+		if fail {
 			return
 		}
-		if startDateTime.IsZero() {
-			appLog(fmt.Sprint("Problem with parsing start date time in orf program entry.\n"))
-			return
-		}
-		startDateTime = startDateTime.In(location)
 
 		// handle end date time
-		endDateTime, err := time.Parse(time.RFC3339, endTimeStr)
-		if err != nil {
-			appLog(fmt.Sprint("Problem with parsing start date time in orf program entry.\n"))
+		endDateTime, fail := parseDate(endTimeStr, location)
+		if fail {
 			return
 		}
-		if endDateTime.IsZero() {
-			appLog(fmt.Sprint("Problem with parsing start date time in orf program entry.\n"))
-			return
-		}
-		endDateTime = endDateTime.In(location)
 
 		programEntry.StartDateTime = &startDateTime
 		programEntry.EndDateTime = &endDateTime
@@ -329,6 +317,20 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		appLog(fmt.Sprintf("Error of orf collector in url '%s': %v\n", queryURL, err))
 	}
 	c.Wait()
+}
+
+func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
+	dateTime, err := time.Parse(time.RFC3339, datetimeStr)
+	if err != nil {
+		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
+		return time.Time{}, true
+	}
+	if dateTime.IsZero() {
+		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
+		return time.Time{}, true
+	}
+	dateTime = dateTime.In(location)
+	return dateTime, false
 }
 
 func getDaysBetween(day time.Time, now time.Time) int {

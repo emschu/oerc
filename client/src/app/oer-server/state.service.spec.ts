@@ -16,23 +16,19 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {SpinnerComponent} from './spinner/spinner.component';
-import { MomentDatePipe } from './moment-date.pipe';
+import { TestBed } from '@angular/core/testing';
 
+import { StateService } from './state.service';
 
-@NgModule({
-  declarations: [
-    SpinnerComponent,
-    MomentDatePipe
-  ],
-  imports: [
-    CommonModule
-  ],
-  exports: [
-    SpinnerComponent,
-    MomentDatePipe,
-  ]
-})
-export class UtilModule { }
+describe('StateService', () => {
+  let service: StateService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(StateService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});

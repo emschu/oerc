@@ -85,9 +85,11 @@ type ChannelResponse struct {
 
 // LogEntriesResponse response object
 type LogEntriesResponse struct {
-	Elements *[]LogEntry `json:"elements"`
-	Size     int64       `json:"size"`
-	Page     int64       `json:"page"`
+	Elements   *[]LogEntry `json:"elements"`
+	Size       int64       `json:"size"`
+	Page       int64       `json:"page"`
+	PageCount  int64       `json:"page_count"`
+	EntryCount int64       `json:"entry_count"`
 }
 
 // Error api return object
@@ -115,6 +117,15 @@ func initRouter() *gin.Engine {
 		// TODO the IP probably needs to be dynamic, too... probably this should get a new configuration option
 		context.Header("Access-Control-Allow-Origin", fmt.Sprintf("http://127.0.0.1:%d", GetAppConf().ServerPort))
 	})
+
+	// default redirect to client app and ping redirect
+	r.GET("/", func(context *gin.Context) {
+		context.Redirect(301, "/client")
+	})
+	r.GET("/ping", func(context *gin.Context) {
+		context.Redirect(301, "/api/v2/ping")
+	})
+
 	// ping
 	apiV2.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"data": "Pong", "date": time.Now()})

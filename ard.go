@@ -29,7 +29,9 @@ import (
 	"math"
 	url2 "net/url"
 	"regexp"
+	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -47,7 +49,7 @@ var (
 	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
 	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
 	ardIcalLinkMatcher      = regexp.MustCompile(`^/ICalendar/iCal---Sendung\?sendung=[0-9]+`)
-	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9]+\.(jpg|png))|((https?://programm.ard.de)?/files/.*\.(jpg|png)))`)
+	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9]+\.(jpe?g|png))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png)))`)
 	ardMainTags             = map[string]string{
 		"Film":            "Film/Alle-Filme/Alle-Filme",
 		"Dokumentation":   "Dokus--Reportagen/Alle-Dokumentationen/Startseite",
@@ -115,7 +117,7 @@ var (
 
 // ParseARD central method to parse ARD tv show and program data
 func ParseARD() {
-	db, _ := getDb()
+	db := getDb()
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "ARD")
@@ -129,11 +131,11 @@ func ParseARD() {
 		fetchTvShowsARD(db, channelFamily)
 	}
 
-	times := *generateDateRange(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
 
 	if GetAppConf().EnableProgramEntryCollection {
 		// import program entries for the configured date range
-		pool := pond.New(4, 10000, pond.IdleTimeout(120*60*time.Second), pond.PanicHandler(func(i interface{}) {
+		pool := pond.New(runtime.NumCPU(), 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
 			log.Printf("Problem with goroutine pool: %v\n", i)
 		}))
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
@@ -201,6 +203,8 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		// subtitle (nested span) is removed from title and added to description
 		title = trimAndSanitizeString(strings.Replace(title, subtitle, "", 1))
 		programEntry.Title = title
+		// reset description field
+		programEntry.Description = ""
 		if len(subtitle) > 0 {
 			programEntry.Description = subtitle + ". "
 		}
@@ -263,7 +267,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		}
 		icalLink := ardHostWithPrefix + icalHref
 
-		icalContent, err := handleIcal(icalLink)
+		icalContent, err := parseStartAndEndDateTimeFromIcal(icalLink)
 		if icalContent == nil || err != nil {
 			appLog(fmt.Sprintf("Problem fetching ical at link '%s'", icalLink))
 			return
@@ -285,16 +289,15 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		descrSelector := fmt.Sprintf("#mehr-%s .eventText", programEntry.TechnicalID)
 		desc := element.DOM.Find(descrSelector)
 		text := desc.Text()
-		programEntry.Description += trimAndSanitizeString(text)
+		if !strings.HasPrefix(programEntry.Description, "Keine weiteren Informationen") {
+			programEntry.Description += trimAndSanitizeString(text)
+		}
 
 		if len(programEntry.Description) == 0 {
 			// try an alternative description location
 			descr2Selector := fmt.Sprintf("div.detail-top div.eventText")
 			desc = element.DOM.Find(descr2Selector)
-			if !strings.HasPrefix(programEntry.Description, "Keine weiteren Informationen") {
-				programEntry.Description = trimAndSanitizeString(desc.Text())
-			}
-
+			programEntry.Description = trimAndSanitizeString(desc.Text())
 			if len(programEntry.Description) == 0 {
 				programEntry.Description = "Keine weiteren Informationen"
 			}
@@ -360,7 +363,6 @@ func fetchTvShowsARD(db *gorm.DB, channelFamily *ChannelFamily) {
 	// Create a Collector specifically for Shopify
 	c := ardCollector()
 
-	// var counter = 0
 	// Create a callback on the XPath query searching for the URLs
 	c.OnHTML(".az-slick > .box > a", func(e *colly.HTMLElement) {
 		var link = e.Attr("href")
@@ -512,10 +514,13 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 func getEIDsOfUrls(urls []string) []string {
 	c := ardCollector()
 	var eidList []string
+	var listMutex sync.Mutex
 
 	c.OnHTML(".event-list li[class^=eid]", func(element *colly.HTMLElement) {
 		eid := strings.Replace(ardEidMatcher.FindString(element.Attr("class")), "eid", "", 1)
+		listMutex.Lock()
 		eidList = append(eidList, eid)
+		listMutex.Unlock()
 	})
 
 	for _, url := range urls {
@@ -526,6 +531,7 @@ func getEIDsOfUrls(urls []string) []string {
 		}
 	}
 	c.Wait()
+
 	return eidList
 }
 
@@ -535,8 +541,8 @@ type ICalContent struct {
 	endDate   time.Time
 }
 
-// handleIcal method to parse a plain ical file data just for DTSTART and DTEND. Needed for ARD only atm.
-func handleIcal(targetURL string) (*ICalContent, error) {
+// parseStartAndEndDateTimeFromIcal method to parse a plain ical file data just for DTSTART and DTEND. Needed for ARD only atm.
+func parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalContent, error) {
 	requestHeaders := map[string]string{"Accept": "text/html", "Host": "programm.ard.de"}
 
 	icalContent, err := doGetRequest(targetURL, requestHeaders, 3)
@@ -552,14 +558,15 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 	var hasStart = false
 	var hasEnd = false
 	var content = ICalContent{}
+	const iCalDateLayout = "20060102T150405"
+	_, zoneOffsetInSecs := time.Now().In(location).Zone()
+	timeZoneOffset := time.Duration(-zoneOffsetInSecs) * time.Second
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		const iCalDateLayout = "20060102T150405"
 		if !hasStart && strings.HasPrefix(line, "DTSTART;") {
 			startDate := strings.Replace(line, "DTSTART;TZID=Europe/Berlin:", "", 1)
 			content.startDate, err = time.Parse(iCalDateLayout, startDate)
-			content.startDate = content.startDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.\n", icalContent, err))
 			} else {
@@ -569,7 +576,6 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 		if !hasEnd && strings.HasPrefix(line, "DTEND;") {
 			endDate := strings.Replace(line, "DTEND;TZID=Europe/Berlin:", "", 1)
 			content.endDate, err = time.Parse(iCalDateLayout, endDate)
-			content.endDate = content.endDate.In(location)
 			if err != nil {
 				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.\n", icalContent, err))
 			} else {
@@ -577,11 +583,17 @@ func handleIcal(targetURL string) (*ICalContent, error) {
 			}
 		}
 		if hasStart && hasEnd {
+			// its important to subtract this offset and set the correct time zone here
+			content.startDate = content.startDate.Add(timeZoneOffset).In(location)
+			content.endDate = content.endDate.Add(timeZoneOffset).In(location)
 			break
 		}
 	}
+	if !hasStart || !hasEnd {
+		return nil, errors.New("Could not find start and/or end date in supplied ical content")
+	}
 	if content.startDate.IsZero() || content.endDate.IsZero() {
-		return nil, errors.New("Empty dates detected in ical content. Probably a perser error")
+		return nil, errors.New("Empty dates detected in ical content. Probably a parser error")
 	}
 	return &content, nil
 }

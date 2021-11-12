@@ -57,15 +57,18 @@
         <tr *ngFor="let item of recommendations">
           <td class="col_start_date"><span
             class="channel_label">{{ apiService.getChannelById(item.channel_id)?.title}}</span><br/>
-            {{item.program_entry.start_date_time | date:'d.MM.y - HH:mm' }}-{{item.program_entry.end_date_time | date:'HH:mm' }}<br/>
+            <span *ngIf="item.program_entry.is_deprecated" class="label label-warning">Could be out-of-date!</span>
+            {{item.program_entry.start_date_time | momentDate:'full-medium' }}-{{item.program_entry.end_date_time | momentDate:'time-medium' }}<br/>
             <img
               *ngIf="item.program_entry.image_links && item.program_entry.image_links.length > 0"
+              alt="program entry preview image"
               class="img-responsive img-fit-contain"
               src="{{item.program_entry.image_links[0].url}}"
               loading="lazy"/><br/>
               <em>Keywords: {{ item.keywords }}</em>
           </td>
-          <td class="col_title" [innerHTML]="item.program_entry?.title | search:item.keywords"></td>
+          <td class="col_title" [innerHTML]="item.program_entry?.title | search:item.keywords">
+          </td>
           <td class="col_description"
               [innerHTML]="item.program_entry?.description | readMore | search:item.keywords"></td>
         </tr>

@@ -20,6 +20,7 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
 import {StatusResponse} from '../entities';
 import {Subscription} from 'rxjs';
+import {skip} from 'rxjs/operators';
 
 @Component({
   selector: 'app-oer-status-display',
@@ -33,17 +34,12 @@ export class StatusComponent implements OnInit, OnDestroy {
   constructor(private oerApiService: ApiService) {}
 
   ngOnInit(): void {
-    this.updateStatus();
+    this.statusSubscription = this.oerApiService.statusSubject.pipe(skip(1)).subscribe(value => {
+      this.currentStatus = value;
+    });
   }
 
   ngOnDestroy(): void {
     this.statusSubscription?.unsubscribe();
-  }
-
-  updateStatus(): void {
-    const statusResponseObservable = this.oerApiService.statusResponse();
-    this.statusSubscription = statusResponseObservable.subscribe(statusResponse => {
-      this.currentStatus = statusResponse;
-    });
   }
 }

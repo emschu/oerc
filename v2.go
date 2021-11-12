@@ -22,6 +22,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,9 +30,12 @@ import (
 
 // getProgramOf generating a program entry list response for each channel (or if channel = nil for ALL channels) in given time range. returns ProgramResponse
 func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
-	db, _ := getDb()
+	db := getDb()
 	var entries []ProgramEntry
-	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, end).Preload("ImageLinks").Order("channel_id")
+	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, end).
+		Preload("ImageLinks").
+		Preload("CollisionEntries").
+		Order("channel_id")
 	if channel != nil {
 		order.Where("channel_id", channel.ID)
 	}
@@ -46,21 +50,21 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramRe
 }
 
 func getChannels() *[]Channel {
-	db, _ := getDb()
+	db := getDb()
 	var channels []Channel
-	db.Model(&Channel{}).Find(&channels)
+	db.Model(&Channel{}).Preload("ChannelFamily").Find(&channels)
 	return &channels
 }
 
 func getChannelFamilies() *[]ChannelFamily {
-	db, _ := getDb()
+	db := getDb()
 	families := &[]ChannelFamily{}
 	db.Model(&ChannelFamily{}).Find(families)
 	return families
 }
 
 func getCount(model interface{}) uint64 {
-	db, _ := getDb()
+	db := getDb()
 	var count int64
 	db.Model(model).Count(&count)
 	return uint64(count)
@@ -221,9 +225,9 @@ func getSingleProgramEntryHandler(c *gin.Context) {
 		return
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var programEntry ProgramEntry
-	db.Model(ProgramEntry{}).Preload("ImageLinks").First(&programEntry, pEID)
+	db.Model(ProgramEntry{}).Preload("ImageLinks").Preload("CollisionEntries").First(&programEntry, pEID)
 	if programEntry.ID == 0 {
 		c.JSON(http.StatusNotFound, Error{Status: "404", Message: "Invalid program entry id"})
 		return
@@ -297,7 +301,7 @@ func getStatusObject() *StatusResponse {
 		return nil
 	}
 
-	db, _ := getDb()
+	db := getDb()
 
 	var firstEntry time.Time
 	var peCount int64
@@ -318,13 +322,13 @@ func getStatusObject() *StatusResponse {
 
 	var firstEntryStr string
 	if firstEntry.IsZero() {
-		firstEntryStr = "-"
+		firstEntryStr = ""
 	} else {
 		firstEntryStr = firstEntry.Format(time.RFC3339)
 	}
 	var lastEntryStr string
 	if lastEntry.IsZero() {
-		lastEntryStr = "-"
+		lastEntryStr = ""
 	} else {
 		lastEntryStr = lastEntry.Format(time.RFC3339)
 	}
@@ -353,10 +357,13 @@ func getChannelsHandler(c *gin.Context) {
 }
 
 func getLogEntriesHandler(context *gin.Context) {
-	db, _ := getDb()
+	db := getDb()
 	var logEntryList []LogEntry
+	var entryCount, pageCount int64
+	db.Model(&LogEntry{}).Count(&entryCount)
+	pageCount = int64(math.Ceil(float64(entryCount)))
 	db.Model(&LogEntry{}).Limit(500).Order("id desc").Find(&logEntryList)
-	context.JSON(http.StatusOK, LogEntriesResponse{&logEntryList, int64(len(logEntryList)), 0})
+	context.JSON(http.StatusOK, LogEntriesResponse{&logEntryList, int64(len(logEntryList)), 0, pageCount, entryCount})
 }
 
 func getSingleLogEntriesHandler(context *gin.Context) {
@@ -367,7 +374,7 @@ func getSingleLogEntriesHandler(context *gin.Context) {
 		return
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var singleLogEntry LogEntry
 	db.Model(&LogEntry{}).Where("id", logEntryID).Find(&singleLogEntry)
 	if singleLogEntry.ID == 0 {
@@ -385,7 +392,7 @@ func deleteSingleLogEntriesHandler(context *gin.Context) {
 		return
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var singleLogEntry LogEntry
 	db.Model(&LogEntry{}).Where("id", logEntryID).Find(&singleLogEntry)
 	if singleLogEntry.ID == 0 {
@@ -407,8 +414,9 @@ func getRecommendationsHandler(context *gin.Context) {
 	fromStr := context.Query("from")
 	var from time.Time
 
+	now := time.Now()
 	if len(fromStr) == 0 {
-		from = time.Now()
+		from = now
 	} else {
 		var err error
 		from, err = time.Parse(time.RFC3339, fromStr)
@@ -418,13 +426,34 @@ func getRecommendationsHandler(context *gin.Context) {
 		}
 	}
 	from = from.In(location)
+	logEntryList := getRecommendationsAt(from)
 
-	db, _ := getDb()
-	var logEntryList []Recommendation
-	db.Model(&Recommendation{}).Where(
-		"start_date_time >= ?", from).Order("start_date_time asc").Preload(
-		"ProgramEntry").Preload("ProgramEntry.ImageLinks").Find(&logEntryList)
 	context.JSON(http.StatusOK, &logEntryList)
+}
+
+func getRecommendationsAt(at time.Time) []Recommendation {
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	minuteDiff := at.Sub(time.Now().In(location)).Minutes()
+
+	db := getDb()
+	var logEntryList []Recommendation
+	dbQuery := db.Model(&Recommendation{}).
+		Select("recommendations.*").
+		Joins("LEFT JOIN program_entries ON (recommendations.program_entry_id = program_entries.id)").
+		Order("recommendations.start_date_time asc").
+		Preload("ProgramEntry").
+		Preload("ProgramEntry.ImageLinks").
+		Preload("ProgramEntry.CollisionEntries")
+
+	if minuteDiff < 15 {
+		// include televised items of this moment, but don't do this for requests of future recommendations
+		dbQuery = dbQuery.Where("((recommendations.start_date_time <= ? AND program_entries.end_date_time >= ?) OR program_entries.start_date_time >= ?)", at, at, at)
+	} else {
+		dbQuery = dbQuery.Where("(recommendations.start_date_time >= ?)", at)
+	}
+	dbQuery.Find(&logEntryList)
+
+	return logEntryList
 }
 
 func getSearchHandler(context *gin.Context) {
@@ -486,9 +515,14 @@ func getSearchHandler(context *gin.Context) {
 		offset = 0
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	var programEntryList []ProgramEntry
-	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).Offset(int(offset)).Limit(int(limit)).Order("start_date_time ASC").Preload("ImageLinks").Find(&programEntryList)
+	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
+		Offset(int(offset)).Limit(int(limit)).
+		Order("start_date_time ASC").
+		Preload("ImageLinks").
+		Preload("CollisionEntries").
+		Find(&programEntryList)
 
 	if len(programEntryList) == 0 {
 		context.JSON(http.StatusOK, [0]ProgramEntry{})

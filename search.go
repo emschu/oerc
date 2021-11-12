@@ -18,6 +18,7 @@
 package main
 
 import (
+	"gorm.io/gorm"
 	"log"
 	"strings"
 	"time"
@@ -56,17 +57,8 @@ func SearchProgram() {
 	endDate := now.Add(time.Duration(GetAppConf().SearchDaysInFuture+1) * 24 * time.Hour)
 	tEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 3, 0, 0, 0, now.Location())
 
-	db, _ := getDb()
-	var excludedChannelIds = make([]uint, len(GetAppConf().SearchSkipChannels))
-	for _, channel := range GetAppConf().SearchSkipChannels {
-		var channelEntry Channel
-		db.Model(&Channel{}).Where("title = ?", channel).First(&channelEntry)
-		if channelEntry.ID > 0 {
-			excludedChannelIds = append(excludedChannelIds, channelEntry.ID)
-		} else {
-			log.Printf("Problem with channel name '%s'. Could not find it in database. Skipping this entry.\n", channel)
-		}
-	}
+	db := getDb()
+	var excludedChannelIDs = getExcludedChannelsFromSearch(db)
 
 	var programEntryList = make([]ProgramEntry, 0)
 	programResponse := getProgramOf(&tStart, &tEnd, nil)
@@ -79,7 +71,7 @@ func SearchProgram() {
 	skipCounter := 0
 	for _, programEntry := range *programResponse.ProgramEntryList {
 		// exclude the channels found above
-		if isChannelExcluded(excludedChannelIds, &programEntry) {
+		if isChannelExcluded(excludedChannelIDs, &programEntry) {
 			skipCounter++
 			continue
 		}
@@ -130,9 +122,39 @@ func SearchProgram() {
 	log.Printf("Found %v search results in tv program of today + %d days. Searched in %d program entries.\n", len(programEntryList), GetAppConf().SearchDaysInFuture, len(*programResponse.ProgramEntryList)-skipCounter)
 }
 
+func getExcludedChannelsFromSearch(db *gorm.DB) *[]uint {
+	var excludedChannelIds = make([]uint, len(GetAppConf().SearchSkipChannels))
+	for _, channel := range GetAppConf().SearchSkipChannels {
+		var channelEntry Channel
+		db.Model(&Channel{}).Where("title = ?", channel).First(&channelEntry)
+		if channelEntry.ID > 0 {
+			excludedChannelIds = append(excludedChannelIds, channelEntry.ID)
+		} else {
+			log.Printf("Problem with channel name '%s'. Could not find it in database. Skipping this entry.\n", channel)
+		}
+	}
+	return &excludedChannelIds
+}
+
+func isChannelFamilyExcluded(family *ChannelFamily) bool {
+	if !appConf.EnableARD && family.Title == "ARD" {
+		return true
+	}
+	if !appConf.EnableZDF && family.Title == "ZDF" {
+		return true
+	}
+	if !appConf.EnableORF && family.Title == "ORF" {
+		return true
+	}
+	if !appConf.EnableSRF && family.Title == "SRF" {
+		return true
+	}
+	return false
+}
+
 // method to check if a single program entry should be skipped because its channel id is contained in the first parameter
-func isChannelExcluded(excludedChannelIds []uint, programEntry *ProgramEntry) bool {
-	for _, skippedChannelID := range excludedChannelIds {
+func isChannelExcluded(excludedChannelIds *[]uint, programEntry *ProgramEntry) bool {
+	for _, skippedChannelID := range *excludedChannelIds {
 		if programEntry.ChannelID == skippedChannelID {
 			return true
 		}

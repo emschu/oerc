@@ -1,5 +1,15 @@
 # Changelog oerc
 
+## 0.9.12 - 2021/11/12
+- New Feature: Auto-detection of overlapping program items is added to the `fetch` command and the web client.
+- New Command: `oerc full-overlap-check`. It will calculate the overlaps on ALL of the program entries 
+  in the database. It could take some while.
+- Improve recommendation sql search
+- Fixing date time offset problem with ARD records.
+- Web-Client: Fixing timezone/localization issues in browser client, but there are still browser-specific bugs
+- Web-Client: Datepicker added to gui and overlapping program items can be displayed
+- HTTP API: Extend LogResponse object of api
+
 ## 0.9.11 - 2021/07/31
 - Integration of GitHub CI
 - Fix of server status request - if there are no program entries

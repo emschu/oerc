@@ -23,5 +23,6 @@ export const environment = {
   serverEndpoint: '/api/v2',
   apiRequestTimeoutInSecs: 60,
   timezone: 'Europe/Berlin',
-  appVersion: packageInfo.version
+  appVersion: packageInfo.version,
+  defaultSettingShowDeprecatedEntries: false,
 };

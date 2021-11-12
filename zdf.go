@@ -59,7 +59,7 @@ func ParseZDF() {
 		log.Printf("Using ZDF API key: %s\n", *zdfAPIKey)
 	}
 
-	db, _ := getDb()
+	db := getDb()
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "ZDF")
 	if channelFamily.ID == 0 {
@@ -67,14 +67,14 @@ func ParseZDF() {
 		return
 	}
 
-	times := *generateDateRange(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
 	if GetAppConf().EnableTVShowCollection {
 		fetchTvShowsZDF(db, channelFamily)
 	}
 
 	// import program entries for the configured date range
 	if GetAppConf().EnableProgramEntryCollection {
-		pool := pond.New(4, 1000, pond.IdleTimeout(120*60*time.Second))
+		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
 				family := *channelFamily
@@ -340,7 +340,7 @@ func fetchTvShowsZDF(db *gorm.DB, channelFamily *ChannelFamily) {
 	// and now process them
 	log.Printf("Processing %d zdf tv shows ...\n", len(tvShowLinks))
 
-	pool := pond.New(4, 1000, pond.IdleTimeout(30*60*time.Second))
+	pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 	for _, singleTvShowPage := range tvShowLinks {
 		family := channelFamily
 		singlePage := singleTvShowPage
