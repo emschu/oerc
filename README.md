@@ -1,9 +1,14 @@
 # OERC
 
-... is a short name for **OER-Collector**, which is a software project to store, view and search the program data of 
+... is a software project to locally store, view and search the program data of 
 public-law ("öffentlich-rechtliche") TV stations in Germany, Austria and Switzerland.
 
-This tool needs an external PostgreSQL database and some configuration parameters to do:
+`oerc` needs a single PostgreSQL database and some configuration options to get ready.
+
+While `oerc` is a command-line tool only, a built-in web application is provided for you 
+at `127.0.0.1:8080` (*default*) if you run `oerc server`.
+
+### Commands
 - **Collecting TV program data** of 28 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
 - Running an **HTTP backend server** to access program data in JSON format (`oerc server`)
@@ -141,7 +146,6 @@ SearchSkipChannels:
   - KIKA
   - ORF Sport +
 Debug: false
-ProfilingEnabled: false
 ```
 
 ## Usage
