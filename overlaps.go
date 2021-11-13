@@ -105,6 +105,8 @@ func processOverlaps(db *gorm.DB, programEntryID *uint) {
 	if len(programEntry.CollisionEntries) == 0 {
 		return
 	}
+	// ensure the correct items only are marked as deprecated here
+
 	// assume the current entry is the most recent one, until we know it better from collision entries
 	isEntryDeprecated := isProgramEntryPossiblyDeprecated(&programEntry)
 	// update entry - if needed
@@ -199,6 +201,7 @@ func storeOverlaps(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 	return affectedIds
 }
 
+// this method asks the database for overlapping items and store the results in a map
 func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntries *[]ProgramEntry) *map[uint][]uint {
 	startOfDay := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location())
 	endOfDay := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, day.Location())
@@ -217,6 +220,10 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntr
 				// avoid checking overlap with itself
 				continue
 			}
+			if peToCheck.EndDateTime.Before(*pe.StartDateTime) || peToCheck.StartDateTime.After(*pe.EndDateTime) {
+				// exclude trivial cases from db queries and save a lot of time and memory
+				continue
+			}
 			queries = append(queries, fmt.Sprintf("CASE WHEN (SELECT (timestamptz '%s', timestamptz '%s') "+
 				"OVERLAPS (timestamptz '%s', timestamptz '%s'))=TRUE THEN '%d;%d' ELSE '' END as a%d",
 				peToCheck.StartDateTime.Format(time.RFC3339), peToCheck.EndDateTime.Format(time.RFC3339),
@@ -227,7 +234,7 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntr
 
 	tx := db.Session(&gorm.Session{PrepareStmt: true})
 	var collisionMap = make(map[uint][]uint)
-	chunks := chunkStringSlice(queries, 25)
+	chunks := chunkStringSlice(queries, 50)
 	for _, singleChunk := range chunks {
 		var result []map[string]interface{}
 		tx.Raw(fmt.Sprintf("SELECT %s", strings.Join(singleChunk, ","))).Scan(&result)

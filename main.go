@@ -114,9 +114,13 @@ func main() {
 						setSetting(settingKeyLastFetch, time.Now().Format(time.RFC3339))
 					}
 					setSetting(settingKeyRequestsLastExecution, strconv.Itoa(int(status.TotalRequests)))
-					currentRequestsTotal, err := strconv.ParseUint(getSetting(settingKeyRequestsTotal).Value, 10, 64)
-					if err != nil {
-						currentRequestsTotal = 0
+					setting := getSetting(settingKeyRequestsTotal)
+					var currentRequestsTotal uint64
+					if setting != nil {
+						currentRequestsTotal, err = strconv.ParseUint(setting.Value, 10, 64)
+						if err != nil {
+							currentRequestsTotal = 0
+						}
 					}
 					setSetting(settingKeyRequestsTotal, strconv.Itoa(int(currentRequestsTotal+status.TotalRequests)))
 					log.Printf("HTTP request counter of this fetch process: %d\n", status.TotalRequests)
