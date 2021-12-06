@@ -319,7 +319,9 @@ func fetchTvShowsZDF(db *gorm.DB, channelFamily *ChannelFamily) {
 	var tvShowGroups = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0+-+9"}
 
 	// fetch all links to tv shows
-	log.Printf("Collecting zdf tv shows ...\n")
+	if verboseGlobal {
+		log.Printf("Collecting zdf tv shows ...\n")
+	}
 	var tvShowLinks = make([]string, 0)
 	for _, group := range tvShowGroups {
 		apiURL := fmt.Sprintf("%s/sendungen-a-z?group=%s", zdfHost, group)
@@ -338,7 +340,9 @@ func fetchTvShowsZDF(db *gorm.DB, channelFamily *ChannelFamily) {
 	}
 
 	// and now process them
-	log.Printf("Processing %d zdf tv shows ...\n", len(tvShowLinks))
+	if verboseGlobal {
+		log.Printf("Processing %d zdf tv shows ...\n", len(tvShowLinks))
+	}
 
 	pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 	for _, singleTvShowPage := range tvShowLinks {

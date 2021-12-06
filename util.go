@@ -192,6 +192,10 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			log.Printf("Unexpected HTTP status code '%d' for url '%s'.\n", resp.StatusCode, target)
 			lastErr = fmt.Errorf("invalid HTTP status code '%d'", resp.StatusCode)
+			if resp.StatusCode == 429 {
+				// 429 == "Too many requests", so wait a little
+				time.Sleep(60 * time.Second)
+			}
 			incrErr()
 			continue
 		}
@@ -208,19 +212,22 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 		case "gzip":
 			if resp.Body != nil {
 				reader, err = gzip.NewReader(resp.Body)
-				if err != nil {
-					log.Printf("problem reading gzip input. error: %v\n", err)
-					lastErr = err
-					incrErr()
-					continue
-				}
 				defer func() {
+					if reader == nil {
+						return
+					}
 					err := reader.Close()
 					if err != nil {
 						appLog(fmt.Sprintf("Problem during close of gzip stream: %v\n", err))
 						incrErr()
 					}
 				}()
+				if err != nil {
+					log.Printf("problem reading gzip input. error: %v\n", err)
+					lastErr = err
+					incrErr()
+					continue
+				}
 			}
 		default:
 			// no compression
