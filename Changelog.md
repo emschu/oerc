@@ -1,5 +1,10 @@
 # Changelog oerc
 
+## 0.9.14 - 2021/12/xx
+- add screenshots to repository
+- add new action (`oerc overlap-check`) to run the overlap check separately from other commands
+- improve documentation
+
 ## 0.9.13 - 2021/11/12
 - bugfixes
 

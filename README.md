@@ -18,8 +18,8 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
 
-This project is written in Golang and it is *AGPL v3* licensed. You are encouraged to participate and improve functionality. 
-[Just create a Github issue!](https://github.com/emschu/oerc/issues)
+This project is written in Golang, and it is *AGPL v3* licensed. You are encouraged to participate and improve functionality. 
+[Just create a GitHub issue!](https://github.com/emschu/oerc/issues)
 
 The focus of this project lies in providing program data for individuals - ready to be enriched, searched or analysed 
 as long as there is no (real) Open Data policy of the public-law sector.
@@ -37,21 +37,25 @@ regions in general.
 
 ![oer-collector logo](./docs/logo.png)
 
-## Install
+### Web Client
+![oerc web client screenshot](./docs/screenshot_web.png)
+![oerc web client screenshot with overlaps](./docs/screenshot_web_overlaps.png)
+
+## Installation
 
 1. Get this application
 ```shell
 go get -u github.com/emschu/oerc
 ```
-**OR** download the latest release for your platform from the [GitHub release page](https://github.com/emschu/oerc/releases).
 
-2. Set up a PostgreSQL database (12+), configure a database and start it
+2. Set up a PostgreSQL database (12+), configure a database and start it.
 3. Run `oerc init`.
 This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
    You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`, 
-   `<db_user>`, `<db_password>` in the configuration file to reach the database.
+   `<db_user>`, `<db_password>` in the configuration file to reach the database you've configured in the previous step.
 4. Run `oerc fetch` for the first time and wait until the first program data is collected for you.
-5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (with the default configuration)
+5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (the endpoint is configurable).
+6. Run `oerc search` to look for recommendations based on your self-defined keywords in the configuration.
 
 ## Description
 
@@ -63,26 +67,27 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   1.0.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.9.14, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
 
 COMMANDS:
-   clear       Clear the database. Be careful!
-   fetch, f    Get latest data
-   init, i     Initial database and configuration setup check
-   search, sc  Search program data and create recommendations
-   server, sv  Start API HTTP backend server
-   status, s   show app's status
-   help, h     Shows a list of commands or help for one command
+   clear               Clear the database. Be careful!
+   fetch, f            Get latest data
+   full-overlap-check  Run overlap check on all program entries. Could take very long.
+   init, i             Initial database and configuration setup check
+   overlap-check       Run overlap check on currently fetched time range
+   search, sc          Search program data and create recommendations
+   server, sv          Start webserver with oerc API and an embedded browser client
+   status, s           Show some of the app's status information
+   help, h             Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --config value, -c value  Path to the yaml configuration file (default: ~/.oerc.yaml)
    --verbose                 Verbose log output (default: false)
    --help, -h                show help (default: false)
-   --version, -v             print the version (default: false)
-                                              
+   --version, -v             print the version (default: false)                                                                     
 ```
 
 ### Configuration options

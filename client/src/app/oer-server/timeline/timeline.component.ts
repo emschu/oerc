@@ -271,7 +271,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadProgramItems(): void {
-    const today = moment().tz(environment.timezone).toDate();
+    const now = moment().tz(environment.timezone);
+    const midnight = moment().tz(environment.timezone).hour(0).minute(0).second(0);
 
     if (this.programSubscription === null || this.programSubscription.closed) {
       this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
@@ -406,7 +407,12 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
-    this.apiService.fetchProgramForDay(today);
+    // load yesterday's program if we are just after midnight to show enough items in the timeline
+    const minuteDiff = now.diff(midnight, 'minute', false);
+    this.apiService.fetchProgramForDay(now.toDate());
+    if (minuteDiff < 180) {
+      this.apiService.fetchProgramForDay(now.clone().subtract('1', 'day').toDate());
+    }
   }
 
   zoomIn(): void {

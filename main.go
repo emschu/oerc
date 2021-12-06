@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	version       = "0.9.13"
+	version       = "0.9.14"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -135,7 +135,7 @@ func main() {
 			{
 				Name:    "status",
 				Aliases: []string{"s"},
-				Usage:   "show app's status",
+				Usage:   "Show some of the app's status information",
 				Action: func(c *cli.Context) error {
 					Startup(c)
 					defer Shutdown()
@@ -155,7 +155,7 @@ func main() {
 			{
 				Name:    "server",
 				Aliases: []string{"sv"},
-				Usage:   "Start API HTTP backend server",
+				Usage:   "Start webserver with oerc API and an embedded browser client",
 				Action: func(c *cli.Context) error {
 					startTime := time.Now()
 					Startup(c)
@@ -211,6 +211,13 @@ func main() {
 					{
 						Name:  "log",
 						Usage: "Clears all logs",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "force",
+								Aliases: []string{"f"},
+								Value:   false,
+							},
+						},
 						Action: func(c *cli.Context) error {
 							log.Println("Clearing all log entries...")
 							Startup(c)
@@ -219,7 +226,7 @@ func main() {
 							if c.Bool("force") {
 								ClearLogs()
 							} else {
-								log.Printf("Please set the '--force true' flag to clear the logs from database.\n")
+								log.Printf("Please set the '--force=true' flag to clear the logs from database.\n")
 							}
 
 							return nil
@@ -228,15 +235,22 @@ func main() {
 					{
 						Name:  "recommendations",
 						Usage: "Clears all recommendations",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "force",
+								Aliases: []string{"f"},
+								Value:   false,
+							},
+						},
 						Action: func(c *cli.Context) error {
-							log.Println("clear recommendations")
+							log.Println("Clear recommendations")
 							Startup(c)
 							defer Shutdown()
 
 							if c.Bool("force") {
 								ClearRecommendations()
 							} else {
-								log.Printf("Please set the '--force true' flag to clear ALL recommendations from database.\n")
+								log.Printf("Please set the '--force=true' flag to clear ALL recommendations from database.\n")
 							}
 
 							return nil
@@ -245,15 +259,22 @@ func main() {
 					{
 						Name:  "recommendations-old",
 						Usage: "Clears old recommendations",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "force",
+								Aliases: []string{"f"},
+								Value:   false,
+							},
+						},
 						Action: func(c *cli.Context) error {
-							log.Println("clear recommendations-old")
+							log.Println("Clear old recommendations")
 							Startup(c)
 							defer Shutdown()
 
 							if c.Bool("force") {
 								ClearOldRecommendations()
 							} else {
-								log.Printf("Please set the '--force true' flag to clear old recommendations from database.\n")
+								log.Printf("Please set the '--force=true' flag to clear old recommendations from database.\n")
 							}
 
 							return nil
@@ -262,6 +283,13 @@ func main() {
 					{
 						Name:  "overlaps",
 						Usage: "Clearing overlap status of all program items",
+						Flags: []cli.Flag{
+							&cli.BoolFlag{
+								Name:    "force",
+								Aliases: []string{"f"},
+								Value:   false,
+							},
+						},
 						Action: func(c *cli.Context) error {
 							log.Println("clear overlaps")
 							Startup(c)
@@ -270,7 +298,7 @@ func main() {
 							if c.Bool("force") {
 								ClearDeprecations()
 							} else {
-								log.Printf("Please set the '--force true' flag to clear program entries' overlap status from database.\n")
+								log.Printf("Please set the '--force=true' flag to clear program entries' overlap status from database.\n")
 							}
 
 							return nil
@@ -281,6 +309,7 @@ func main() {
 					&cli.BoolFlag{
 						Name:    "force",
 						Aliases: []string{"f"},
+						Value:   false,
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -292,7 +321,7 @@ func main() {
 						log.Printf("This could take a while...\n")
 						ClearAll()
 					} else {
-						log.Printf("Please set the '--force true' flag to confirm cleaning the WHOLE database.\n")
+						log.Printf("Please set the '--force=true' flag to confirm cleaning the WHOLE database.\n")
 					}
 
 					return nil
@@ -310,6 +339,22 @@ func main() {
 
 					duration := time.Now().Sub(startTime)
 					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())
+					return nil
+				},
+			},
+			{
+				Name:  "overlap-check",
+				Usage: "Run overlap check on currently fetched time range",
+				Action: func(context *cli.Context) error {
+					startTime := time.Now()
+					Startup(context)
+					defer Shutdown()
+
+					FindOverlaps()
+
+					duration := time.Now().Sub(startTime)
+					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())
+
 					return nil
 				},
 			},
