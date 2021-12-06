@@ -40,6 +40,7 @@ regions in general.
 ### Web Client
 ![oerc web client screenshot](./docs/screenshot_web.png)
 ![oerc web client screenshot with overlaps](./docs/screenshot_web_overlaps.png)
+![oerc web client screenshot with recommendations](./docs/screenshot_web_recommendations.png)
 
 ## Installation
 
