@@ -63,6 +63,7 @@ type AppConfig struct {
 	SearchKeywords               []string `yaml:"SearchKeywords"`
 	SearchSkipChannels           []string `yaml:"SearchSkipChannels"`
 	SearchDaysInFuture           uint     `yaml:"SearchDaysInFuture"`
+	AccessControlAllowOrigin     string   `yaml:"AccessControlAllowOrigin,omitempty"`
 }
 
 func verifyConfiguration() bool {

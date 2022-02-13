@@ -1,4 +1,5 @@
 # oerc configuration file
+# you should at least change all configuration options containing "<" and ">"
 ForceUpdate: false
 TimeToRefreshInMinutes: 360
 DaysInPast: 2
@@ -29,13 +30,10 @@ SearchDaysInFuture: 5
 # feel free to compose the following list of keywords as you want. They are used case-insensitive.
 SearchKeywords:
   - Die Anstalt
-  - Max Uthoff
-  - Claus von Wagner
   - Loriot
-  - Zapp
-  - Kroymann
-  - James Bond
   - Satire
 SearchSkipChannels:
   - KIKA
   - ORF Sport +
+# if you don't know what this means, you should probably keep this value
+AccessControlAllowOrigin: "http://127.0.0.1:8080"

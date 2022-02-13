@@ -1,6 +1,7 @@
 # Changelog oerc
 
-## 0.9.15 - 2022/02/xx
+## 0.9.15 - 2022/02/13
+- new configuration option `AccessControlAllowOrigin` to control the CORS-Header of server directly
 - minor improvements of collection process
 - minor changes to program endpoint of HTTP api
 
