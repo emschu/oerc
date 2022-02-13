@@ -1,6 +1,10 @@
 # Changelog oerc
 
-## 0.9.14 - 2021/12/xx
+## 0.9.15 - 2022/02/xx
+- minor improvements of collection process
+- minor changes to program endpoint of HTTP api
+
+## 0.9.14 - 2021/12/06
 - add screenshots to repository
 - add new action (`oerc overlap-check`) to run the overlap check separately from other commands
 - improve documentation
