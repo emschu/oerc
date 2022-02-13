@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	version       = "0.9.14"
+	version       = "0.9.15"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false

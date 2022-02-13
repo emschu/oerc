@@ -516,7 +516,9 @@ func checkErr() {
 
 // resetErr: global error counter reset method
 func resetErr() {
-	atomic.StoreUint64(&errorCounter, 0)
+	if errorCounter != 0 {
+		atomic.StoreUint64(&errorCounter, 0)
+	}
 }
 
 // general connectivity check, should be called on startup of the fetch process

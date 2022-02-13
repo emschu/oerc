@@ -282,7 +282,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         this.apiService.isLoadingSubject.next(true);
 
         const showDeprecatedEntries = this.showDeprecatedEntries.getValue();
-        const programEntriesSmall = programResponse.program_list.flatMap((value): ProgramEntryEssential => {
+        const programEntries = programResponse.program_list.flatMap((value): ProgramEntryEssential => {
           return {
             id: value.id,
             created_at: value.created_at,
@@ -296,7 +296,13 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         });
 
         const programList: DeepPartial<TimelineItem[]> = [];
-        programEntriesSmall.forEach(singleProgramEntry => {
+
+        function getAdditionalTitleInfo(singleProgramEntry: ProgramEntryEssential): string {
+          // todo i18n
+          return ' | CreatedAt: ' + moment(singleProgramEntry.created_at).tz(environment.timezone).format('d.M HH:mm:SS');
+        }
+
+        programEntries.forEach(singleProgramEntry => {
           if (!showDeprecatedEntries && singleProgramEntry.is_deprecated) {
             // just ignore them
             return;
@@ -307,7 +313,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
             start: singleProgramEntry.start_date_time,
             end: singleProgramEntry.end_date_time,
             content: singleProgramEntry.title,
-            title: singleProgramEntry.title,
+            title: singleProgramEntry.title + getAdditionalTitleInfo(singleProgramEntry),
             type: 'range',
             subgroup: 1,
             className: singleProgramEntry.is_deprecated ? 'deprecated-item' : '',
@@ -317,7 +323,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
         if (showDeprecatedEntries) {
           const deprecatedEntries: DeepPartial<TimelineItem[]> = [];
-          programEntriesSmall.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
+          programEntries.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
             const overlaps = this.items.get({
               filter: item => {
                 if (item.group !== singleProgramEntry.channel_id) {
@@ -392,7 +398,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
               start: singleProgramEntry.start_date_time,
               end: singleProgramEntry.end_date_time,
               content: singleProgramEntry.title,
-              title: singleProgramEntry.title,
+              title: singleProgramEntry.title + getAdditionalTitleInfo(singleProgramEntry),
               type: 'range',
               subgroup: subgroupID,
               className: 'deprecated-item'

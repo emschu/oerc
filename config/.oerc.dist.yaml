@@ -42,3 +42,4 @@ SearchKeywords:
 SearchSkipChannels:
   - KIKA
   - ORF Sport +
+AccessControlAllowOrigin: "http://127.0.0.1:8080"

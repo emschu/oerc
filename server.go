@@ -114,8 +114,12 @@ func initRouter() *gin.Engine {
 	// define group
 	apiV2 := r.Group("/api/v2")
 	apiV2.Use(func(context *gin.Context) {
-		// TODO the IP probably needs to be dynamic, too... probably this should get a new configuration option
-		context.Header("Access-Control-Allow-Origin", fmt.Sprintf("http://127.0.0.1:%d", GetAppConf().ServerPort))
+		if len(GetAppConf().AccessControlAllowOrigin) > 0 {
+			context.Header("Access-Control-Allow-Origin", fmt.Sprintf("%s", GetAppConf().AccessControlAllowOrigin))
+		} else {
+			log.Println("Warning! Using insecure default value '*' for 'Access-Control-Allow-Origin' (CORS) header. Please specify a value 'AccessControlAllowOrigin' in .oerc.yaml.")
+			context.Header("Access-Control-Allow-Origin", "*")
+		}
 	})
 
 	// default redirect to client app and ping redirect
