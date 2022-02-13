@@ -32,7 +32,12 @@ import (
 func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
 	db := getDb()
 	var entries []ProgramEntry
-	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, end).
+	// 14 day = max range
+	var endDateTime = *end
+	if end.Sub(*start).Hours()/24 > 14 {
+		endDateTime = time.Now().Add(14 * 24 * time.Hour)
+	}
+	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, endDateTime).
 		Preload("ImageLinks").
 		Preload("CollisionEntries").
 		Order("channel_id")
