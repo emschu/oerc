@@ -161,8 +161,9 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 			programEntry.EndDateTime = getDateInterpretation(false, day, endDateElement)
 		}
 		title := trimAndSanitizeString(element.DOM.Find("h3.channel-show__title").Text())
-		// in pre-processing we cannot decide on which day the given entry is televised. #
+		// in pre-processing we cannot decide on which day the given entry is televised.
 		// we do this in the next step
+		// NOTE: sometimes they use "anschliessend"
 		if programEntry.StartDateTime == nil || programEntry.EndDateTime == nil {
 			appLog(fmt.Sprintf("Problem parsing start date time (%s) or end date time (%s). Skipping program entry of page '%s' with title '%s'.",
 				programEntry.StartDateTime, programEntry.EndDateTime, queryURL, title))
