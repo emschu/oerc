@@ -27,6 +27,10 @@
   .col_start_date {
     width: 10%;
     font-weight: bold;
+
+    img {
+      max-height: 250px;
+    }
   }
   .col_title {
     width: 25%;
