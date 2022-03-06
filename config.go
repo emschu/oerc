@@ -26,6 +26,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -66,31 +67,30 @@ type AppConfig struct {
 	AccessControlAllowOrigin     string   `yaml:"AccessControlAllowOrigin,omitempty"`
 }
 
-func verifyConfiguration() bool {
+func (a *AppConfig) verifyConfiguration() bool {
 	// check time zone is valid
-	_, err := time.LoadLocation(GetAppConf().TimeZone)
+	_, err := time.LoadLocation(a.TimeZone)
 	if err != nil {
 		log.Printf("Invalid time zone '%s' given!\n", GetAppConf().TimeZone)
 		return false
 	}
 	// check db type is valid/supported
-	if len(GetAppConf().DbType) == 0 {
+	dbType := a.DbType
+	if len(dbType) == 0 {
 		log.Printf("Invalid empty DbType given in configuration!\n")
 		return false
 	}
-	dbType := GetAppConf().DbType
-	if dbType != "postgres" {
+	if strings.ToLower(dbType) != "postgres" && strings.ToLower(dbType) != "postgresql" {
 		log.Printf("Invalid DbType '%s' given!\n", GetAppConf().DbType)
 		return false
 	}
 	// check backend server configuration
-	serverHost := GetAppConf().ServerHost
-	ip := net.ParseIP(serverHost)
+	ip := net.ParseIP(a.ServerHost)
 	if ip == nil {
 		log.Printf("Invalid ServerHost provided in configuration!\n")
 		return false
 	}
-	serverPort := GetAppConf().ServerPort
+	serverPort := a.ServerPort
 	if serverPort == 0 || serverPort > uint16(math.Pow(2, 16)-2) {
 		log.Printf("Invalid port number for server provided in configuration!\n")
 		return false
@@ -98,22 +98,8 @@ func verifyConfiguration() bool {
 	return true
 }
 
-func loadYaml(path string) {
-	f, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-
-	var appConfLoaded AppConfig
-	yamlErr := yaml.UnmarshalStrict(f, &appConfLoaded)
-
-	if yamlErr != nil {
-		log.Fatal(yamlErr)
-	}
-	appConf = appConfLoaded
-}
-
-func loadConfiguration(inputPath string, allowFail bool) *string {
+// mechanism to detect the configuration file to use
+func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string {
 	// at first take the provided path - if possible
 	var cleanedPath = path.Clean(inputPath)
 	if len(cleanedPath) > 0 {
@@ -153,4 +139,19 @@ func loadConfiguration(inputPath string, allowFail bool) *string {
 		}
 	}
 	return nil
+}
+
+func loadYaml(path string) {
+	f, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	var appConfLoaded AppConfig
+	yamlErr := yaml.UnmarshalStrict(f, &appConfLoaded)
+
+	if yamlErr != nil {
+		log.Fatalf("Problem with configuration file: %v", yamlErr)
+	}
+	appConf = appConfLoaded
 }

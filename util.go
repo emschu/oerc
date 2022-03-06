@@ -83,7 +83,7 @@ func getDb() *gorm.DB {
 			},
 		)
 
-		if conf.DbType == "postgres" {
+		if strings.ToLower(conf.DbType) == "postgres" || strings.ToLower(conf.DbType) == "postgresql" {
 			var sslModeStr string
 			if !conf.DbSSLEnabled {
 				sslModeStr = "disable"
@@ -302,42 +302,42 @@ func appLog(msg string) {
 }
 
 // saveProgramEntryRecord: method to store or create a program entry gorm record
-func saveProgramEntryRecord(db *gorm.DB, programEntry *ProgramEntry) {
-	if programEntry.ID != 0 {
+func (p *ProgramEntry) saveProgramEntryRecord(db *gorm.DB) {
+	if p.ID != 0 {
 		// limit description field
-		if len(programEntry.Description) > 30000 {
+		if len(p.Description) > 30000 {
 			if isDebug() {
-				panic(fmt.Errorf("Program Entry description too long %s", programEntry.URL))
+				panic(fmt.Errorf("program entry description too long %s", p.URL))
 			}
-			programEntry.Description = programEntry.Description[0:30000]
+			p.Description = p.Description[0:30000]
 		}
 
 		// TODO handle different technical id case
 		if verboseGlobal {
-			log.Printf("Updating program entry #%d.\n", programEntry.ID)
+			log.Printf("Updating program entry #%d.\n", p.ID)
 		}
-		db.Model(&programEntry).Updates(map[string]interface{}{
-			"Description":     programEntry.Description,
-			"StartDateTime":   programEntry.StartDateTime,
-			"EndDateTime":     programEntry.EndDateTime,
-			"DurationMinutes": programEntry.DurationMinutes,
-			"Tags":            programEntry.Tags,
-			"Title":           programEntry.Title,
-			"Homepage":        programEntry.Homepage,
+		db.Model(&p).Updates(map[string]interface{}{
+			"Description":     p.Description,
+			"StartDateTime":   p.StartDateTime,
+			"EndDateTime":     p.EndDateTime,
+			"DurationMinutes": p.DurationMinutes,
+			"Tags":            p.Tags,
+			"Title":           p.Title,
+			"Homepage":        p.Homepage,
 			"LastCheck":       time.Now(),
 		}).Association("ImageLinks")
 
 		atomic.AddUint64(&status.TotalUpdatedPE, 1)
 	} else {
 		now := time.Now()
-		programEntry.LastCheck = &now
+		p.LastCheck = &now
 
 		if verboseGlobal {
 			log.Printf("Create new program entry '%s' starting at '%s'.\n",
-				programEntry.Title,
-				programEntry.StartDateTime.Format(time.RFC3339))
+				p.Title,
+				p.StartDateTime.Format(time.RFC3339))
 		}
-		db.Create(&programEntry)
+		db.Create(&p)
 
 		atomic.AddUint64(&status.TotalCreatedPE, 1)
 
@@ -361,40 +361,40 @@ func getDocument(apiURL string) (*goquery.Document, error) {
 }
 
 // saveTvShowRecord: general function to save a tv show record
-func saveTvShowRecord(db *gorm.DB, tvShow *TvShow) {
-	if tvShow.ID == 0 {
+func (t *TvShow) saveTvShowRecord(db *gorm.DB) {
+	if t.ID == 0 {
 		// create new tv show
-		db.Create(&tvShow)
+		db.Create(&t)
 
 		atomic.AddUint64(&status.TotalCreatedTVS, 1)
 
 		if verboseGlobal {
-			log.Printf("create tv show #%d \n", tvShow.ID)
+			log.Printf("create tv show #%d \n", t.ID)
 		}
 	} else {
 		// tv show exists: update
-		db.Model(&tvShow).Updates(TvShow{
+		db.Model(&t).Updates(TvShow{
 			ManagedRecord: ManagedRecord{
-				Title:    tvShow.Title,
-				URL:      tvShow.URL,
-				Homepage: tvShow.Homepage,
+				Title:    t.Title,
+				URL:      t.URL,
+				Homepage: t.Homepage,
 			},
 		})
 
 		atomic.AddUint64(&status.TotalUpdatedTVS, 1)
 
 		if verboseGlobal {
-			log.Printf("update tv show #%d \n", tvShow.ID)
+			log.Printf("update tv show #%d \n", t.ID)
 		}
 	}
 }
 
 // isRecentlyUpdated: method to check if program entry record was updated recently
-func isRecentlyUpdated(entry *ProgramEntry) bool {
-	if entry.LastCheck == nil || entry.LastCheck.IsZero() || GetAppConf().ForceUpdate {
+func (p *ProgramEntry) isRecentlyUpdated() bool {
+	if p.LastCheck == nil || p.LastCheck.IsZero() || GetAppConf().ForceUpdate {
 		return false
 	}
-	secDiff := time.Since(*entry.LastCheck).Seconds()
+	secDiff := time.Since(*p.LastCheck).Seconds()
 	if secDiff < float64(GetAppConf().TimeToRefreshInMinutes*60) {
 		return true
 	}
@@ -431,10 +431,10 @@ func buildHash(in []string) string {
 }
 
 // considerTagExists: adds a tag to the program entry.
-func considerTagExists(programEntry *ProgramEntry, mainTagName *string) {
+func (p *ProgramEntry) considerTagExists(mainTagName *string) {
 	var existingTags []string
-	if len(programEntry.Tags) > 0 {
-		existingTags = strings.Split(programEntry.Tags, ";")
+	if len(p.Tags) > 0 {
+		existingTags = strings.Split(p.Tags, ";")
 	} else {
 		existingTags = []string{}
 	}
@@ -445,10 +445,10 @@ func considerTagExists(programEntry *ProgramEntry, mainTagName *string) {
 	}
 	existingTags = append(existingTags, trimAndSanitizeString(*mainTagName))
 	if verboseGlobal {
-		log.Printf("Save new tag '%s' to program entry #%d\n", *mainTagName, programEntry.ID)
+		log.Printf("Save new tag '%s' to program entry #%d\n", *mainTagName, p.ID)
 	}
 
-	programEntry.Tags = strings.Join(existingTags, ";")
+	p.Tags = strings.Join(existingTags, ";")
 }
 
 // this definition is important for default values

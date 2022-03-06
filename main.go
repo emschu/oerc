@@ -373,12 +373,12 @@ func main() {
 func Startup(c *cli.Context) {
 	appConf = AppConfig{}
 	if c != nil {
-		loadConfiguration(c.Path("config"), true)
+		appConf.loadConfiguration(c.Path("config"), true)
 	} else {
 		log.Fatal("Problem with context")
 	}
 
-	isValid := verifyConfiguration()
+	isValid := appConf.verifyConfiguration()
 	if !isValid {
 		log.Fatalln("Invalid configuration! Startup cancelled.")
 	}
@@ -427,7 +427,7 @@ func Shutdown() {
 func initialStartup(c *cli.Context) {
 	appConf = AppConfig{}
 	if c != nil {
-		configurationFile := loadConfiguration(c.Path("config"), false)
+		configurationFile := appConf.loadConfiguration(c.Path("config"), false)
 		if len(c.Path("config")) == 0 && configurationFile != nil {
 			confBox := rice.MustFindBox("config")
 			log.Printf("Trying to create default configuration at '%s'.\n", *configurationFile)
@@ -437,7 +437,7 @@ func initialStartup(c *cli.Context) {
 			}
 		}
 	}
-	isValid := verifyConfiguration()
+	isValid := appConf.verifyConfiguration()
 	if !isValid {
 		log.Fatalln("Invalid configuration! Please adjust and fix the configuration. Startup cancelled.")
 	}

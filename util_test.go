@@ -169,7 +169,7 @@ func TestAppLog(t *testing.T) {
 }
 
 func TestIsRecentlyUpdated(t *testing.T) {
-	if isRecentlyUpdated(&ProgramEntry{LastCheck: nil}) || isRecentlyUpdated(&ProgramEntry{LastCheck: &time.Time{}}) {
+	if (&ProgramEntry{LastCheck: nil}).isRecentlyUpdated() || (&ProgramEntry{LastCheck: &time.Time{}}).isRecentlyUpdated() {
 		t.Fatalf("cannot be updated if last check is nil")
 	}
 	const i = 15
@@ -178,15 +178,15 @@ func TestIsRecentlyUpdated(t *testing.T) {
 	fakeLastCheckTime := time.Now().Add(-i*time.Minute - 1*time.Second)
 	fakeLastCheckTime2 := time.Now().Add(-i * time.Minute)
 	fakeLastCheckTime3 := time.Now().Add(-i*time.Minute + 1*time.Second)
-	if isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime}) ||
-		isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime2}) ||
-		!isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime3}) {
+	if (&ProgramEntry{LastCheck: &fakeLastCheckTime}).isRecentlyUpdated() ||
+		(&ProgramEntry{LastCheck: &fakeLastCheckTime2}).isRecentlyUpdated() ||
+		!(&ProgramEntry{LastCheck: &fakeLastCheckTime3}).isRecentlyUpdated() {
 		t.Fatalf("time range check failed")
 	}
 	appConf.ForceUpdate = true
-	if isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime}) ||
-		isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime2}) ||
-		isRecentlyUpdated(&ProgramEntry{LastCheck: &fakeLastCheckTime3}) {
+	if (&ProgramEntry{LastCheck: &fakeLastCheckTime}).isRecentlyUpdated() ||
+		(&ProgramEntry{LastCheck: &fakeLastCheckTime2}).isRecentlyUpdated() ||
+		(&ProgramEntry{LastCheck: &fakeLastCheckTime3}).isRecentlyUpdated() {
 		t.Fatalf("force-update check failed")
 	}
 }
@@ -244,20 +244,20 @@ func TestConsiderTagExists(t *testing.T) {
 
 	emptyStr := ""
 	testTag := "test"
-	considerTagExists(&pe, &emptyStr)
+	pe.considerTagExists(&emptyStr)
 	if pe.Tags != "" {
 		t.Fatalf("Empty string is not a tag")
 	}
-	considerTagExists(&pe, &testTag)
+	pe.considerTagExists(&testTag)
 	if pe.Tags != "test" {
 		t.Fatalf("There should be a new tag 'test'")
 	}
-	considerTagExists(&pe, &testTag)
+	pe.considerTagExists(&testTag)
 	if pe.Tags != "test" {
 		t.Fatalf("There should be a new tag 'test'")
 	}
 	testTag2 := "test2"
-	considerTagExists(&pe, &testTag2)
+	pe.considerTagExists(&testTag2)
 	if pe.Tags != "test;test2" {
 		t.Fatalf("There should be a new tag 'test2'")
 	}

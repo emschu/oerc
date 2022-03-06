@@ -190,7 +190,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		entry := ProgramEntry{}
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
 		if entry.ID != 0 {
-			if isRecentlyUpdated(&entry) {
+			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
@@ -339,7 +339,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 			}
 		})
 
-		saveProgramEntryRecord(db, programEntry)
+		programEntry.saveProgramEntryRecord(db)
 	})
 
 	for _, pe := range *programEntryList {
@@ -398,7 +398,7 @@ func fetchTvShowsARD(db *gorm.DB, channelFamily *ChannelFamily) {
 		if show.ID != 0 {
 			tvShow.ID = show.ID
 		}
-		saveTvShowRecord(db, tvShow)
+		tvShow.saveTvShowRecord(db)
 	})
 
 	// Start the collector
@@ -467,7 +467,7 @@ func linkTagsToEntriesDaily(db *gorm.DB, day time.Time) {
 			} else {
 				db.Model(ProgramEntry{}).Where("technical_id IN(?)", eidList).Find(&programEntry)
 			}
-			considerTagExists(&programEntry, &mainTagName)
+			programEntry.considerTagExists(&mainTagName)
 		}
 	}
 }
@@ -505,7 +505,7 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 					}
 				}
 			}
-			considerTagExists(&programEntry, &subTagName)
+			programEntry.considerTagExists(&subTagName)
 		}
 	}
 }

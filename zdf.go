@@ -155,7 +155,7 @@ func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		})
 		db.Model(ProgramEntry{}).Where("hash = ?", hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&programEntry)
 		programEntry.Hash = hash
-		if programEntry.ID >= 0 && isRecentlyUpdated(&programEntry) {
+		if programEntry.ID >= 0 && programEntry.isRecentlyUpdated() {
 			atomic.AddUint64(&status.TotalSkippedPE, 1)
 			continue
 		}
@@ -208,14 +208,14 @@ func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 			log.Printf("Problem fetching zdf api program item data: '%s'\n", programItemAPIUrl)
 		} else {
 			if len(apiResponse.Category) > 0 {
-				considerTagExists(&programEntry, &apiResponse.Category)
+				programEntry.considerTagExists(&apiResponse.Category)
 			}
 			if len(apiResponse.Genre) > 0 {
-				considerTagExists(&programEntry, &apiResponse.Genre)
+				programEntry.considerTagExists(&apiResponse.Genre)
 			}
 		}
 
-		saveProgramEntryRecord(db, &programEntry)
+		programEntry.saveProgramEntryRecord(db)
 		pendingHashes.Delete(programEntry.Hash)
 	}
 }
@@ -395,7 +395,7 @@ func processSingleTvShow(db *gorm.DB, channelFamily *ChannelFamily, singleTvShow
 	tvShowRecord.TechnicalID = tvShowExternalID
 	tvShowRecord.ChannelFamily = *channelFamily
 
-	saveTvShowRecord(db, &tvShowRecord)
+	tvShowRecord.saveTvShowRecord(db)
 	return
 }
 

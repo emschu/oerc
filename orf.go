@@ -134,7 +134,7 @@ func fetchTvShowsORF(db *gorm.DB, family *ChannelFamily) {
 		if show.ID != 0 {
 			tvShow.ID = show.ID
 		}
-		saveTvShowRecord(db, tvShow)
+		tvShow.saveTvShowRecord(db)
 	})
 
 	err := c.Visit(orfHostWithPrefix + "/profiles")
@@ -251,7 +251,7 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		entry := ProgramEntry{}
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
 		if entry.ID != 0 {
-			if isRecentlyUpdated(&entry) {
+			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
@@ -288,7 +288,7 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 			doc.Find("div.broadcast-data a.broadcast-category").Each(func(i int, selection *goquery.Selection) {
 				genre := trimAndSanitizeString(selection.Text())
 				if len(genre) > 0 && len(genre) < 48 {
-					considerTagExists(&programEntry, &genre)
+					programEntry.considerTagExists(&genre)
 				}
 			})
 		}
@@ -309,7 +309,7 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		})
 		programEntry.ImageLinks = append(programEntry.ImageLinks, imageLinks...)
 
-		saveProgramEntryRecord(db, &programEntry)
+		programEntry.saveProgramEntryRecord(db)
 	})
 
 	err = c.Visit(fmt.Sprintf("%s%s", orfProgramHostWithPrefix, programDetailURLPerDay))

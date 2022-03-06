@@ -131,7 +131,7 @@ func fetchTvShowsSRF(db *gorm.DB, family *ChannelFamily) {
 		if show.ID != 0 {
 			tvShow.ID = show.ID
 		}
-		saveTvShowRecord(db, tvShow)
+		tvShow.saveTvShowRecord(db)
 	})
 
 	err := c.Visit("https://www.srf.ch/play/tv/sendungen")
@@ -194,7 +194,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		entry := ProgramEntry{}
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Find(&entry)
 		if entry.ID != 0 {
-			if isRecentlyUpdated(&entry) {
+			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
@@ -306,7 +306,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 				}
 
 				if len(genre) > 0 {
-					considerTagExists(&programEntry, &genre)
+					programEntry.considerTagExists(&genre)
 				}
 			}
 		}
@@ -321,7 +321,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		})
 		programEntry.Homepage = strings.Replace(homepage, "//", "https://", 1)
 
-		saveProgramEntryRecord(db, &programEntry)
+		programEntry.saveProgramEntryRecord(db)
 	})
 
 	err := c.Visit(queryURL)
