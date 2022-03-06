@@ -17,6 +17,9 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
+APP_VERSION_DOT = "0.9.16"
+APP_VERSION_STR = "0-9-16"
+
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
 GO_REVIVE = $(GO_PATH)/bin/revive
@@ -117,3 +120,12 @@ sonarscan: ## run sonar scanner against local sonarqube
 						docker run --rm --user="$$(id -u):$$(id -g)" \
 						-e SONAR_HOST_URL=$$SONAR_HOST_URL -e SONAR_LOGIN=$$SONAR_LOGIN \
 						-v "$$(pwd):/usr/src" sonarsource/sonar-scanner-cli
+
+
+.PHONY: version
+version: ## populate the current version defined in this make file
+	sed -r -i 's/version\s*=\s*"([0-9]+.[0-9]+.[0-9]+)"/version       = "'$(APP_VERSION_DOT)'"/g' main.go
+	sed -r -i 's/([0-9]+.[0-9]+.[0-9]+, License:)/'$(APP_VERSION_DOT)', License:/g' README.md
+	sed -r -i 's/"version": "([0-9]+.[0-9]+.[0-9]+)"/"version": "'$(APP_VERSION_DOT)'"/g' client/package.json
+	cd client; npm i;
+	make frontend
