@@ -68,7 +68,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.9.15, License: AGPLv3, https://github.com/emschu/oerc
+   0.9.16, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -152,6 +152,7 @@ SearchSkipChannels:
   - KIKA
   - ORF Sport +
 Debug: false
+AccessControlAllowOrigin: "http://127.0.0.1:8080"
 ```
 
 ## Usage

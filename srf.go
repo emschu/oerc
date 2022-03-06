@@ -22,7 +22,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
-	"gorm.io/gorm"
 	"log"
 	"math"
 	"regexp"
@@ -41,9 +40,15 @@ var (
 	srfTvShowURLMatcher = regexp.MustCompile(`^(/play/tv/sendung/.*|(https?://www\.srgssr\.ch/?.*))$`)
 )
 
-// ParseSRF central method to parse SRF tv show and program data
-func ParseSRF() {
+// SRFParser struct for srf parsing code
+type SRFParser struct {
+	Parser
+}
+
+// Fetch central method to parse SRF tv show and program data
+func (s *SRFParser) Fetch() {
 	db := getDb()
+	s.db = db
 
 	// get channel family db record
 	var channelFamily = getChannelFamily(db, "SRF")
@@ -51,16 +56,16 @@ func ParseSRF() {
 		log.Fatalln("SRF channelFamily was not found!")
 		return
 	}
+	s.ChannelFamily = *channelFamily
 
 	// import tv shows
 	if GetAppConf().EnableTVShowCollection {
-		fetchTvShowsSRF(db, channelFamily)
+		s.fetchTvShows()
 	}
 
 	// import program entries for the configured date range
 	if GetAppConf().EnableProgramEntryCollection {
 		daysInPast := GetAppConf().DaysInPast
-		daysInFuture := GetAppConf().DaysInFuture
 
 		if daysInPast > 15 {
 			warnMsg := "Maximum for days in past for SRF is 15!\n"
@@ -68,18 +73,26 @@ func ParseSRF() {
 			appLog(warnMsg)
 			daysInPast = 15
 		}
-		times := *generateDateRangeInPastAndFuture(daysInPast, daysInFuture)
+
+		timeRange := s.dateRangeHandler.getDateRange()
+		var times []time.Time
+		if timeRange != nil {
+			times = *timeRange
+		} else {
+			log.Printf("No valid time range received!\n")
+			return
+		}
+
 		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
 				if int(time.Since(day).Hours()/24) <= 30 {
-					family := *channelFamily
 					chn := channel
 					dayToFetch := day
 
 					// srf specific limits!
 					pool.Submit(func() {
-						handleDaySRF(db, family, chn, dayToFetch)
+						s.handleDay(chn, dayToFetch)
 					})
 				}
 			}
@@ -94,13 +107,13 @@ func ParseSRF() {
 }
 
 // fetchTvShowSRF: This method checks all the tv shows
-func fetchTvShowsSRF(db *gorm.DB, family *ChannelFamily) {
+func (s *SRFParser) fetchTvShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
 	}
 
-	c := srfCollector()
+	c := s.newSrfCollector()
 	c.OnHTML("section", func(element *colly.HTMLElement) {
 		title := trimAndSanitizeString(element.DOM.Find("h2").Text())
 		url, _ := element.DOM.Find("a").Attr("href")
@@ -111,7 +124,7 @@ func fetchTvShowsSRF(db *gorm.DB, family *ChannelFamily) {
 		}
 
 		var hash = buildHash([]string{
-			fmt.Sprintf("%d", int(family.ID)),
+			fmt.Sprintf("%d", int(s.ChannelFamily.ID)),
 			title,
 			"tv-show",
 		})
@@ -121,17 +134,17 @@ func fetchTvShowsSRF(db *gorm.DB, family *ChannelFamily) {
 				URL:             srfHostWithPrefix + url,
 				Hash:            hash,
 				Homepage:        srfHostWithPrefix + url,
-				ChannelFamily:   *family,
-				ChannelFamilyID: family.ID, // 3 = srf
+				ChannelFamily:   s.ChannelFamily,
+				ChannelFamilyID: s.ChannelFamily.ID, // 3 = srf
 			},
 		}
 
 		show := TvShow{}
-		db.Where("hash = ?", hash).Find(&show)
+		s.db.Where("hash = ?", hash).Find(&show)
 		if show.ID != 0 {
 			tvShow.ID = show.ID
 		}
-		saveTvShowRecord(db, tvShow)
+		tvShow.saveTvShowRecord(s.db)
 	})
 
 	err := c.Visit("https://www.srf.ch/play/tv/sendungen")
@@ -141,9 +154,9 @@ func fetchTvShowsSRF(db *gorm.DB, family *ChannelFamily) {
 	c.Wait()
 }
 
-// handleDaySRF: handle a single day to fetch SRF program data
-func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.Time) {
-	c := srfCollector()
+// handleDay: handle a single day to fetch SRF program data
+func (s *SRFParser) handleDay(channel Channel, day time.Time) {
+	c := s.newSrfCollector()
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
 
 	queryURL := fmt.Sprintf("https://www.srf.ch/programm/tv/sender/%s/%02d-%02d-%d", channel.TechnicalID, day.Day(), day.Month(), day.Year())
@@ -155,10 +168,10 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 
 		var programEntry ProgramEntry
 		if len(startDateElement) > 0 {
-			programEntry.StartDateTime = getDateInterpretation(false, day, startDateElement)
+			programEntry.StartDateTime = s.getDateInterpretation(false, day, startDateElement)
 		}
 		if len(endDateElement) > 0 {
-			programEntry.EndDateTime = getDateInterpretation(false, day, endDateElement)
+			programEntry.EndDateTime = s.getDateInterpretation(false, day, endDateElement)
 		}
 		title := trimAndSanitizeString(element.DOM.Find("h3.channel-show__title").Text())
 		// in pre-processing we cannot decide on which day the given entry is televised.
@@ -180,21 +193,21 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 			title,
 			programEntry.StartDateTime.String(),
 			linkElement,
-			strconv.Itoa(int(family.ID)),
+			strconv.Itoa(int(s.ChannelFamily.ID)),
 			strconv.Itoa(int(channel.ID)),
 			"program-entry",
 		})
 		programEntry.Hash = hash
 		programEntry.TechnicalID = hash
-		programEntry.ChannelFamily = family
-		programEntry.ChannelFamilyID = family.ID
+		programEntry.ChannelFamily = s.ChannelFamily
+		programEntry.ChannelFamilyID = s.ChannelFamily.ID
 		programEntry.Channel = channel
 		programEntry.ChannelID = channel.ID
 
 		entry := ProgramEntry{}
-		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Find(&entry)
+		s.db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Find(&entry)
 		if entry.ID != 0 {
-			if isRecentlyUpdated(&entry) {
+			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
@@ -233,7 +246,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 				appLog(fmt.Sprintf("Invalid date range for srf program entry detected. Hash: %s", programEntry.Hash))
 				return
 			}
-			dateOfEntry := getDateFromStringSrf(dateStr)
+			dateOfEntry := s.getDateFromStringSrf(dateStr)
 			if dateOfEntry == nil {
 				appLog("Could not parse date in srf program entry: #")
 				return
@@ -306,7 +319,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 				}
 
 				if len(genre) > 0 {
-					considerTagExists(&programEntry, &genre)
+					programEntry.considerTagExists(&genre)
 				}
 			}
 		}
@@ -321,7 +334,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		})
 		programEntry.Homepage = strings.Replace(homepage, "//", "https://", 1)
 
-		saveProgramEntryRecord(db, &programEntry)
+		programEntry.saveProgramEntryRecord(s.db)
 	})
 
 	err := c.Visit(queryURL)
@@ -332,7 +345,7 @@ func handleDaySRF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 }
 
 // getDateFromStringSrf: Extract a date object of a given string format of the page
-func getDateFromStringSrf(dateStr string) *time.Time {
+func (s *SRFParser) getDateFromStringSrf(dateStr string) *time.Time {
 	if len(dateStr) == 0 {
 		return nil
 	}
@@ -362,8 +375,8 @@ func getDateFromStringSrf(dateStr string) *time.Time {
 		log.Printf("Problem parsing month: %v\n", err)
 		return nil
 	}
-	s := dateStr[secondPointIndex+2:]
-	year, err = strconv.ParseInt(s, 10, 64)
+	substr := dateStr[secondPointIndex+2:]
+	year, err = strconv.ParseInt(substr, 10, 64)
 	if err != nil {
 		log.Printf("Problem parsing year: %v\n", err)
 		return nil
@@ -374,12 +387,12 @@ func getDateFromStringSrf(dateStr string) *time.Time {
 }
 
 // helper method to get a collector instance
-func srfCollector() *colly.Collector {
+func (s *SRFParser) newSrfCollector() *colly.Collector {
 	return baseCollector([]string{srfHost})
 }
 
 // getDateInterpretation: method to parse a date string (used by ORF) into a single time object
-func getDateInterpretation(isNight bool, day time.Time, timeString string) *time.Time {
+func (s *SRFParser) getDateInterpretation(isNight bool, day time.Time, timeString string) *time.Time {
 	middle := strings.Index(timeString, ":")
 	if middle == -1 {
 		return nil

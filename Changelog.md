@@ -1,5 +1,9 @@
 # Changelog oerc
 
+## 0.9.16 - 2022/03/XX
+- Improving code structure in general which brings more performance
+- now `postgres` and `postgresql` as values for `DbType` will be accepted
+
 ## 0.9.15 - 2022/02/13
 - new configuration option `AccessControlAllowOrigin` to control the CORS-Header of server directly
 - minor improvements of collection process

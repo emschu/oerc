@@ -30,6 +30,7 @@ import (
 
 // FindOverlaps central method to find, store and process overlapping program entries with same range as "fetch" command
 func FindOverlaps() {
+	log.Println("Start processing overlaps")
 	var wg sync.WaitGroup
 	for _, channel := range *getChannels() {
 		if isChannelFamilyExcluded(&channel.ChannelFamily) {
@@ -42,6 +43,7 @@ func FindOverlaps() {
 		}
 	}
 	wg.Wait()
+	log.Println("End processing overlaps")
 }
 
 // FindOverlapsGlobal recalcalate all overlaps in database

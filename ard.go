@@ -24,7 +24,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
-	"gorm.io/gorm"
 	"log"
 	"math"
 	url2 "net/url"
@@ -115,23 +114,38 @@ var (
 	}
 )
 
-// ParseARD central method to parse ARD tv show and program data
-func ParseARD() {
-	db := getDb()
+// ARDParser struct of ard parser code
+type ARDParser struct {
+	Parser
+}
 
-	// get channel family db record
-	var channelFamily = getChannelFamily(db, "ARD")
+// Fetch central method to parse ARD tv show and program data
+func (a *ARDParser) Fetch() {
+	// setup db
+	db := getDb()
+	a.db = db
+
+	// get channel family db record and save it to the parser instance
+	var channelFamily = getChannelFamily(db, a.ChannelFamilyKey)
 	if channelFamily.ID == 0 {
 		log.Fatalln("ARD channelFamily was not found!")
 		return
 	}
+	a.ChannelFamily = *channelFamily
 
 	// import tv shows
 	if GetAppConf().EnableTVShowCollection {
-		fetchTvShowsARD(db, channelFamily)
+		a.fetchTvShows()
 	}
 
-	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	timeRange := a.dateRangeHandler.getDateRange()
+	var times []time.Time
+	if timeRange != nil {
+		times = *timeRange
+	} else {
+		log.Printf("No valid time range received!\n")
+		return
+	}
 
 	if GetAppConf().EnableProgramEntryCollection {
 		// import program entries for the configured date range
@@ -140,12 +154,11 @@ func ParseARD() {
 		}))
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
-				family := *channelFamily
 				chn := channel
 				dayToFetch := day
 
 				pool.Submit(func() {
-					handleDayARD(db, family, chn, dayToFetch)
+					a.handleDay(chn, dayToFetch)
 				})
 			}
 		}
@@ -153,7 +166,7 @@ func ParseARD() {
 		pool.StopAndWait()
 
 		// general tag linking
-		linkTagsToEntriesGeneral(db)
+		a.linkTagsToEntriesGeneral()
 	}
 
 	if verboseGlobal {
@@ -162,9 +175,10 @@ func ParseARD() {
 }
 
 // method to process a single day of a single channel
-func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day time.Time) {
-	// Create a Collector specifically for Shopify
-	c := ardCollector()
+func (a *ARDParser) handleDay(channel Channel, day time.Time) {
+	db := a.db
+	// Create a Collector specifically for ard
+	c := a.newArdCollector()
 
 	var programEntryList = &[]ProgramEntry{}
 	c.OnHTML(".event-list li[class^=eid]", func(element *colly.HTMLElement) {
@@ -174,7 +188,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		eid := ardEidMatcher.FindString(element.Attr("class"))
 		programEntry.Hash = buildHash([]string{
 			eid,
-			fmt.Sprintf("%d", int(channelFamily.ID)),
+			fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
 			"program-entry",
 		})
 
@@ -190,7 +204,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		entry := ProgramEntry{}
 		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
 		if entry.ID != 0 {
-			if isRecentlyUpdated(&entry) {
+			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
 				return
 			}
@@ -223,7 +237,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		programEntry.URL = ardHostWithPrefix + urlOfEntry
 		// link channel and channel family
 		programEntry.ChannelID = channel.ID
-		programEntry.ChannelFamilyID = channelFamily.ID
+		programEntry.ChannelFamilyID = a.ChannelFamily.ID
 
 		*programEntryList = append(*programEntryList, programEntry)
 	})
@@ -267,7 +281,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		}
 		icalLink := ardHostWithPrefix + icalHref
 
-		icalContent, err := parseStartAndEndDateTimeFromIcal(icalLink)
+		icalContent, err := a.parseStartAndEndDateTimeFromIcal(icalLink)
 		if icalContent == nil || err != nil {
 			appLog(fmt.Sprintf("Problem fetching ical at link '%s'", icalLink))
 			return
@@ -339,7 +353,7 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 			}
 		})
 
-		saveProgramEntryRecord(db, programEntry)
+		programEntry.saveProgramEntryRecord(db)
 	})
 
 	for _, pe := range *programEntryList {
@@ -351,20 +365,20 @@ func handleDayARD(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		c2.Wait()
 	}
 
-	linkTagsToEntriesDaily(db, day)
+	a.linkTagsToEntriesDaily(day)
 }
 
 // method to fetch all tv show data
-func fetchTvShowsARD(db *gorm.DB, channelFamily *ChannelFamily) {
+func (a *ARDParser) fetchTvShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
 	}
 	// Create a Collector specifically for Shopify
-	c := ardCollector()
+	collector := a.newArdCollector()
 
 	// Create a callback on the XPath query searching for the URLs
-	c.OnHTML(".az-slick > .box > a", func(e *colly.HTMLElement) {
+	collector.OnHTML(".az-slick > .box > a", func(e *colly.HTMLElement) {
 		var link = e.Attr("href")
 		if !ardTvShowLinkMatcher.Match([]byte(link)) {
 			appLog(fmt.Sprintf("Invalid link '%s' for ard tv show detected. Skipping entry.", link))
@@ -377,7 +391,7 @@ func fetchTvShowsARD(db *gorm.DB, channelFamily *ChannelFamily) {
 			return
 		}
 		var hash = buildHash([]string{
-			fmt.Sprintf("%d", int(channelFamily.ID)),
+			fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
 			title,
 			"tv-show",
 		})
@@ -388,31 +402,31 @@ func fetchTvShowsARD(db *gorm.DB, channelFamily *ChannelFamily) {
 				URL:             url,
 				Hash:            hash,
 				Homepage:        url,
-				ChannelFamily:   *channelFamily,
-				ChannelFamilyID: channelFamily.ID, // 0 = ard
+				ChannelFamily:   a.ChannelFamily,
+				ChannelFamilyID: a.ChannelFamily.ID, // 0 = ard
 			},
 		}
 
 		show := TvShow{}
-		db.Model(&TvShow{}).Where("hash = ?", hash).Find(&show)
+		a.db.Model(&TvShow{}).Where("hash = ?", hash).Find(&show)
 		if show.ID != 0 {
 			tvShow.ID = show.ID
 		}
-		saveTvShowRecord(db, tvShow)
+		tvShow.saveTvShowRecord(a.db)
 	})
 
 	// Start the collector
 	tvShowURL := ardHostWithPrefix + "/TV/Sendungen-von-A-bis-Z/Startseite?page=&char=all"
-	err := c.Visit(tvShowURL)
+	err := collector.Visit(tvShowURL)
 	if err != nil {
 		appLog(fmt.Sprintf("Problem scraping URL '%s'\n", tvShowURL))
 	}
-	c.Wait()
+	collector.Wait()
 	// TODO add tv show post processing: image links + tags + related program entries
 }
 
 // helper method to get a collector instance
-func ardCollector() *colly.Collector {
+func (a *ARDParser) newArdCollector() *colly.Collector {
 	return baseCollector([]string{ardHost})
 }
 
@@ -443,7 +457,7 @@ func tryToFindTags(eid string) (*[]string, error) {
 }
 
 // method to link tags to program entries of a single day
-func linkTagsToEntriesDaily(db *gorm.DB, day time.Time) {
+func (a *ARDParser) linkTagsToEntriesDaily(day time.Time) {
 	if isRecentlyFetched() && !GetAppConf().ForceUpdate {
 		return
 	}
@@ -458,22 +472,22 @@ func linkTagsToEntriesDaily(db *gorm.DB, day time.Time) {
 			tagURLPart,
 			formattedDate,
 		)
-		eidList := getEIDsOfUrls([]string{dailyURL})
+		eidList := a.getEIDsOfUrls([]string{dailyURL})
 
 		var programEntry ProgramEntry
 		if len(eidList) > 0 {
 			if len(eidList) == 1 {
-				db.Model(ProgramEntry{}).Where("technical_id LIKE ?", eidList[0]).Find(&programEntry)
+				a.db.Model(ProgramEntry{}).Where("technical_id LIKE ?", eidList[0]).Find(&programEntry)
 			} else {
-				db.Model(ProgramEntry{}).Where("technical_id IN(?)", eidList).Find(&programEntry)
+				a.db.Model(ProgramEntry{}).Where("technical_id IN(?)", eidList).Find(&programEntry)
 			}
-			considerTagExists(&programEntry, &mainTagName)
+			programEntry.considerTagExists(&mainTagName)
 		}
 	}
 }
 
 // method to link tags to program entries
-func linkTagsToEntriesGeneral(db *gorm.DB) {
+func (a *ARDParser) linkTagsToEntriesGeneral() {
 	if isRecentlyFetched() {
 		log.Printf("Skip update of ard program entry tag search, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
@@ -483,12 +497,12 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 	for subTagName, tagURLPart := range ardSubTags {
 		previewURL := fmt.Sprintf("%s%s%s?ajaxPageLoad=1", ardHostWithPrefix, ardMainTagPage, tagURLPart)
 		archiveURL := fmt.Sprintf("%s&archiv=1", previewURL)
-		eidList := getEIDsOfUrls([]string{previewURL, archiveURL})
+		eidList := a.getEIDsOfUrls([]string{previewURL, archiveURL})
 
 		var programEntry ProgramEntry
 		if len(eidList) > 0 {
 			if len(eidList) == 1 {
-				db.Model(&ProgramEntry{}).Where("technical_id LIKE ?", eidList[0]).Find(&programEntry)
+				a.db.Model(&ProgramEntry{}).Where("technical_id LIKE ?", eidList[0]).Find(&programEntry)
 			} else {
 				// we have to ensure that the IN-operation of the SQL database is has a limited input length
 				// typically an eid has 15 chars, allow 15 x 15 chars = 225 chars in IN-query + 14 times ","
@@ -497,7 +511,7 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 				for len(eidList) > 0 {
 					highestIndex := int(math.Min(float64(blockSize), float64(len(eidList)-1)))
 					list := eidList[:highestIndex]
-					db.Model(ProgramEntry{}).Where("technical_id IN (?)", list).Find(&programEntry)
+					a.db.Model(ProgramEntry{}).Where("technical_id IN (?)", list).Find(&programEntry)
 					if (len(eidList)-1) >= highestIndex && highestIndex > 0 {
 						eidList = eidList[highestIndex:]
 					} else {
@@ -505,14 +519,14 @@ func linkTagsToEntriesGeneral(db *gorm.DB) {
 					}
 				}
 			}
-			considerTagExists(&programEntry, &subTagName)
+			programEntry.considerTagExists(&subTagName)
 		}
 	}
 }
 
 // getEIDsOfUrls get eid of urls, these urls should be checked to be not malicious
-func getEIDsOfUrls(urls []string) []string {
-	c := ardCollector()
+func (a *ARDParser) getEIDsOfUrls(urls []string) []string {
+	c := a.newArdCollector()
 	var eidList []string
 	var listMutex sync.Mutex
 
@@ -542,7 +556,7 @@ type ICalContent struct {
 }
 
 // parseStartAndEndDateTimeFromIcal method to parse a plain ical file data just for DTSTART and DTEND. Needed for ARD only atm.
-func parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalContent, error) {
+func (a *ARDParser) parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalContent, error) {
 	requestHeaders := map[string]string{"Accept": "text/html", "Host": "programm.ard.de"}
 
 	icalContent, err := doGetRequest(targetURL, requestHeaders, 3)

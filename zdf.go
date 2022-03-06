@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/alitto/pond"
-	"gorm.io/gorm"
 	"log"
 	"net/url"
 	"regexp"
@@ -40,17 +39,22 @@ const (
 )
 
 var (
-	zdfAPIKey                  *string
 	pendingHashes              sync.Map
 	zdfTvShowLinkMatcher       = regexp.MustCompile(`^https?://(www\.)?zdf.de/.*`)
 	zdfTvShowExternalIDMatcher = regexp.MustCompile(`[a-zA-Z0-9_-]+`)
 )
 
-// ParseZDF This method handles the whole ZDF stuff
-func ParseZDF() {
+// ZDFParser struct to group zdf parsing code
+type ZDFParser struct {
+	Parser
+	zdfAPIKey string
+}
+
+// Fetch This method handles the whole ZDF stuff
+func (z *ZDFParser) Fetch() {
 	var apiKeyErr error
-	zdfAPIKey, apiKeyErr = getZdfAPIKey()
-	if zdfAPIKey == nil || apiKeyErr != nil {
+	zdfAPIKey, apiKeyErr := z.getZdfAPIKey()
+	if z.zdfAPIKey == "" || apiKeyErr != nil {
 		log.Printf("Error fetching zdf api key: %v\n", apiKeyErr)
 		return
 	}
@@ -58,18 +62,28 @@ func ParseZDF() {
 		log.Println("Start parsing ZDF")
 		log.Printf("Using ZDF API key: %s\n", *zdfAPIKey)
 	}
+	z.zdfAPIKey = *zdfAPIKey
 
 	db := getDb()
+	z.db = db
 	// get channel family db record
-	var channelFamily = getChannelFamily(db, "ZDF")
+	var channelFamily = getChannelFamily(db, z.ChannelFamilyKey)
 	if channelFamily.ID == 0 {
 		log.Fatalln("ZDF channelFamily was not found! Cancel execution")
 		return
 	}
+	z.ChannelFamily = *channelFamily
 
-	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
+	timeRange := z.dateRangeHandler.getDateRange()
+	var times []time.Time
+	if timeRange != nil {
+		times = *timeRange
+	} else {
+		log.Printf("No valid time range received!\n")
+		return
+	}
 	if GetAppConf().EnableTVShowCollection {
-		fetchTvShowsZDF(db, channelFamily)
+		z.fetchTvShows()
 	}
 
 	// import program entries for the configured date range
@@ -77,12 +91,11 @@ func ParseZDF() {
 		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
-				family := *channelFamily
 				chn := channel
 				dayToFetch := day
 
 				pool.Submit(func() {
-					handleDayZDF(db, family, chn, dayToFetch)
+					z.handleDayZDF(chn, dayToFetch)
 				})
 			}
 		}
@@ -96,7 +109,7 @@ func ParseZDF() {
 }
 
 // getZdfAPIKey method to retrieve the api key we need to connect to the zdf api
-func getZdfAPIKey() (*string, error) {
+func (z *ZDFParser) getZdfAPIKey() (*string, error) {
 	apiURL := fmt.Sprintf("%s%s", zdfHost, zdfAPIKeyPath)
 
 	doc, err := getDocument(apiURL)
@@ -121,7 +134,7 @@ func getZdfAPIKey() (*string, error) {
 }
 
 // method to process a single day of a single channel
-func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day time.Time) {
+func (z *ZDFParser) handleDayZDF(channel Channel, day time.Time) {
 	startDateStr := day.Format(time.RFC3339)
 	endDate := day.AddDate(0, 0, 1)
 	endDateStr := endDate.Format(time.RFC3339)
@@ -137,7 +150,7 @@ func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 		log.Printf("Visit: %s\n", apiURL)
 	}
 
-	zdfProgramRequest, apiErr := doZDFApiBroadcastRequest(apiURL)
+	zdfProgramRequest, apiErr := z.doZDFApiBroadcastRequest(apiURL)
 	if apiErr != nil {
 		log.Printf("%v\n", apiErr)
 		return
@@ -153,9 +166,9 @@ func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 			broadcast.Title,
 			broadcast.TvServiceID,
 		})
-		db.Model(ProgramEntry{}).Where("hash = ?", hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&programEntry)
+		z.db.Model(ProgramEntry{}).Where("hash = ?", hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&programEntry)
 		programEntry.Hash = hash
-		if programEntry.ID >= 0 && isRecentlyUpdated(&programEntry) {
+		if programEntry.ID >= 0 && programEntry.isRecentlyUpdated() {
 			atomic.AddUint64(&status.TotalSkippedPE, 1)
 			continue
 		}
@@ -196,63 +209,64 @@ func handleDayZDF(db *gorm.DB, channelFamily ChannelFamily, channel Channel, day
 
 		programEntry.Description = trimAndSanitizeString(broadcast.Text)
 		programEntry.Channel = channel
-		programEntry.ChannelFamily = channelFamily
+		programEntry.ChannelFamily = z.ChannelFamily
 
 		// save image links
-		handleProgramImageLinks(&broadcast, &programEntry)
+		programEntry.handleProgramImageLinks(&broadcast)
 
 		programItemAPIUrl := zdfAPIHost + broadcast.ProgrammeItem
 		programEntry.Homepage = programItemAPIUrl
-		apiResponse, apiErr := doZDFApiProgramItemRequest(programItemAPIUrl)
+		apiResponse, apiErr := z.doZDFApiProgramItemRequest(programItemAPIUrl)
 		if apiErr != nil {
 			log.Printf("Problem fetching zdf api program item data: '%s'\n", programItemAPIUrl)
 		} else {
 			if len(apiResponse.Category) > 0 {
-				considerTagExists(&programEntry, &apiResponse.Category)
+				programEntry.considerTagExists(&apiResponse.Category)
 			}
 			if len(apiResponse.Genre) > 0 {
-				considerTagExists(&programEntry, &apiResponse.Genre)
+				programEntry.considerTagExists(&apiResponse.Genre)
 			}
 		}
 
-		saveProgramEntryRecord(db, &programEntry)
+		programEntry.saveProgramEntryRecord(z.db)
 		pendingHashes.Delete(programEntry.Hash)
 	}
 }
 
-func handleProgramImageLinks(broadcast *ZdfBroadcast, programEntry *ProgramEntry) {
-	if broadcast == nil || programEntry == nil {
+// atm only useful in zdf context
+func (p *ProgramEntry) handleProgramImageLinks(broadcast *ZdfBroadcast) {
+	if broadcast == nil || p == nil {
 		// nothing to do here
 		return
 	}
-	if len(broadcast.Images.Layouts.W2400) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W2400) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W2400})
+	if len(broadcast.Images.Layouts.W2400) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W2400) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W2400})
 	}
-	if len(broadcast.Images.Layouts.W1920) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W1920) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W1920})
+	if len(broadcast.Images.Layouts.W1920) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W1920) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W1920})
 	}
-	if len(broadcast.Images.Layouts.W1280) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W1280) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W1280})
+	if len(broadcast.Images.Layouts.W1280) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W1280) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W1280})
 	}
-	if len(broadcast.Images.Layouts.W768) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W768) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W768})
+	if len(broadcast.Images.Layouts.W768) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W768) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W768})
 	}
-	if len(broadcast.Images.Layouts.W640) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W640) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W640})
+	if len(broadcast.Images.Layouts.W640) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W640) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W640})
 	}
-	if len(broadcast.Images.Layouts.W384) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W384) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W384})
+	if len(broadcast.Images.Layouts.W384) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W384) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W384})
 	}
-	if len(broadcast.Images.Layouts.W276) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W276) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W276})
+	if len(broadcast.Images.Layouts.W276) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W276) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W276})
 	}
-	if len(broadcast.Images.Layouts.W240) > 0 && !doesImageLinkExist(programEntry, broadcast.Images.Layouts.W240) {
-		programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W240})
+	if len(broadcast.Images.Layouts.W240) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W240) {
+		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W240})
 	}
 }
 
-func doesImageLinkExist(programEntry *ProgramEntry, url string) bool {
-	for _, entryDetails := range programEntry.ImageLinks {
+func (p *ProgramEntry) doesImageLinkExist(url string) bool {
+	for _, entryDetails := range p.ImageLinks {
 		if entryDetails.URL == url {
 			return true
 		}
@@ -260,12 +274,12 @@ func doesImageLinkExist(programEntry *ProgramEntry, url string) bool {
 	return false
 }
 
-func doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastResponse, error) {
+func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastResponse, error) {
 	headers := map[string]string{
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
 		"Origin":   zdfHost,
-		"Api-Auth": "Bearer " + *zdfAPIKey,
+		"Api-Auth": "Bearer " + z.zdfAPIKey,
 	}
 	resp, err := doGetRequest(apiURL, headers, 3)
 	if resp == nil || err != nil {
@@ -285,12 +299,12 @@ func doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastResponse, error) {
 	return &response, nil
 }
 
-func doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemResponse, error) {
+func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemResponse, error) {
 	headers := map[string]string{
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
 		"Origin":   zdfHost,
-		"Api-Auth": "Bearer " + *zdfAPIKey,
+		"Api-Auth": "Bearer " + z.zdfAPIKey,
 	}
 	resp, err := doGetRequest(apiURL, headers, 3)
 	if resp == nil || err != nil {
@@ -310,8 +324,8 @@ func doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemResponse, error) 
 	return &response, nil
 }
 
-// fetchTvShowsZDF method to fetch zdf tv shows
-func fetchTvShowsZDF(db *gorm.DB, channelFamily *ChannelFamily) {
+// fetchTvShows method to fetch zdf tv shows
+func (z *ZDFParser) fetchTvShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
@@ -346,17 +360,16 @@ func fetchTvShowsZDF(db *gorm.DB, channelFamily *ChannelFamily) {
 
 	pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 	for _, singleTvShowPage := range tvShowLinks {
-		family := channelFamily
 		singlePage := singleTvShowPage
 
 		pool.Submit(func() {
-			processSingleTvShow(db, family, singlePage)
+			z.processSingleTvShow(singlePage)
 		})
 	}
 	pool.StopAndWait()
 }
 
-func processSingleTvShow(db *gorm.DB, channelFamily *ChannelFamily, singleTvShowPage string) {
+func (z *ZDFParser) processSingleTvShow(singleTvShowPage string) {
 	doc, err := getDocument(singleTvShowPage)
 	if doc == nil || err != nil {
 		appLog(fmt.Sprintf("Could not fetch tv show detail page at '%s'", singleTvShowPage))
@@ -377,7 +390,7 @@ func processSingleTvShow(db *gorm.DB, channelFamily *ChannelFamily, singleTvShow
 		return
 	}
 	hash := buildHash([]string{tvShowExternalID, tvShowID})
-	db.Where("hash = ?", hash).Find(&tvShowRecord)
+	z.db.Where("hash = ?", hash).Find(&tvShowRecord)
 
 	// do validation steps
 	if !zdfTvShowLinkMatcher.Match([]byte(tvShowURL)) {
@@ -393,9 +406,9 @@ func processSingleTvShow(db *gorm.DB, channelFamily *ChannelFamily, singleTvShow
 	tvShowRecord.Homepage = tvShowURL
 	tvShowRecord.URL = zdfHost + tvShowAPIPath
 	tvShowRecord.TechnicalID = tvShowExternalID
-	tvShowRecord.ChannelFamily = *channelFamily
+	tvShowRecord.ChannelFamily = z.ChannelFamily
 
-	saveTvShowRecord(db, &tvShowRecord)
+	tvShowRecord.saveTvShowRecord(z.db)
 	return
 }
 
