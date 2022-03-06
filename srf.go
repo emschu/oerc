@@ -40,6 +40,7 @@ var (
 	srfTvShowURLMatcher = regexp.MustCompile(`^(/play/tv/sendung/.*|(https?://www\.srgssr\.ch/?.*))$`)
 )
 
+// SRFParser struct for srf parsing code
 type SRFParser struct {
 	Parser
 }

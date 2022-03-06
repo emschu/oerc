@@ -39,22 +39,22 @@ const (
 )
 
 var (
-	zdfAPIKey                  *string
 	pendingHashes              sync.Map
 	zdfTvShowLinkMatcher       = regexp.MustCompile(`^https?://(www\.)?zdf.de/.*`)
 	zdfTvShowExternalIDMatcher = regexp.MustCompile(`[a-zA-Z0-9_-]+`)
 )
 
+// ZDFParser struct to group zdf parsing code
 type ZDFParser struct {
 	Parser
-	zdfApiKey string
+	zdfAPIKey string
 }
 
 // Fetch This method handles the whole ZDF stuff
 func (z *ZDFParser) Fetch() {
 	var apiKeyErr error
-	zdfAPIKey, apiKeyErr = z.getZdfAPIKey()
-	if zdfAPIKey == nil || apiKeyErr != nil {
+	zdfAPIKey, apiKeyErr := z.getZdfAPIKey()
+	if z.zdfAPIKey == "" || apiKeyErr != nil {
 		log.Printf("Error fetching zdf api key: %v\n", apiKeyErr)
 		return
 	}
@@ -62,7 +62,7 @@ func (z *ZDFParser) Fetch() {
 		log.Println("Start parsing ZDF")
 		log.Printf("Using ZDF API key: %s\n", *zdfAPIKey)
 	}
-	z.zdfApiKey = *zdfAPIKey
+	z.zdfAPIKey = *zdfAPIKey
 
 	db := getDb()
 	z.db = db
@@ -279,7 +279,7 @@ func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastRespon
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
 		"Origin":   zdfHost,
-		"Api-Auth": "Bearer " + *zdfAPIKey,
+		"Api-Auth": "Bearer " + z.zdfAPIKey,
 	}
 	resp, err := doGetRequest(apiURL, headers, 3)
 	if resp == nil || err != nil {
@@ -304,7 +304,7 @@ func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemRe
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
 		"Origin":   zdfHost,
-		"Api-Auth": "Bearer " + *zdfAPIKey,
+		"Api-Auth": "Bearer " + z.zdfAPIKey,
 	}
 	resp, err := doGetRequest(apiURL, headers, 3)
 	if resp == nil || err != nil {

@@ -114,6 +114,7 @@ var (
 	}
 )
 
+// ARDParser struct of ard parser code
 type ARDParser struct {
 	Parser
 }

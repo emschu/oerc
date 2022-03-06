@@ -43,6 +43,7 @@ var (
 	orfDailyProgramURLMatcher  = regexp.MustCompile(`^/program/[a-zA-Z0-9]+/index.*\.html$`)
 )
 
+// ORFParser struct to group orf parsing code
 type ORFParser struct {
 	Parser
 }
