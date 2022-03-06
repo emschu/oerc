@@ -87,22 +87,38 @@ func main() {
 					// parse the single channels
 					if appConf.EnableARD {
 						log.Printf("Parsing ARD Start\n")
-						ParseARD()
+						var parser = ARDParser{Parser: Parser{
+							ChannelFamilyKey: "ARD",
+							dateRangeHandler: newDefaultDateRangeHandler(),
+						}}
+						parser.Fetch()
 						log.Printf("Parsing ARD End\n")
 					}
 					if appConf.EnableZDF {
 						log.Printf("Parsing ZDF Start\n")
-						ParseZDF()
+						var parser = ZDFParser{Parser: Parser{
+							ChannelFamilyKey: "ZDF",
+							dateRangeHandler: newDefaultDateRangeHandler(),
+						}}
+						parser.Fetch()
 						log.Printf("Parsing ZDF End\n")
 					}
 					if appConf.EnableORF {
 						log.Printf("Parsing ORF Start\n")
-						ParseORF()
+						var parser = ORFParser{Parser: Parser{
+							ChannelFamilyKey: "ORF",
+							dateRangeHandler: newDefaultDateRangeHandler(),
+						}}
+						parser.Fetch()
 						log.Printf("Parsing ORF End\n")
 					}
 					if appConf.EnableSRF {
 						log.Printf("Parsing SRF Start\n")
-						ParseSRF()
+						var parser = SRFParser{Parser: Parser{
+							ChannelFamilyKey: "SRF",
+							dateRangeHandler: newDefaultDateRangeHandler(),
+						}}
+						parser.Fetch()
 						log.Printf("Parsing SRF End\n")
 					}
 

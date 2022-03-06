@@ -656,3 +656,17 @@ func chunkStringSlice(slice []string, size int) [][]string {
 	}
 	return chunks
 }
+
+func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
+	dateTime, err := time.Parse(time.RFC3339, datetimeStr)
+	if err != nil {
+		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
+		return time.Time{}, true
+	}
+	if dateTime.IsZero() {
+		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
+		return time.Time{}, true
+	}
+	dateTime = dateTime.In(location)
+	return dateTime, false
+}

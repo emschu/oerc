@@ -22,7 +22,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
-	"gorm.io/gorm"
 	"log"
 	"regexp"
 	"strconv"
@@ -44,35 +43,46 @@ var (
 	orfDailyProgramURLMatcher  = regexp.MustCompile(`^/program/[a-zA-Z0-9]+/index.*\.html$`)
 )
 
-// ParseORF central method to parse ORF tv show and program data
-func ParseORF() {
+type ORFParser struct {
+	Parser
+}
+
+// Fetch central method to parse ORF tv show and program data
+func (o *ORFParser) Fetch() {
 	db := getDb()
+	o.db = db
 
 	// get channel family db record
-	var channelFamily = getChannelFamily(db, "ORF")
+	var channelFamily = getChannelFamily(db, o.ChannelFamilyKey)
 	if channelFamily.ID == 0 {
 		log.Fatalln("ORF channelFamily was not found!")
 		return
 	}
+	o.ChannelFamily = *channelFamily
 
 	// import tv shows
 	if GetAppConf().EnableTVShowCollection {
-		fetchTvShowsORF(db, channelFamily)
+		o.fetchTvShows()
 	}
 
-	times := *generateDateRangeInPastAndFuture(GetAppConf().DaysInPast, GetAppConf().DaysInFuture)
-
+	timeRange := o.dateRangeHandler.getDateRange()
+	var times []time.Time
+	if timeRange != nil {
+		times = *timeRange
+	} else {
+		log.Printf("No valid time range received!\n")
+		return
+	}
 	// import program entries for the configured date range
 	if GetAppConf().EnableProgramEntryCollection {
 		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
 			for _, day := range times {
-				family := *channelFamily
 				chn := channel
 				dayToFetch := day
 
 				pool.Submit(func() {
-					handleDayORF(db, family, chn, dayToFetch)
+					o.handleDay(chn, dayToFetch)
 				})
 			}
 		}
@@ -85,14 +95,14 @@ func ParseORF() {
 	}
 }
 
-// fetchTvShowORF: This method checks all the tv shows
-func fetchTvShowsORF(db *gorm.DB, family *ChannelFamily) {
+// fetchTvShow: This method checks all the tv shows
+func (o *ORFParser) fetchTvShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
 	}
 
-	c := orfCollector()
+	c := o.newOrfCollector()
 
 	c.OnHTML(".b-teaser", func(element *colly.HTMLElement) {
 		var title, url string
@@ -114,7 +124,7 @@ func fetchTvShowsORF(db *gorm.DB, family *ChannelFamily) {
 			return
 		}
 		var hash = buildHash([]string{
-			fmt.Sprintf("%d", int(family.ID)),
+			fmt.Sprintf("%d", int(o.ChannelFamily.ID)),
 			title,
 			"tv-show",
 		})
@@ -124,17 +134,17 @@ func fetchTvShowsORF(db *gorm.DB, family *ChannelFamily) {
 				URL:             url,
 				Hash:            hash,
 				Homepage:        url,
-				ChannelFamily:   *family,
-				ChannelFamilyID: family.ID, // 4 = orf
+				ChannelFamily:   o.ChannelFamily,
+				ChannelFamilyID: o.ChannelFamily.ID, // 4 = orf
 			},
 		}
 
 		show := TvShow{}
-		db.Where("hash = ?", hash).Find(&show)
+		o.db.Where("hash = ?", hash).Find(&show)
 		if show.ID != 0 {
 			tvShow.ID = show.ID
 		}
-		tvShow.saveTvShowRecord(db)
+		tvShow.saveTvShowRecord(o.db)
 	})
 
 	err := c.Visit(orfHostWithPrefix + "/profiles")
@@ -144,12 +154,12 @@ func fetchTvShowsORF(db *gorm.DB, family *ChannelFamily) {
 	c.Wait()
 }
 
-// handleDayORF method to fetch a single day of ORF
-func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.Time) {
+// handleDay method to fetch a single day of ORF
+func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 	queryURL := fmt.Sprintf("https://tv.orf.at/program/%s", channel.TechnicalID)
 
-	c := orfCollector()
-	dateDayDiff := getDaysBetween(day, time.Now())
+	c := o.newOrfCollector()
+	dateDayDiff := o.getDaysBetween(day, time.Now())
 
 	var programDetailURLPerDay string
 	c.OnHTML("li.lane-item", func(dayElement *colly.HTMLElement) {
@@ -242,14 +252,14 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 			title,
 			url,
 			strconv.Itoa(int(channel.ID)),
-			strconv.Itoa(int(family.ID)),
+			strconv.Itoa(int(o.ChannelFamily.ID)),
 			"program-entry",
 		})
 		programEntry.Hash = hash
 		programEntry.TechnicalID = hash
 
 		entry := ProgramEntry{}
-		db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
+		o.db.Model(&entry).Where("hash = ?", programEntry.Hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&entry)
 		if entry.ID != 0 {
 			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
@@ -260,8 +270,8 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 
 		programEntry.Title = title
 		programEntry.Description = description + "<br/>"
-		programEntry.ChannelFamily = family
-		programEntry.ChannelFamilyID = family.ID
+		programEntry.ChannelFamily = o.ChannelFamily
+		programEntry.ChannelFamilyID = o.ChannelFamily.ID
 		programEntry.Channel = channel
 		programEntry.ChannelID = channel.ID
 
@@ -309,7 +319,7 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 		})
 		programEntry.ImageLinks = append(programEntry.ImageLinks, imageLinks...)
 
-		programEntry.saveProgramEntryRecord(db)
+		programEntry.saveProgramEntryRecord(o.db)
 	})
 
 	err = c.Visit(fmt.Sprintf("%s%s", orfProgramHostWithPrefix, programDetailURLPerDay))
@@ -319,28 +329,14 @@ func handleDayORF(db *gorm.DB, family ChannelFamily, channel Channel, day time.T
 	c.Wait()
 }
 
-func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
-	dateTime, err := time.Parse(time.RFC3339, datetimeStr)
-	if err != nil {
-		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
-		return time.Time{}, true
-	}
-	if dateTime.IsZero() {
-		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
-		return time.Time{}, true
-	}
-	dateTime = dateTime.In(location)
-	return dateTime, false
-}
-
-func getDaysBetween(day time.Time, now time.Time) int {
+func (o *ORFParser) getDaysBetween(day time.Time, now time.Time) int {
 	first := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)
 	second := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	return int(first.Sub(second).Hours() / 24)
 }
 
 // helper method to get a collector instance
-func orfCollector() *colly.Collector {
+func (o *ORFParser) newOrfCollector() *colly.Collector {
 	collector := baseCollector([]string{orfHost, orfProgramHost})
 	collector.Async = false
 	return collector
