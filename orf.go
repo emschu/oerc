@@ -20,7 +20,6 @@ package main
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"regexp"
@@ -45,55 +44,15 @@ var (
 
 // ORFParser struct to group orf parsing code
 type ORFParser struct {
+	ParserInterface
 	Parser
 }
 
-// Fetch central method to parse ORF tv show and program data
-func (o *ORFParser) Fetch() {
-	db := getDb()
-	o.db = db
+func (o *ORFParser) postProcess() {}
 
-	// get channel family db record
-	var channelFamily = getChannelFamily(db, o.ChannelFamilyKey)
-	if channelFamily.ID == 0 {
-		log.Fatalln("ORF channelFamily was not found!")
-		return
-	}
-	o.ChannelFamily = *channelFamily
-
-	// import tv shows
-	if GetAppConf().EnableTVShowCollection {
-		o.fetchTvShows()
-	}
-
-	timeRange := o.dateRangeHandler.getDateRange()
-	var times []time.Time
-	if timeRange != nil {
-		times = *timeRange
-	} else {
-		log.Printf("No valid time range received!\n")
-		return
-	}
-	// import program entries for the configured date range
-	if GetAppConf().EnableProgramEntryCollection {
-		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
-		for _, channel := range getChannelsOfFamily(db, channelFamily) {
-			for _, day := range times {
-				chn := channel
-				dayToFetch := day
-
-				pool.Submit(func() {
-					o.handleDay(chn, dayToFetch)
-				})
-			}
-		}
-		// wait for finish
-		pool.StopAndWait()
-	}
-
-	if verboseGlobal {
-		log.Println("ORF parsed successfully")
-	}
+func (o *ORFParser) preProcess() bool {
+	o.parallelWorkersCount = 4
+	return true
 }
 
 // fetchTvShow: This method checks all the tv shows
@@ -334,6 +293,23 @@ func (o *ORFParser) getDaysBetween(day time.Time, now time.Time) int {
 	first := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)
 	second := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	return int(first.Sub(second).Hours() / 24)
+}
+
+func (o *ORFParser) isDateValidToFetch(day *time.Time) bool {
+	if day == nil {
+		return false
+	}
+
+	if o.isMoreThanXDaysInFuture(day, 22) {
+		appLog("Maximum for days in future for ORF is 22!\n")
+		return false
+	}
+
+	if o.isMoreThanXDaysInPast(day, 15) {
+		appLog("Maximum for days in past for ORF is 15!\n")
+		return false
+	}
+	return true
 }
 
 // helper method to get a collector instance

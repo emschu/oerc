@@ -20,7 +20,6 @@ package main
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"math"
@@ -42,68 +41,15 @@ var (
 
 // SRFParser struct for srf parsing code
 type SRFParser struct {
+	ParserInterface
 	Parser
 }
 
-// Fetch central method to parse SRF tv show and program data
-func (s *SRFParser) Fetch() {
-	db := getDb()
-	s.db = db
+func (s *SRFParser) postProcess() {}
 
-	// get channel family db record
-	var channelFamily = getChannelFamily(db, "SRF")
-	if channelFamily.ID == 0 {
-		log.Fatalln("SRF channelFamily was not found!")
-		return
-	}
-	s.ChannelFamily = *channelFamily
-
-	// import tv shows
-	if GetAppConf().EnableTVShowCollection {
-		s.fetchTvShows()
-	}
-
-	// import program entries for the configured date range
-	if GetAppConf().EnableProgramEntryCollection {
-		daysInPast := GetAppConf().DaysInPast
-
-		if daysInPast > 15 {
-			warnMsg := "Maximum for days in past for SRF is 15!\n"
-			log.Printf(warnMsg)
-			appLog(warnMsg)
-			daysInPast = 15
-		}
-
-		timeRange := s.dateRangeHandler.getDateRange()
-		var times []time.Time
-		if timeRange != nil {
-			times = *timeRange
-		} else {
-			log.Printf("No valid time range received!\n")
-			return
-		}
-
-		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
-		for _, channel := range getChannelsOfFamily(db, channelFamily) {
-			for _, day := range times {
-				if int(time.Since(day).Hours()/24) <= 30 {
-					chn := channel
-					dayToFetch := day
-
-					// srf specific limits!
-					pool.Submit(func() {
-						s.handleDay(chn, dayToFetch)
-					})
-				}
-			}
-		}
-		// wait for finish
-		pool.StopAndWait()
-	}
-
-	if verboseGlobal {
-		log.Println("SRF parsed successfully")
-	}
+func (s *SRFParser) preProcess() bool {
+	s.parallelWorkersCount = 4
+	return true
 }
 
 // fetchTvShowSRF: This method checks all the tv shows
@@ -342,6 +288,23 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 		appLog(fmt.Sprintf("Error of collector: %v\n", err))
 	}
 	c.Wait()
+}
+
+func (s *SRFParser) isDateValidToFetch(day *time.Time) bool {
+	if day == nil {
+		return false
+	}
+
+	if s.isMoreThanXDaysInFuture(day, 30) {
+		appLog("Maximum for days in future for SRF is 30!\n")
+		return false
+	}
+
+	if s.isMoreThanXDaysInPast(day, 15) {
+		appLog("Maximum for days in past for SRF is 15!\n")
+		return false
+	}
+	return true
 }
 
 // getDateFromStringSrf: Extract a date object of a given string format of the page

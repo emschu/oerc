@@ -46,66 +46,27 @@ var (
 
 // ZDFParser struct to group zdf parsing code
 type ZDFParser struct {
+	ParserInterface
 	Parser
 	zdfAPIKey string
 }
 
-// Fetch This method handles the whole ZDF stuff
-func (z *ZDFParser) Fetch() {
+func (z *ZDFParser) postProcess() {}
+
+func (z *ZDFParser) preProcess() bool {
 	var apiKeyErr error
 	zdfAPIKey, apiKeyErr := z.getZdfAPIKey()
 	if z.zdfAPIKey == "" || apiKeyErr != nil {
 		log.Printf("Error fetching zdf api key: %v\n", apiKeyErr)
-		return
+		return false
 	}
 	if verboseGlobal {
-		log.Println("Start parsing ZDF")
 		log.Printf("Using ZDF API key: %s\n", *zdfAPIKey)
 	}
 	z.zdfAPIKey = *zdfAPIKey
 
-	db := getDb()
-	z.db = db
-	// get channel family db record
-	var channelFamily = getChannelFamily(db, z.ChannelFamilyKey)
-	if channelFamily.ID == 0 {
-		log.Fatalln("ZDF channelFamily was not found! Cancel execution")
-		return
-	}
-	z.ChannelFamily = *channelFamily
-
-	timeRange := z.dateRangeHandler.getDateRange()
-	var times []time.Time
-	if timeRange != nil {
-		times = *timeRange
-	} else {
-		log.Printf("No valid time range received!\n")
-		return
-	}
-	if GetAppConf().EnableTVShowCollection {
-		z.fetchTvShows()
-	}
-
-	// import program entries for the configured date range
-	if GetAppConf().EnableProgramEntryCollection {
-		pool := pond.New(4, 100, getWorkerPoolIdleTimeout())
-		for _, channel := range getChannelsOfFamily(db, channelFamily) {
-			for _, day := range times {
-				chn := channel
-				dayToFetch := day
-
-				pool.Submit(func() {
-					z.handleDayZDF(chn, dayToFetch)
-				})
-			}
-		}
-		// wait for finish
-		pool.StopAndWait()
-	}
-
-	if verboseGlobal {
-		log.Println("ZDF parsed successfully")
-	}
+	z.parallelWorkersCount = 4
+	return true
 }
 
 // getZdfAPIKey method to retrieve the api key we need to connect to the zdf api
@@ -410,6 +371,23 @@ func (z *ZDFParser) processSingleTvShow(singleTvShowPage string) {
 
 	tvShowRecord.saveTvShowRecord(z.db)
 	return
+}
+
+func (z *ZDFParser) isDateValidToFetch(day *time.Time) bool {
+	if day == nil {
+		return false
+	}
+
+	if z.isMoreThanXDaysInFuture(day, 43) { // = six weeks in future + today
+		appLog("Maximum for days in future for ZDF is 43!\n")
+		return false
+	}
+	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, nil)
+	if day.Before(earliestDate) {
+		appLog(fmt.Sprintf("Maximum for days in past for ZDF is %s!\n", earliestDate.Format(time.RFC822)))
+		return false
+	}
+	return true
 }
 
 // ZdfBroadcastResponse api response struct definitions

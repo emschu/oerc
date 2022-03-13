@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"math"
@@ -116,62 +115,8 @@ var (
 
 // ARDParser struct of ard parser code
 type ARDParser struct {
+	ParserInterface
 	Parser
-}
-
-// Fetch central method to parse ARD tv show and program data
-func (a *ARDParser) Fetch() {
-	// setup db
-	db := getDb()
-	a.db = db
-
-	// get channel family db record and save it to the parser instance
-	var channelFamily = getChannelFamily(db, a.ChannelFamilyKey)
-	if channelFamily.ID == 0 {
-		log.Fatalln("ARD channelFamily was not found!")
-		return
-	}
-	a.ChannelFamily = *channelFamily
-
-	// import tv shows
-	if GetAppConf().EnableTVShowCollection {
-		a.fetchTvShows()
-	}
-
-	timeRange := a.dateRangeHandler.getDateRange()
-	var times []time.Time
-	if timeRange != nil {
-		times = *timeRange
-	} else {
-		log.Printf("No valid time range received!\n")
-		return
-	}
-
-	if GetAppConf().EnableProgramEntryCollection {
-		// import program entries for the configured date range
-		pool := pond.New(runtime.NumCPU(), 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
-			log.Printf("Problem with goroutine pool: %v\n", i)
-		}))
-		for _, channel := range getChannelsOfFamily(db, channelFamily) {
-			for _, day := range times {
-				chn := channel
-				dayToFetch := day
-
-				pool.Submit(func() {
-					a.handleDay(chn, dayToFetch)
-				})
-			}
-		}
-		// wait for finish
-		pool.StopAndWait()
-
-		// general tag linking
-		a.linkTagsToEntriesGeneral()
-	}
-
-	if verboseGlobal {
-		log.Println("ARD parsed successfully")
-	}
 }
 
 // method to process a single day of a single channel
@@ -454,6 +399,33 @@ func tryToFindTags(eid string) (*[]string, error) {
 		}
 	})
 	return tags, nil
+}
+
+// method which is called after the program entries and tv shows are fetched
+func (a *ARDParser) postProcess() {
+	a.linkTagsToEntriesGeneral()
+}
+
+// method which is called after the program entries and tv shows are fetched: empty for ARD
+func (a *ARDParser) preProcess() bool {
+	a.parallelWorkersCount = runtime.NumCPU()
+	return true
+}
+
+func (a *ARDParser) isDateValidToFetch(day *time.Time) bool {
+	if day == nil {
+		return false
+	}
+	if a.isMoreThanXDaysInFuture(day, 43) { // = six weeks in future + today
+		appLog("Maximum for days in future for ARD is 43!\n")
+		return false
+	}
+	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, nil)
+	if day.Before(earliestDate) {
+		appLog(fmt.Sprintf("Maximum for days in past for ARD is %s!\n", earliestDate.Format(time.RFC822)))
+		return false
+	}
+	return true
 }
 
 // method to link tags to program entries of a single day
