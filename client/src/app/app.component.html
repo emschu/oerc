@@ -22,7 +22,7 @@
   <router-outlet></router-outlet>
 </div>
 
-<div class="modal modal-md no-connection-modal" [ngClass]="{'active': !isLive}" *ngIf="isLive != true">
+<div class="modal modal-md no-connection-modal" [ngClass]="{'active': !isLive}" *ngIf="isLive !== true">
   <a href="#close" class="modal-overlay" aria-label="Close"></a>
   <div class="modal-container scroll-cont">
     <div class="modal-header">

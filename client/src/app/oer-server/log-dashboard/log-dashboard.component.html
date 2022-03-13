@@ -39,7 +39,7 @@
           <th>Message</th>
         </tr>
         </thead>
-        <tbody *ngIf="logEntries != null">
+        <tbody *ngIf="logEntries !== null">
         <tr *ngFor="let item of logEntries.elements">
           <td class="col_date">{{ item.created_at | momentDate:'full' }}</td>
           <td class="col_message" [innerHTML]="item.message"></td>

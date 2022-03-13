@@ -17,8 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {ApiService} from './oer-server/api.service';
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {OnPageHidden, OnPageVisible} from 'angular-page-visibility';
+import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import moment from 'moment-timezone';
 import 'moment/min/locales';
 import {Subscription} from 'rxjs';
@@ -36,16 +35,14 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(public apiService: ApiService) {
   }
 
-  @OnPageHidden()
-  onPageHidden(): void {
-    console.log('on page hidden');
-    this.apiService.isWindowOpenedSubject.next(false);
-  }
-
-  @OnPageVisible()
+  @HostListener('document:visibilitychange', ['$event'])
   onPageVisible(): void {
-    console.log('on page visible');
-    this.apiService.isWindowOpenedSubject.next(true);
+    if (document.hidden) {
+      this.apiService.isWindowOpenedSubject.next(false);
+    } else {
+      console.log('on page visible');
+      this.apiService.isWindowOpenedSubject.next(true);
+    }
   }
 
   ngOnInit(): void {
