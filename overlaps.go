@@ -29,15 +29,15 @@ import (
 )
 
 // FindOverlaps central method to find, store and process overlapping program entries with same range as "fetch" command
-func FindOverlaps() {
+func FindOverlaps(handler dateRangeHandler) {
 	log.Println("Start processing overlaps")
 	var wg sync.WaitGroup
 	for _, channel := range *getChannels() {
 		if isChannelFamilyExcluded(&channel.ChannelFamily) {
 			continue
 		}
-		times := generateDateRangeInPastAndFuture(GetAppConf().DaysInPast-1, GetAppConf().DaysInFuture+1)
-		for _, dayToCheck := range *times {
+		dateRange := handler.getDateRange()
+		for _, dayToCheck := range *dateRange {
 			wg.Add(1)
 			handleOverlapsByDay(&wg, &channel, dayToCheck)
 		}
@@ -46,7 +46,7 @@ func FindOverlaps() {
 	log.Println("End processing overlaps")
 }
 
-// FindOverlapsGlobal recalcalate all overlaps in database
+// FindOverlapsGlobal recalculate all overlaps in database, could take veeeeery long
 func FindOverlapsGlobal() {
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
 	if len(getStatusObject().DataStartTime) == 0 || len(getStatusObject().DataEndTime) == 0 {

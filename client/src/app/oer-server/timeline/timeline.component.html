@@ -53,7 +53,7 @@
   </div>
 </div>
 
-<div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}" *ngIf="currentProgramEntry != null">
+<div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}" *ngIf="currentProgramEntry !== null">
   <a href="#close" class="modal-overlay" aria-label="Close" (click)="isModalOpen = false"></a>
   <div class="modal-container scroll-cont">
     <div class="modal-header">

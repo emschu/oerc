@@ -71,7 +71,7 @@ func (a *AppConfig) verifyConfiguration() bool {
 	// check time zone is valid
 	_, err := time.LoadLocation(a.TimeZone)
 	if err != nil {
-		log.Printf("Invalid time zone '%s' given!\n", GetAppConf().TimeZone)
+		log.Printf("Invalid time zone '%s' given!\n", a.TimeZone)
 		return false
 	}
 	// check db type is valid/supported
@@ -81,7 +81,7 @@ func (a *AppConfig) verifyConfiguration() bool {
 		return false
 	}
 	if strings.ToLower(dbType) != "postgres" && strings.ToLower(dbType) != "postgresql" {
-		log.Printf("Invalid DbType '%s' given!\n", GetAppConf().DbType)
+		log.Printf("Invalid DbType '%s' given!\n", a.DbType)
 		return false
 	}
 	// check backend server configuration
@@ -105,7 +105,11 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 	if len(cleanedPath) > 0 {
 		providedFilePath, err := os.Stat(cleanedPath)
 		if err != nil {
-			log.Fatal(err)
+			if allowFail {
+				log.Fatal(err)
+			} else {
+				return nil
+			}
 		}
 		if providedFilePath.Mode().IsRegular() {
 			log.Printf("Loading configuration from file '%s'.\n", cleanedPath)
@@ -117,7 +121,11 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 	homeDir, err := os.UserHomeDir()
 	homeDir = path.Clean(homeDir)
 	if err != nil {
-		log.Fatalf("Home dir cannot be accessed - error: %v", err)
+		if allowFail {
+			log.Fatalf("Home dir cannot be accessed - error: %v", err)
+		} else {
+			return nil
+		}
 	}
 	// then look in ~/.oerc.yaml
 	homeDirConfigFile := fmt.Sprintf("%s/%s", homeDir, ".oerc.yaml")
@@ -126,7 +134,7 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 		if allowFail {
 			log.Fatalf("Could not find configuration file at '%s'", homeDirConfigFile)
 		} else {
-			return &homeDirConfigFile
+			return nil
 		}
 	} else {
 		if verboseGlobal {
@@ -134,7 +142,9 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 		}
 		if homeDirCfgFileStat.Mode().IsRegular() {
 			loadYaml(homeDirConfigFile)
-		} else {
+			return &homeDirConfigFile
+		}
+		if allowFail {
 			log.Fatalf("Path '%s' is not a valid regular file.", homeDirConfigFile)
 		}
 	}

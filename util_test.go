@@ -41,6 +41,23 @@ func TestGenerateDateRange(t *testing.T) {
 	}
 }
 
+func TestGenerateDateRangeBetweenDates(t *testing.T) {
+	today := time.Now()
+	dates := generateDateRangeBetweenDates(today, today)
+	if len(*dates) != 1 {
+		t.Errorf("one day expected, was: %d", len(*dates))
+	}
+	tomorrow := today.Add(24 * time.Hour)
+	dates2 := generateDateRangeBetweenDates(today, tomorrow)
+	if len(*dates2) != 2 {
+		t.Errorf("two days expected, was: %d", len(*dates2))
+	}
+	dates3 := generateDateRangeBetweenDates(tomorrow, today)
+	if len(*dates3) != 2 {
+		t.Errorf("two days expected, was: %d", len(*dates3))
+	}
+}
+
 func TestTrim(t *testing.T) {
 	in := "\n\t\t\t\t\t\t\tZDX-Morgenmagazin\t\t\t\t\t\tn\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tModeration: X Y, Z D und F A\t\t\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
 	trimString := trimAndSanitizeString(in)
@@ -290,5 +307,29 @@ func TestChunkStringSlice(t *testing.T) {
 	}
 	if len(chunkStringSlice(slice3, 2)) != 2 {
 		t.Fatalf("Invalid handling of slice with three elements")
+	}
+}
+
+func TestParseDate(t *testing.T) {
+	setupInMemoryDbForTesting()
+
+	location, _ := time.LoadLocation(defaultAppConfig().TimeZone)
+	date, fail := parseDate("2022-02-22T10:10:11Z", location)
+	if fail || date.IsZero() {
+		t.Fatalf("invalid date")
+	}
+
+	invalidDates := []string{
+		"",
+		"1",
+		"2022-02-22T10:10:11",
+		"2022-02-22 10:10:11Z",
+		"2022-02-22 10:10:11",
+	}
+	for _, invalidDate := range invalidDates {
+		date, fail2 := parseDate(invalidDate, location)
+		if !fail2 || !date.IsZero() {
+			t.Fatalf("invalid date parsing result")
+		}
 	}
 }

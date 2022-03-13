@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	version       = "0.9.16"
+	version       = "0.9.17"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -84,66 +84,58 @@ func main() {
 						return err
 					}
 
-					// parse the single channels
-					if appConf.EnableARD {
-						log.Printf("Parsing ARD Start\n")
-						var parser = ARDParser{Parser: Parser{
-							ChannelFamilyKey: "ARD",
-							dateRangeHandler: newDefaultDateRangeHandler(),
-						}}
-						parser.Fetch()
-						log.Printf("Parsing ARD End\n")
-					}
-					if appConf.EnableZDF {
-						log.Printf("Parsing ZDF Start\n")
-						var parser = ZDFParser{Parser: Parser{
-							ChannelFamilyKey: "ZDF",
-							dateRangeHandler: newDefaultDateRangeHandler(),
-						}}
-						parser.Fetch()
-						log.Printf("Parsing ZDF End\n")
-					}
-					if appConf.EnableORF {
-						log.Printf("Parsing ORF Start\n")
-						var parser = ORFParser{Parser: Parser{
-							ChannelFamilyKey: "ORF",
-							dateRangeHandler: newDefaultDateRangeHandler(),
-						}}
-						parser.Fetch()
-						log.Printf("Parsing ORF End\n")
-					}
-					if appConf.EnableSRF {
-						log.Printf("Parsing SRF Start\n")
-						var parser = SRFParser{Parser: Parser{
-							ChannelFamilyKey: "SRF",
-							dateRangeHandler: newDefaultDateRangeHandler(),
-						}}
-						parser.Fetch()
-						log.Printf("Parsing SRF End\n")
-					}
+					FetchAll(newDefaultDateRangeHandler())
 
-					FindOverlaps()
+					FindOverlaps(newDefaultDateRangeHandlerPadded(1))
 
 					// update counters if something has happened
-					if status.TotalCreatedPE > 0 || status.TotalCreatedTVS > 0 ||
-						status.TotalUpdatedPE > 0 || status.TotalUpdatedTVS > 0 {
-						setSetting(settingKeyLastFetch, time.Now().Format(time.RFC3339))
+					showFetchResults(startTime)
+
+					return nil
+				},
+			},
+			{
+				Name:    "fetch-range",
+				Aliases: []string{"fr"},
+				Usage:   "Fetch a specific date range",
+				Flags: []cli.Flag{
+					&cli.TimestampFlag{
+						Name:        "from",
+						Usage:       "Data range start date, YYYY-MM-DD",
+						Layout:      "2006-01-02",
+						DefaultText: "empty",
+					},
+					&cli.TimestampFlag{
+						Name:        "to",
+						Usage:       "Data range end date, YYYY-MM-DD",
+						Layout:      "2006-01-02",
+						DefaultText: "empty",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					log.Println("Starting fetch-range process")
+					startTime := time.Now()
+					Startup(c)
+					defer Shutdown()
+
+					isNetworkAvailable, err := connectivityCheck()
+					if !isNetworkAvailable {
+						return err
 					}
-					setSetting(settingKeyRequestsLastExecution, strconv.Itoa(int(status.TotalRequests)))
-					setting := getSetting(settingKeyRequestsTotal)
-					var currentRequestsTotal uint64
-					if setting != nil {
-						currentRequestsTotal, err = strconv.ParseUint(setting.Value, 10, 64)
-						if err != nil {
-							currentRequestsTotal = 0
-						}
+
+					rangeStart := c.Timestamp("from")
+					rangeEnd := c.Timestamp("to")
+
+					if rangeStart == nil || rangeEnd == nil {
+						return fmt.Errorf("invalid date range start or end given")
 					}
-					setSetting(settingKeyRequestsTotal, strconv.Itoa(int(currentRequestsTotal+status.TotalRequests)))
-					log.Printf("HTTP request counter of this fetch process: %d\n", status.TotalRequests)
-					sub := time.Now().Sub(startTime)
-					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", sub.Seconds(), sub.Minutes())
-					log.Printf("Created program entries: %d. Updated: %d. Skipped: %d ", status.TotalCreatedPE, status.TotalUpdatedPE, status.TotalSkippedPE)
-					log.Printf("Created tv shows: %d. Updated: %d.", status.TotalCreatedTVS, status.TotalUpdatedTVS)
+
+					FetchAll(newSpecificDateRangeHandler(*rangeStart, *rangeEnd))
+
+					FindOverlaps(newSpecificDateRangeHandlerPadded(*rangeStart, *rangeEnd, 1))
+
+					// update counters if something has happened
+					showFetchResults(startTime)
 
 					return nil
 				},
@@ -366,7 +358,7 @@ func main() {
 					Startup(context)
 					defer Shutdown()
 
-					FindOverlaps()
+					FindOverlaps(newDefaultDateRangeHandlerPadded(1))
 
 					duration := time.Now().Sub(startTime)
 					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())
@@ -382,6 +374,70 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func showFetchResults(startTime time.Time) {
+	if status.TotalCreatedPE > 0 || status.TotalCreatedTVS > 0 ||
+		status.TotalUpdatedPE > 0 || status.TotalUpdatedTVS > 0 {
+		setSetting(settingKeyLastFetch, time.Now().Format(time.RFC3339))
+	}
+	setSetting(settingKeyRequestsLastExecution, strconv.Itoa(int(status.TotalRequests)))
+	setting := getSetting(settingKeyRequestsTotal)
+	var err error
+	var currentRequestsTotal uint64
+	if setting != nil {
+		currentRequestsTotal, err = strconv.ParseUint(setting.Value, 10, 64)
+		if err != nil {
+			currentRequestsTotal = 0
+		}
+	}
+	setSetting(settingKeyRequestsTotal, strconv.Itoa(int(currentRequestsTotal+status.TotalRequests)))
+	log.Printf("HTTP request counter of this fetch process: %d\n", status.TotalRequests)
+	sub := time.Now().Sub(startTime)
+	log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", sub.Seconds(), sub.Minutes())
+	log.Printf("Created program entries: %d. Updated: %d. Skipped: %d ", status.TotalCreatedPE, status.TotalUpdatedPE, status.TotalSkippedPE)
+	log.Printf("Created tv shows: %d. Updated: %d.", status.TotalCreatedTVS, status.TotalUpdatedTVS)
+}
+
+// FetchAll central method to fetch the data based on a dateRangeHandler
+func FetchAll(handler dateRangeHandler) {
+	// parse the single channels
+	if appConf.EnableARD {
+		log.Printf("Parsing ARD Start\n")
+		var parser = &ARDParser{Parser: Parser{
+			ChannelFamilyKey: "ARD",
+			dateRangeHandler: handler,
+		}}
+		parser.Fetch(parser)
+		log.Printf("Parsing ARD End\n")
+	}
+	if appConf.EnableZDF {
+		log.Printf("Parsing ZDF Start\n")
+		var parser = &ZDFParser{Parser: Parser{
+			ChannelFamilyKey: "ZDF",
+			dateRangeHandler: handler,
+		}}
+		parser.Fetch(parser)
+		log.Printf("Parsing ZDF End\n")
+	}
+	if appConf.EnableORF {
+		log.Printf("Parsing ORF Start\n")
+		var parser = &ORFParser{Parser: Parser{
+			ChannelFamilyKey: "ORF",
+			dateRangeHandler: handler,
+		}}
+		parser.Fetch(parser)
+		log.Printf("Parsing ORF End\n")
+	}
+	if appConf.EnableSRF {
+		log.Printf("Parsing SRF Start\n")
+		var parser = &SRFParser{Parser: Parser{
+			ChannelFamilyKey: "SRF",
+			dateRangeHandler: handler,
+		}}
+		parser.Fetch(parser)
+		log.Printf("Parsing SRF End\n")
 	}
 }
 

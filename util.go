@@ -31,6 +31,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -218,7 +219,7 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 					}
 					err := reader.Close()
 					if err != nil {
-						appLog(fmt.Sprintf("Problem during close of gzip stream: %v\n", err))
+						appLog(fmt.Sprintf("Problem during close of gzip stream: %v", err))
 						incrErr()
 					}
 				}()
@@ -274,10 +275,24 @@ func generateDateRangeInPastAndFuture(daysInPast, daysInFuture uint) *[]time.Tim
 
 // generateDateRangeBetweenDates: get a slice of dates between a and b
 func generateDateRangeBetweenDates(startDate time.Time, endDate time.Time) *[]time.Time {
-	var dates []time.Time
+
 	daysBetween := endDate.Sub(startDate).Hours() / 24
-	for i := 1; i <= int(daysBetween); i++ {
-		dates = append(dates, startDate.AddDate(0, 0, i))
+	if daysBetween == 0 {
+		return &[]time.Time{
+			time.Now(),
+		}
+	}
+	var firstDate time.Time
+	if startDate.Before(endDate) {
+		firstDate = startDate
+	} else {
+		firstDate = endDate
+	}
+	var dates []time.Time
+	dates = append(dates, firstDate)
+
+	for i := 1; i <= int(math.Abs(daysBetween)); i++ {
+		dates = append(dates, firstDate.AddDate(0, 0, i))
 	}
 	return &dates
 }
@@ -298,7 +313,7 @@ func appLog(msg string) {
 	parsingError.Message = trimAndSanitizeString(msg)
 	db.Save(parsingError)
 
-	log.Printf("error in parse process: '%s'", msg)
+	log.Printf("error in parse process: '%s'\n", msg)
 }
 
 // saveProgramEntryRecord: method to store or create a program entry gorm record
@@ -660,11 +675,11 @@ func chunkStringSlice(slice []string, size int) [][]string {
 func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
 	dateTime, err := time.Parse(time.RFC3339, datetimeStr)
 	if err != nil {
-		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
+		appLog(fmt.Sprint("Problem with parsing date time in orf program entry."))
 		return time.Time{}, true
 	}
 	if dateTime.IsZero() {
-		appLog(fmt.Sprint("Problem with parsing date time in orf program entry.\n"))
+		appLog(fmt.Sprint("Problem with parsing date time in orf program entry."))
 		return time.Time{}, true
 	}
 	dateTime = dateTime.In(location)

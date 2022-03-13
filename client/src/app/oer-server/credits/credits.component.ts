@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import {environment} from '../../../environments/environment';
 
 @Component({
@@ -24,13 +24,9 @@ import {environment} from '../../../environments/environment';
   templateUrl: './credits.component.html',
   styleUrls: ['./credits.component.scss']
 })
-export class CreditsComponent implements OnInit {
+export class CreditsComponent {
 
   appVersion = environment.appVersion;
 
   constructor() { }
-
-  ngOnInit(): void {
-  }
-
 }

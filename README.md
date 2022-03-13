@@ -68,7 +68,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.9.16, License: AGPLv3, https://github.com/emschu/oerc
+   0.9.17, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -76,6 +76,7 @@ DESCRIPTION:
 COMMANDS:
    clear               Clear the database. Be careful!
    fetch, f            Get latest data
+   fetch-range, fr     Fetch a specific date range
    full-overlap-check  Run overlap check on all program entries. Could take very long.
    init, i             Initial database and configuration setup check
    overlap-check       Run overlap check on currently fetched time range
@@ -88,7 +89,7 @@ GLOBAL OPTIONS:
    --config value, -c value  Path to the yaml configuration file (default: ~/.oerc.yaml)
    --verbose                 Verbose log output (default: false)
    --help, -h                show help (default: false)
-   --version, -v             print the version (default: false)                                                                     
+   --version, -v             print the version (default: false)                                                            
 ```
 
 ### Configuration options
@@ -262,10 +263,9 @@ Note: The first column does not necessarily have to correspond to the channel id
 
 <a name="similar-projects"></a>
 ### Similar projects:
-- [cemrich/zapp-backend](https://github.com/mediathekview/zapp-backend)
+- [mediathekview/zapp-backend](https://github.com/mediathekview/zapp-backend)
 - [MediathekView(Web)-Project](https://github.com/mediathekview)
 - [MediathekDirekt](https://mediathekdirekt.de/) + [Sources](https://gitlab.com/mediathekdirekt/mediathekdirekt)
-- [EPG Scraper for ARD TV Stations to Use With tvheadend External XMLTV Grabber](https://projects.webvoss.de/2019/04/14/legal-epg-scraper-for-ard-tv-stations-to-use-with-tvheadend-external-xmltv-grabber/)
 
 ### OpenApi 3 specification
 If you run the (backend) server (just run `oerc server`) an OpenApi 3 specification is shipped at

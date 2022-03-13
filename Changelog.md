@@ -1,7 +1,11 @@
 # Changelog oerc
 
-## 0.9.16 - 2022/03/XX
-- Improving code structure in general which brings more performance
+## 0.9.17 - 2022/03/13
+- introduce `fetch-range` subcommand to import all available information
+- More code improvements and more tests
+
+## 0.9.16 - 2022/03/06
+- Improving code structure in general which also brings more performance
 - now `postgres` and `postgresql` as values for `DbType` will be accepted
 
 ## 0.9.15 - 2022/02/13

@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/alitto/pond"
 	"github.com/gocolly/colly/v2"
 	"log"
 	"math"
@@ -48,7 +47,7 @@ var (
 	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
 	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
 	ardIcalLinkMatcher      = regexp.MustCompile(`^/ICalendar/iCal---Sendung\?sendung=[0-9]+`)
-	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9]+\.(jpe?g|png))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png)))`)
+	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_-]+\.(jpe?g|png|JPE?G|PNG))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG)))`)
 	ardMainTags             = map[string]string{
 		"Film":            "Film/Alle-Filme/Alle-Filme",
 		"Dokumentation":   "Dokus--Reportagen/Alle-Dokumentationen/Startseite",
@@ -116,62 +115,8 @@ var (
 
 // ARDParser struct of ard parser code
 type ARDParser struct {
+	ParserInterface
 	Parser
-}
-
-// Fetch central method to parse ARD tv show and program data
-func (a *ARDParser) Fetch() {
-	// setup db
-	db := getDb()
-	a.db = db
-
-	// get channel family db record and save it to the parser instance
-	var channelFamily = getChannelFamily(db, a.ChannelFamilyKey)
-	if channelFamily.ID == 0 {
-		log.Fatalln("ARD channelFamily was not found!")
-		return
-	}
-	a.ChannelFamily = *channelFamily
-
-	// import tv shows
-	if GetAppConf().EnableTVShowCollection {
-		a.fetchTvShows()
-	}
-
-	timeRange := a.dateRangeHandler.getDateRange()
-	var times []time.Time
-	if timeRange != nil {
-		times = *timeRange
-	} else {
-		log.Printf("No valid time range received!\n")
-		return
-	}
-
-	if GetAppConf().EnableProgramEntryCollection {
-		// import program entries for the configured date range
-		pool := pond.New(runtime.NumCPU(), 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
-			log.Printf("Problem with goroutine pool: %v\n", i)
-		}))
-		for _, channel := range getChannelsOfFamily(db, channelFamily) {
-			for _, day := range times {
-				chn := channel
-				dayToFetch := day
-
-				pool.Submit(func() {
-					a.handleDay(chn, dayToFetch)
-				})
-			}
-		}
-		// wait for finish
-		pool.StopAndWait()
-
-		// general tag linking
-		a.linkTagsToEntriesGeneral()
-	}
-
-	if verboseGlobal {
-		log.Println("ARD parsed successfully")
-	}
 }
 
 // method to process a single day of a single channel
@@ -248,7 +193,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	url := fmt.Sprintf("%s/TV/Programm/Sender?datum=%s&hour=0&sender=%s", ardHostWithPrefix, formattedDate, channel.Hash)
 	err := c.Visit(url)
 	if err != nil {
-		appLog(fmt.Sprintf("error in call to url '%s': %v \n", url, err))
+		appLog(fmt.Sprintf("error in call to url '%s': %v", url, err))
 	}
 	c.Wait()
 
@@ -272,11 +217,11 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		// fetch ical-links for proper datetime information
 		icalHref, exists := element.DOM.Find("a[href*=ICalendar]").Attr("href")
 		if !exists {
-			appLog(fmt.Sprintf("ERROR: No iCal link found for program entry '%s'\n", programEntry.Hash))
+			appLog(fmt.Sprintf("ERROR: No iCal link found for program entry '%s'", programEntry.Hash))
 			return
 		}
 		if !ardIcalLinkMatcher.Match([]byte(icalHref)) {
-			appLog(fmt.Sprintf("Invalid iCal link found for program entry hash '%s'\n", programEntry.Hash))
+			appLog(fmt.Sprintf("Invalid iCal link found for program entry hash '%s'", programEntry.Hash))
 			return
 		}
 		icalLink := ardHostWithPrefix + icalHref
@@ -360,7 +305,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		programEntry = &pe
 		err := c2.Visit(pe.URL)
 		if err != nil {
-			appLog(fmt.Sprintf("Error in ard tv show call to url '%s':%v\n", ardHostWithPrefix+pe.URL, err))
+			appLog(fmt.Sprintf("Error in ard tv show call to url '%s':%v", ardHostWithPrefix+pe.URL, err))
 		}
 		c2.Wait()
 	}
@@ -369,7 +314,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 }
 
 // method to fetch all tv show data
-func (a *ARDParser) fetchTvShows() {
+func (a *ARDParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
@@ -387,7 +332,7 @@ func (a *ARDParser) fetchTvShows() {
 
 		var title = trimAndSanitizeString(e.ChildAttr("img", "title"))
 		if link == "" || title == "" {
-			appLog(fmt.Sprintf("ERR: empty link or title in URL '%s'\n", e.Request.URL.EscapedPath()))
+			appLog(fmt.Sprintf("ERR: empty link or title in URL '%s'", e.Request.URL.EscapedPath()))
 			return
 		}
 		var hash = buildHash([]string{
@@ -419,7 +364,7 @@ func (a *ARDParser) fetchTvShows() {
 	tvShowURL := ardHostWithPrefix + "/TV/Sendungen-von-A-bis-Z/Startseite?page=&char=all"
 	err := collector.Visit(tvShowURL)
 	if err != nil {
-		appLog(fmt.Sprintf("Problem scraping URL '%s'\n", tvShowURL))
+		appLog(fmt.Sprintf("Problem scraping URL '%s'", tvShowURL))
 	}
 	collector.Wait()
 	// TODO add tv show post processing: image links + tags + related program entries
@@ -454,6 +399,32 @@ func tryToFindTags(eid string) (*[]string, error) {
 		}
 	})
 	return tags, nil
+}
+
+// method which is called after the program entries and tv shows are fetched
+func (a *ARDParser) postProcess() {
+	a.linkTagsToEntriesGeneral()
+}
+
+// method which is called after the program entries and tv shows are fetched: empty for ARD
+func (a *ARDParser) preProcess() bool {
+	a.parallelWorkersCount = runtime.NumCPU()
+	return true
+}
+
+func (a *ARDParser) isDateValidToFetch(day *time.Time) (bool, error) {
+	if day == nil {
+		return false, fmt.Errorf("invalid day")
+	}
+	if a.isMoreThanXDaysInFuture(day, 43) { // = six weeks in future + today
+		return false, fmt.Errorf("maximum for days in future for ARD is 43")
+	}
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, location)
+	if day.Before(earliestDate) {
+		return false, fmt.Errorf("maximum for days in past for ARD is %s", earliestDate.Format(time.RFC822))
+	}
+	return true, nil
 }
 
 // method to link tags to program entries of a single day
@@ -582,7 +553,7 @@ func (a *ARDParser) parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalCon
 			startDate := strings.Replace(line, "DTSTART;TZID=Europe/Berlin:", "", 1)
 			content.startDate, err = time.Parse(iCalDateLayout, startDate)
 			if err != nil {
-				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.\n", icalContent, err))
+				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.", icalContent, err))
 			} else {
 				hasStart = true
 			}
@@ -591,7 +562,7 @@ func (a *ARDParser) parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalCon
 			endDate := strings.Replace(line, "DTEND;TZID=Europe/Berlin:", "", 1)
 			content.endDate, err = time.Parse(iCalDateLayout, endDate)
 			if err != nil {
-				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.\n", icalContent, err))
+				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.", icalContent, err))
 			} else {
 				hasEnd = true
 			}

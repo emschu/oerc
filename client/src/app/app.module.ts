@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {LOCALE_ID, NgModule} from '@angular/core';
-import { registerLocaleData } from '@angular/common';
+import {CommonModule, registerLocaleData} from '@angular/common';
 import localeDe from '@angular/common/locales/de';
 import {BrowserModule} from '@angular/platform-browser';
 
@@ -27,7 +27,6 @@ import {OercClientModule} from './oer-server/oerc-client.module';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {UtilModule} from './util/util.module';
 import { NavComponent } from './nav/nav.component';
-import { AngularPageVisibilityModule } from 'angular-page-visibility';
 
 registerLocaleData(localeDe);
 
@@ -39,7 +38,7 @@ registerLocaleData(localeDe);
   ],
   imports: [
     BrowserModule,
-    AngularPageVisibilityModule,
+    CommonModule,
     AppRoutingModule,
     OercClientModule,
     UtilModule,
