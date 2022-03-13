@@ -56,7 +56,7 @@ func (z *ZDFParser) postProcess() {}
 func (z *ZDFParser) preProcess() bool {
 	var apiKeyErr error
 	zdfAPIKey, apiKeyErr := z.getZdfAPIKey()
-	if z.zdfAPIKey == "" || apiKeyErr != nil {
+	if apiKeyErr != nil {
 		log.Printf("Error fetching zdf api key: %v\n", apiKeyErr)
 		return false
 	}
@@ -95,7 +95,7 @@ func (z *ZDFParser) getZdfAPIKey() (*string, error) {
 }
 
 // method to process a single day of a single channel
-func (z *ZDFParser) handleDayZDF(channel Channel, day time.Time) {
+func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 	startDateStr := day.Format(time.RFC3339)
 	endDate := day.AddDate(0, 0, 1)
 	endDateStr := endDate.Format(time.RFC3339)
@@ -286,7 +286,7 @@ func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemRe
 }
 
 // fetchTvShows method to fetch zdf tv shows
-func (z *ZDFParser) fetchTvShows() {
+func (z *ZDFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
@@ -303,7 +303,7 @@ func (z *ZDFParser) fetchTvShows() {
 
 		document, err := getDocument(apiURL)
 		if document == nil || err != nil {
-			appLog(fmt.Sprintf("Problem with http call to zdf %v\n", err))
+			appLog(fmt.Sprintf("Problem with http call to zdf %v", err))
 			continue
 		}
 		document.Find(".b-content-teaser-item h3 a").Each(func(i int, selection *goquery.Selection) {
@@ -373,21 +373,20 @@ func (z *ZDFParser) processSingleTvShow(singleTvShowPage string) {
 	return
 }
 
-func (z *ZDFParser) isDateValidToFetch(day *time.Time) bool {
+func (z *ZDFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	if day == nil {
-		return false
+		return false, fmt.Errorf("invalid day")
 	}
 
 	if z.isMoreThanXDaysInFuture(day, 43) { // = six weeks in future + today
-		appLog("Maximum for days in future for ZDF is 43!\n")
-		return false
+		return false, fmt.Errorf("maximum for days in future for ZDF is 43")
 	}
-	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, nil)
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, location)
 	if day.Before(earliestDate) {
-		appLog(fmt.Sprintf("Maximum for days in past for ZDF is %s!\n", earliestDate.Format(time.RFC822)))
-		return false
+		return false, fmt.Errorf("maximum for days in past for ZDF is %s", earliestDate.Format(time.RFC822))
 	}
-	return true
+	return true, nil
 }
 
 // ZdfBroadcastResponse api response struct definitions

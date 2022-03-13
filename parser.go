@@ -34,7 +34,7 @@ type ParserInterface interface {
 
 	preProcess() bool // run tasks before the fetch process (like receiving API keys etc.), return success state
 
-	isDateValidToFetch(day *time.Time) bool
+	isDateValidToFetch(day *time.Time) (bool, error)
 }
 
 type dateRangeHandler interface {
@@ -57,10 +57,24 @@ func newDefaultDateRangeHandler() dateRangeHandler {
 	}
 }
 
+func newDefaultDateRangeHandlerPadded(paddingDays uint) dateRangeHandler {
+	return &defaultDateRangeHandler{
+		DaysInPast:   GetAppConf().DaysInPast - paddingDays,
+		DaysInFuture: GetAppConf().DaysInFuture + paddingDays,
+	}
+}
+
 func newSpecificDateRangeHandler(startDateTime time.Time, endDateTime time.Time) dateRangeHandler {
 	return &specificDateRangeHandler{
 		StartDateTime: startDateTime,
 		EndDateTime:   endDateTime,
+	}
+}
+
+func newSpecificDateRangeHandlerPadded(startDateTime time.Time, endDateTime time.Time, paddingDays uint) dateRangeHandler {
+	return &specificDateRangeHandler{
+		StartDateTime: startDateTime.Add(time.Duration(paddingDays) * -24 * time.Hour),
+		EndDateTime:   endDateTime.Add(time.Duration(paddingDays) * 24 * time.Hour),
 	}
 }
 
@@ -82,7 +96,7 @@ type Parser struct {
 }
 
 // Fetch generic fetch function ready to handle all parsers, sets ChannelFamily and DB to the instance
-func (p *Parser) Fetch() {
+func (p *Parser) Fetch(parserInterface ParserInterface) {
 	// setup db
 	db := getDb()
 	p.db = db
@@ -95,9 +109,7 @@ func (p *Parser) Fetch() {
 	}
 	p.ChannelFamily = *channelFamily
 
-	var parserInst interface{} = p
-	parserInterface, ok := parserInst.(ParserInterface)
-	if !ok {
+	if parserInterface == nil {
 		log.Fatalf("Incompliant parser instance received! Key: '%s'\n", p.ChannelFamilyKey)
 	}
 
@@ -130,10 +142,15 @@ func (p *Parser) Fetch() {
 			for _, day := range times {
 				chn := channel
 				dayToFetch := day
-				if parserInterface.isDateValidToFetch(&dayToFetch) {
+				ok, err := parserInterface.isDateValidToFetch(&dayToFetch)
+				if ok && err == nil {
 					pool.Submit(func() {
 						parserInterface.handleDay(chn, dayToFetch)
 					})
+				} else {
+					if verboseGlobal {
+						log.Printf("Skipping date '%s' of channel #%s\n", dayToFetch.Format("2006-01-02"), chn.ChannelFamily.Title)
+					}
 				}
 			}
 		}

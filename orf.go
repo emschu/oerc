@@ -56,7 +56,7 @@ func (o *ORFParser) preProcess() bool {
 }
 
 // fetchTvShow: This method checks all the tv shows
-func (o *ORFParser) fetchTvShows() {
+func (o *ORFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
@@ -109,7 +109,7 @@ func (o *ORFParser) fetchTvShows() {
 
 	err := c.Visit(orfHostWithPrefix + "/profiles")
 	if err != nil {
-		appLog(fmt.Sprintf("ORF parser fetch url error: %v\n", err))
+		appLog(fmt.Sprintf("ORF parser fetch url error: %v", err))
 	}
 	c.Wait()
 }
@@ -239,7 +239,7 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 			requestHeaders := map[string]string{"Origin": "tv.orf.at", "Host": "tv.orf.at", "Accept": "text/html"}
 			response, err := doGetRequest(url, requestHeaders, 3)
 			if err != nil || response == nil {
-				appLog(fmt.Sprintf("Problem fetching orf URL '%s'\n", url))
+				appLog(fmt.Sprintf("Problem fetching orf URL '%s'", url))
 				return
 			}
 			// Load the HTML document
@@ -284,7 +284,7 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 
 	err = c.Visit(fmt.Sprintf("%s%s", orfProgramHostWithPrefix, programDetailURLPerDay))
 	if err != nil {
-		appLog(fmt.Sprintf("Error of orf collector in url '%s': %v\n", queryURL, err))
+		appLog(fmt.Sprintf("Error of orf collector in url '%s': %v", queryURL, err))
 	}
 	c.Wait()
 }
@@ -295,21 +295,19 @@ func (o *ORFParser) getDaysBetween(day time.Time, now time.Time) int {
 	return int(first.Sub(second).Hours() / 24)
 }
 
-func (o *ORFParser) isDateValidToFetch(day *time.Time) bool {
+func (o *ORFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	if day == nil {
-		return false
+		return false, fmt.Errorf("invalid day")
 	}
 
 	if o.isMoreThanXDaysInFuture(day, 22) {
-		appLog("Maximum for days in future for ORF is 22!\n")
-		return false
+		return false, fmt.Errorf("maximum for days in future for ORF is 22")
 	}
 
 	if o.isMoreThanXDaysInPast(day, 15) {
-		appLog("Maximum for days in past for ORF is 15!\n")
-		return false
+		return false, fmt.Errorf("maximum for days in past for ORF is 15")
 	}
-	return true
+	return true, nil
 }
 
 // helper method to get a collector instance

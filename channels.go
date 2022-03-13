@@ -275,15 +275,6 @@ func getOrfChannels() *[]Channel {
 		},
 		{
 			ManagedRecord: ManagedRecord{
-				Title:       "ORF 2 Europe",
-				URL:         "",
-				Hash:        "orf2",
-				TechnicalID: "orf2",
-				Homepage:    "http://tv.orf.at/program/orf2",
-			},
-		},
-		{
-			ManagedRecord: ManagedRecord{
 				Title:       "ORF III",
 				URL:         "",
 				Hash:        "orf3",

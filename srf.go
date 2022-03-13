@@ -53,7 +53,7 @@ func (s *SRFParser) preProcess() bool {
 }
 
 // fetchTvShowSRF: This method checks all the tv shows
-func (s *SRFParser) fetchTvShows() {
+func (s *SRFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
 		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
 		return
@@ -95,7 +95,7 @@ func (s *SRFParser) fetchTvShows() {
 
 	err := c.Visit("https://www.srf.ch/play/tv/sendungen")
 	if err != nil {
-		appLog(fmt.Sprintf("Problem fetching URL 'https://www.srf.ch/play/tv/sendungen' %v.\n", err))
+		appLog(fmt.Sprintf("Problem fetching URL 'https://www.srf.ch/play/tv/sendungen' %v.", err))
 	}
 	c.Wait()
 }
@@ -285,26 +285,24 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 
 	err := c.Visit(queryURL)
 	if err != nil {
-		appLog(fmt.Sprintf("Error of collector: %v\n", err))
+		appLog(fmt.Sprintf("Error of collector: %v", err))
 	}
 	c.Wait()
 }
 
-func (s *SRFParser) isDateValidToFetch(day *time.Time) bool {
+func (s *SRFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	if day == nil {
-		return false
+		return false, fmt.Errorf("invalid day")
 	}
 
 	if s.isMoreThanXDaysInFuture(day, 30) {
-		appLog("Maximum for days in future for SRF is 30!\n")
-		return false
+		return false, fmt.Errorf("maximum for days in future for SRF is 30")
 	}
 
 	if s.isMoreThanXDaysInPast(day, 15) {
-		appLog("Maximum for days in past for SRF is 15!\n")
-		return false
+		return false, fmt.Errorf("maximum for days in past for SRF is 15")
 	}
-	return true
+	return true, nil
 }
 
 // getDateFromStringSrf: Extract a date object of a given string format of the page

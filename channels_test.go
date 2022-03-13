@@ -33,7 +33,55 @@ func TestGetChannels(t *testing.T) {
 		t.Fatalf("Invalid amount of srf channels: %d", len(*srfChannels))
 	}
 	orfChannels := getOrfChannels()
-	if len(*orfChannels) != 5 {
+	if len(*orfChannels) != 4 {
 		t.Fatalf("Invalid amount of orf channels: %d", len(*orfChannels))
+	}
+}
+
+func TestGetChannelFamily(t *testing.T) {
+	setupInMemoryDbForTesting()
+	handleChannelsSetup()
+	if getDb() == nil {
+		t.Fatalf("nil db")
+	}
+	families := []string{
+		"ARD", "ZDF", "ORF", "SRF",
+	}
+
+	for _, family := range families {
+		dbFamily := getChannelFamily(getDb(), family)
+		if dbFamily == nil {
+			t.Fatalf("channel family cannot be found")
+		}
+	}
+}
+
+func TestGetChannelsOfFamily(t *testing.T) {
+	setupInMemoryDbForTesting()
+	handleChannelsSetup()
+	if getDb() == nil {
+		t.Fatalf("nil db")
+	}
+	ardFamily := getChannelFamily(getDb(), "ARD")
+	zdfFamily := getChannelFamily(getDb(), "ZDF")
+	orfFamily := getChannelFamily(getDb(), "ORF")
+	srfFamily := getChannelFamily(getDb(), "SRF")
+
+	ardChannels := getChannelsOfFamily(getDb(), ardFamily)
+	zdfChannels := getChannelsOfFamily(getDb(), zdfFamily)
+	orfChannels := getChannelsOfFamily(getDb(), orfFamily)
+	srfChannels := getChannelsOfFamily(getDb(), srfFamily)
+
+	if len(ardChannels) != len(*getArdChannels()) {
+		t.Fatalf("invalid number of ard channels")
+	}
+	if len(zdfChannels) != len(*getZdfChannels()) {
+		t.Fatalf("invalid number of zdf channels")
+	}
+	if len(orfChannels) != len(*getOrfChannels()) {
+		t.Fatalf("invalid number of orf channels")
+	}
+	if len(srfChannels) != len(*getSrfChannels()) {
+		t.Fatalf("invalid number of srf channels")
 	}
 }
