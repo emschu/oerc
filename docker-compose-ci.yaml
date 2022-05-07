@@ -19,7 +19,7 @@ version: "3"
 
 services:
   db:
-    image: postgres:12.3
+    image: postgres:13.5-alpine
     container_name: oerc-db
     environment:
       POSTGRES_PASSWORD: root

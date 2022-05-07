@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Affero General Public
 # License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
-FROM golang:1.16-alpine
+FROM golang:1.17-alpine
 
 MAINTAINER emschu <emschu@mailbox.org>
 
@@ -23,7 +23,7 @@ RUN mkdir /app
 ENV TZ=Europe/Berlin
 
 ADD config/.oerc.docker.yaml /app/.oerc.yaml
-ADD bin/oerc-docker /app/oerc
+ADD bin/oerc-release /app/oerc
 RUN apk add --no-cache tzdata; chmod +x /app/oerc
 
 WORKDIR /app
