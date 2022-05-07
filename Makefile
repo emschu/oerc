@@ -63,7 +63,6 @@ frontend: ## build the frontend and the static rice box file
 .PHONY: build
 build: ## build dev version of application
 	$(GO) build -race -o bin/oerc
-	CGO_ENABLED=0 ; GOOS=linux ; $(GO) build -o bin/oerc-release -ldflags "-s -w"
 
 .PHONY: lint
 lint: ## linting the code
@@ -76,7 +75,7 @@ lint-fix: ## lint-fix the code
 
 .PHONY: test
 test: ## run unit, integration and api tests
-	$(GO) test -v -race ./...
+	$(GO) test -v -race -msan ./...
 	$(GO) test -v -trace=/dev/null ./...
 
 .PHONY: integration-test-prepare
@@ -113,6 +112,11 @@ release: clean ## build release packages for multiple platforms
 	GOOS=linux GOARCH=arm GOARM=7 $(GO) build -o bin/linux-armv7/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=386 $(GO) build -o bin/linux-386/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=amd64 $(GO) build -o bin/linux-amd64/oerc -ldflags "-s -w"
+
+.PHONY: release-docker
+release-docker: clean ## build release version of application for containers
+	GO_ENABLED=0 ; GOOS=linux ; $(GO) build -o bin/oerc-docker -ldflags "-s -w"
+
 
 .PHONY: sonarscan
 sonarscan: ## run sonar scanner against local sonarqube

@@ -19,15 +19,12 @@ FROM golang:1.17-alpine
 
 MAINTAINER emschu <emschu@mailbox.org>
 
-RUN mkdir /app
+RUN mkdir /app && apk add --no-cache tzdata;
 ENV TZ=Europe/Berlin
 
-ADD config/.oerc.docker.yaml /app/.oerc.yaml
-ADD bin/oerc-release /app/oerc
-RUN apk add --no-cache tzdata; chmod +x /app/oerc
-
-WORKDIR /app
-
 EXPOSE 8080
-
+WORKDIR /app
+ADD config/.oerc.docker.yaml /app/.oerc.yaml
+ADD bin/oerc-docker /app/oerc
+RUN chmod +x /app/oerc
 ENTRYPOINT ["/app/oerc", "-c", "/app/.oerc.yaml"]

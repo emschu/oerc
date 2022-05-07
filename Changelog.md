@@ -1,5 +1,12 @@
 # Changelog oerc
 
+
+## 0.9.18 - 2022/05/07
+- API field change in StatusResponse: `problem_count` -> `log_count`
+- docker-compose improvements and documentation added
+- Dependency updates for web client
+- Clean up configuration file
+
 ## 0.9.17 - 2022/03/13
 - introduce `fetch-range` subcommand to import all available information
 - More code improvements and more tests

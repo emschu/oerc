@@ -29,16 +29,7 @@ ClientEnabled: true
 # search settings
 SearchDaysInFuture: 5
 SearchKeywords:
-  - Die Anstalt
-  - Max Uthoff
-  - Claus von Wagner
   - Loriot
-  - Zapp
-  - Stromberg
-  - Kroymann
-  - James Bond
-  - Satire
-  - Garten
 SearchSkipChannels:
   - KIKA
   - ORF Sport +
