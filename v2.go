@@ -344,7 +344,7 @@ func getStatusObject() *StatusResponse {
 		ImageLinksCount:     getImageLinksCount(),
 		ProgramEntryCount:   getProgramEntryCount(),
 		TvShowCount:         getTvShowCount(),
-		ProblemCount:        getCount(&LogEntry{}),
+		LogCount:            getCount(&LogEntry{}),
 		RecommendationCount: getCount(&Recommendation{}),
 		Version:             version,
 		ServerDateTime:      time.Now().Format(time.RFC3339),

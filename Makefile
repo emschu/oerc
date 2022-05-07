@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.9.17"
-APP_VERSION_STR = "0-9-17"
+APP_VERSION_DOT = "0.9.18"
+APP_VERSION_STR = "0-9-18"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -55,7 +55,7 @@ setup: ## install required project and (dev) dependencies
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
 
-.PHONY: build-frontend
+.PHONY: frontend
 frontend: ## build the frontend and the static rice box file
 	cd client; npm run build-prod
 	$(GO_RICE) embed-go
@@ -63,12 +63,11 @@ frontend: ## build the frontend and the static rice box file
 .PHONY: build
 build: ## build dev version of application
 	$(GO) build -race -o bin/oerc
-	export CGO_ENABLED=0 ; export GOOS=linux ; $(GO) build -o bin/oerc-docker
 
 .PHONY: lint
 lint: ## linting the code
-	@$(GO) fmt ./...
-	@$(GO_REVIVE) .
+	$(GO) fmt ./...
+	$(GO_REVIVE) .
 
 .PHONY: lint-fix
 lint-fix: ## lint-fix the code
@@ -76,8 +75,8 @@ lint-fix: ## lint-fix the code
 
 .PHONY: test
 test: ## run unit, integration and api tests
-	@$(GO) test -v -race ./...
-	@$(GO) test -v -trace=/dev/null .
+	$(GO) test -v -race ./...
+	$(GO) test -v -trace=/dev/null ./...
 
 .PHONY: integration-test-prepare
 integration-test-prepare: ## start (local) oerc server to run integration tests against

@@ -1,27 +1,29 @@
 # OERC
 
-... is a software project to locally store, view and search the program data of 
+... is a software project to locally store, view and search the program data of
 public-law ("öffentlich-rechtliche") TV stations in Germany, Austria and Switzerland.
 
 `oerc` needs a single PostgreSQL database and some configuration options to get ready.
 
-While `oerc` is a command-line tool only, a built-in web application is provided for you 
+While `oerc` is a command-line tool only, a built-in web application is provided for you
 at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 
 ### Commands
+
 - **Collecting TV program data** of 28 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
 - Running an **HTTP backend server** to access program data in JSON format (`oerc server`)
-- Running a (local) HTTP server to serve a **client web application** in your browser to view the program data and 
-  your personal program recommendations (`oerc server`)
+- By default the server contains a small **client web application** for your browser to view the program data and
+  your personal program recommendations
 
 With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
 
-This project is written in Golang, and it is *AGPL v3* licensed. You are encouraged to participate and improve functionality. 
+This project is written in Golang, and it is *AGPL v3* licensed. You are encouraged to participate and improve
+functionality.
 [Just create a GitHub issue!](https://github.com/emschu/oerc/issues)
 
-The focus of this project lies in providing program data for individuals - ready to be enriched, searched or analysed 
+The focus of this project lies in providing program data for individuals - ready to be enriched, searched or analysed
 as long as there is no (real) Open Data policy of the public-law sector.
 
 At the moment it's not intended to create links between program data and Media(thek) information.
@@ -30,7 +32,7 @@ If you are looking for this have a look at [similar projects](#similar-projects)
 *Note 1:* This server and client software is not ready to be used directly in the internet without further changes.
 It is recommended to use it locally only or in protected environments and don't expose it to the internet.
 
-*Note 2*: Unfortunately the public-law web pages this software needs to access are restricted to certain geographic IP 
+*Note 2*: Unfortunately the public-law web pages this software needs to access are restricted to certain geographic IP
 regions in general.
 
 **Current software quality: Beta**
@@ -38,21 +40,38 @@ regions in general.
 ![oer-collector logo](./docs/logo.png)
 
 ### Web Client
+
 ![oerc web client screenshot](./docs/screenshot_web.png)
 ![oerc web client screenshot with overlaps](./docs/screenshot_web_overlaps.png)
 ![oerc web client screenshot with recommendations](./docs/screenshot_web_recommendations.png)
 
-## Installation
+# Setup & Run
+
+## With docker/docker-compose
+
+Clone this repository, and build the binary file for the container:
+```bash
+$ CGO_ENABLED=0 ; GOOS=linux ; GO111MODULE=on go build -o bin/oerc-release -ldflags "-s -w"
+```
+Then:
+```bash
+$ docker-compose build
+$ docker-compose up
+```
+
+## Manual Installation
 
 1. Get this application
+
 ```shell
 go get -u github.com/emschu/oerc
 ```
 
-2. Set up a PostgreSQL database (12+), configure a database and start it.
-3. Run `oerc init`.
-This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
-   You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`, 
+2. Set up a PostgreSQL database (12+), configure a database with a user and start it.
+    - The development section contains a simple docker command to run a local database for development and
+3. Run `oerc init`.   
+   - This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
+   You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`,
    `<db_user>`, `<db_password>` in the configuration file to reach the database you've configured in the previous step.
 4. Run `oerc fetch` for the first time and wait until the first program data is collected for you.
 5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (the endpoint is configurable).
@@ -68,7 +87,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.9.17, License: AGPLv3, https://github.com/emschu/oerc
+   0.9.18, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -98,12 +117,19 @@ The following preferences are important to understand your possibilities to cont
 You can find this file [here](./config/.oerc_default.dist.yaml) and if you run `oerc init` this file will be created at
 `~/.oerc.yaml` for you. You *must* provide valid postgres database connection details.
 
-If you don't want to put your configuration at the user's home directory, you can also use the 
-`-c <path-to-your-oerc>.yaml` 
+If you don't want to put your configuration at the user's home directory, you can also use the
+`-c <path-to-your-oerc>.yaml`
 argument for all `oerc` commands.
 
-
 ```yaml
+# db settings
+DbType: postgres
+DbHost: localhost
+DbPort: 5432
+DbName: <db_name>
+DbUser: <db_user>
+DbPassword: <db_password>
+DbSSLEnabled: false
 # general fetch settings
 ForceUpdate: false
 # don't update entries which were processed already in the last 6 hours
@@ -126,28 +152,12 @@ ServerHost: 127.0.0.1
 ServerPort: 8080
 # client server settings
 ClientEnabled: true
-# db settings
-DbType: postgres
-DbHost: localhost
-DbPort: 5432
-DbName: <db_name>
-DbUser: <db_user>
-DbPassword: <db_password>
-DbSSLEnabled: false
 # search settings
 # only search for recommendations in the next 4 days
 SearchDaysInFuture: 5
 # these are example values. Feel free to create you own list of keywords :)
 SearchKeywords:
-  - Die Anstalt
-  - Max Uthoff
-  - Claus von Wagner
   - Loriot
-  - Zapp
-  - Stromberg
-  - Kroymann
-  - James Bond
-  - Satire
 # these channels won't be recognized during the "search" for recommendations based on your keywords
 SearchSkipChannels:
   - KIKA
@@ -160,15 +170,17 @@ AccessControlAllowOrigin: "http://127.0.0.1:8080"
 
 After installing `oerc` and setting it up, you should run at least one time the `oerc fetch` command.
 
-It is recommended to update the program data regularly, e.g. daily, by using a (unix) **cron job** which runs `oerc fetch` 
+It is recommended to update the program data regularly, e.g. daily, by using a (unix) **cron job** which
+runs `oerc fetch`
 and `oerc search`.
 
 While it is possible to run `oerc server` in a user session, you should consider to create a systemd
-service to run and control the web server (backend + frontend) in the background persistently. 
+service to run and control the web server (backend + frontend) in the background persistently.
 
 The following systemd service file is a simple example to integrate `oerc` with systemd in a Linux system:
 
 **oerc.service:**
+
 ```
 [Unit]
 Description=oerc service
@@ -184,74 +196,74 @@ KillMode=process
 WantedBy=multi-user.target
 ```
 
-*Note*: You *must* replace `<path_to_oerc_bin>` in with a correct path to the `oerc` binary. If you don't know how to do this
+*Note*: You *must* replace `<path_to_oerc_bin>` in with a correct path to the `oerc` binary. If you don't know how to do
+this
 type `which oerc`.
 
-Copy the modified system service templates to your systemd services directory, e.g. `/etc/systemd/system` and reload the systemd daemon by executing
+Copy the modified system service templates to your systemd services directory, e.g. `/etc/systemd/system` and reload the
+systemd daemon by executing
 
-`$ sudo systemctl daemon-reload`. 
+`$ sudo systemctl daemon-reload`.
 
-After the last command you can use 
+After the last command you can use
 
-`$ sudo systemctl [start|stop] oerc` 
+`$ sudo systemctl [start|stop] oerc`
 
-to start (or stop) the services. 
+to start (or stop) the services.
 
-If you want to get the servers up after system (re-)boot, you need to execute 
+If you want to get the servers up after system (re-)boot, you need to execute
 
 `$ sudo systemctl [enable|disable] oerc`.
 
-If you do so (enabling both services by default), please keep in mind that the PostgreSQL database needs 
+If you do so (enabling both services by default), please keep in mind that the PostgreSQL database needs
 to be available, too, so use systemctl to enable the postgres service as well.
-
-### Containerized run
-Will be added in future releases.
-
 
 ### Channel list
 
 Note: The first column does not necessarily have to correspond to the channel id in the database.
 
-| No. | Channel    | Version |
-| --- | --------------| ---- |
-|1| ARD               |   v2 |
-|2| ZDF               |   v2 |
-|3| 3Sat              |   v2 |
-|4| ARTE              |   v2 |
-|5| ZDFInfo           |   v2 |
-|6| ZDFNeo            |   v2 |
-|7| Phoenix           |   v2 |
-|8| KiKa              |   v2 |
-|9| ARD One           |   v2 |
-|10| Tagesschau24     |   v2 |
-|11| ARD Alpha        |   v2 |
-|12| SWR RP Fernsehen |   v2 |
-|13| WDR Fernsehen	  |   v2 |
-|14| SWR BW Fernsehen |   v2 |
-|15| SR Fernsehen     |   v2 |
-|16| Radio Bremen TV  |   v2 |
-|17| RBB Fernsehen    |   v2 |
-|18| NDR Fernsehen 	  |   v2 |
-|19| MDR Fernsehen	  |   v2 |
-|20| HR Fernsehen     |   v2 |
-|21| BR Fernsehen     |   v2 |
-|22| ORF eins         |   v2 |
-|23| ORF 2            |   v2 |
-|24| ORF III          |   v2 |
-|25| ORF Sport +      |   v2 |
-|26| SRF-1            |   v2 |
-|27| SRF-zwei         |   v2 |
-|28| SRF-info         |   v2 |
+| No. | Channel          | Version |
+|-----|------------------|---------|
+| 1   | ARD              | v2      |
+| 2   | ZDF              | v2      |
+| 3   | 3Sat             | v2      |
+| 4   | ARTE             | v2      |
+| 5   | ZDFInfo          | v2      |
+| 6   | ZDFNeo           | v2      |
+| 7   | Phoenix          | v2      |
+| 8   | KiKa             | v2      |
+| 9   | ARD One          | v2      |
+| 10  | Tagesschau24     | v2      |
+| 11  | ARD Alpha        | v2      |
+| 12  | SWR RP Fernsehen | v2      |
+| 13  | WDR Fernsehen    | v2      |
+| 14  | SWR BW Fernsehen | v2      |
+| 15  | SR Fernsehen     | v2      |
+| 16  | Radio Bremen TV  | v2      |
+| 17  | RBB Fernsehen    | v2      |
+| 18  | NDR Fernsehen    | v2      |
+| 19  | MDR Fernsehen    | v2      |
+| 20  | HR Fernsehen     | v2      |
+| 21  | BR Fernsehen     | v2      |
+| 22  | ORF eins         | v2      |
+| 23  | ORF 2            | v2      |
+| 24  | ORF III          | v2      |
+| 25  | ORF Sport +      | v2      |
+| 26  | SRF-1            | v2      |
+| 27  | SRF-zwei         | v2      |
+| 28  | SRF-info         | v2      |
 
-### Data import limits
+### Time range import limits
 
-| Channel family | Earliest date       | Latest date     |
-| ---------------| ------------------- | --------------- |
-| ARD/ZDF        | ~ 2011              | Today + 6 weeks |
-| ORF            | Today - 14 days     | Today + 22 days |
-| SRF            | Today - 14 days     | Today + 29 days |
+| Channel family | Earliest date   | Latest date     |
+|----------------|-----------------| --------------- |
+| ARD            | ~ 2010/01       | Today + 6 weeks |
+| ZDF            | 2015/03         | Today + 6 weeks |
+| ORF            | Today - 14 days | Today + 22 days |
+| SRF            | Today - 14 days | Today + 29 days |
 
 ## Project guidelines
+
 - This project is non-commercial.
 - Private/commercial sector TV or radio stations will *never* be part of this project.
 - This project shall be an instrument mainly to analyze the program and constructively
@@ -262,15 +274,18 @@ Note: The first column does not necessarily have to correspond to the channel id
 - All parts of the software should work on "low-resource" platforms, e.g. a Raspberry Pi 3b+
 
 <a name="similar-projects"></a>
+
 ### Similar projects:
+
 - [mediathekview/zapp-backend](https://github.com/mediathekview/zapp-backend)
 - [MediathekView(Web)-Project](https://github.com/mediathekview)
 - [MediathekDirekt](https://mediathekdirekt.de/) + [Sources](https://gitlab.com/mediathekdirekt/mediathekdirekt)
 
 ### OpenApi 3 specification
+
 If you run the (backend) server (just run `oerc server`) an OpenApi 3 specification is shipped at
-`http://localhost:8080/spec/openapi3.json`, respectively `/spec/openapi3.yaml`. Or - alternatively - have a look at the 
-spec  files in [this directory](./docs).
+`http://localhost:8080/spec/openapi3.json`, respectively `/spec/openapi3.yaml`. Or - alternatively - have a look at the
+spec files in [this directory](./docs).
 
 Please notify the maintainer of this project if you build something around the JSON HTTP API oerc
 offers (for the mail address see below in `License` section).
@@ -300,30 +315,33 @@ If not, see <https://www.gnu.org/licenses/>.
 
 ### Used libraries
 
-- [Urfave/cli v2](https://github.com/urfave/cli/) – CLI is a simple, fast, and fun package for building command line apps in Go.
+- [Urfave/cli v2](https://github.com/urfave/cli/) – CLI is a simple, fast, and fun package for building command line
+  apps in Go.
 - [Gorm](https://gorm.io/) – The fantastic ORM library for Golang
 - [Colly](http://go-colly.org/) – Fast and Elegant Scraping Framework for Gophers
 - [Gin](https://github.com/gin-gonic/gin) – Gin is a HTTP web framework
 - [Bluemonday](https://github.com/microcosm-cc/bluemonday) – A fast golang HTML sanitizer
 
 ## Development
-This project is shipped with a `Makefile` to ease the development and testing process. 
-At first you should run `make setup` and you need the usual Golang/Python/Node/Java toolchains. 
+
+This project is shipped with a `Makefile` to ease the development and testing process.
+At first you should run `make setup` and you need the usual Golang/Python/Node/Java toolchains.
 Be sure to run `make build` and `make spec` (if you updated something there) before filing a pull request.
 
 ### Database
-#### Development postgres container
-```console
-# docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:12.3
 
-// test connection with
-$ psql -U postgres -h 127.0.0.1 -W 
+#### Development postgresql container
+
+```console
+# docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:13.5-alpine 
 ```
 
 ### Contributing
+
 - File issues on GitHub to request and discuss new features or bugs there.
 - You need a new feature/improvement? -> File an issue.
 - Contribute code through pull requests or submit patch files.
 
 ## More information
+
 - [German] [Die Vermessung des TV-Programms auf datenjournalist.de](https://www.datenjournalist.de/die-vermessung-des-tv-programms/)

@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '*'
 
 jobs:
   oerc-integration:
@@ -38,7 +40,6 @@ jobs:
       - name: Build oerc and startup server
         run: |
           make setup
-          make build
           docker-compose -f docker-compose-ci.yaml up -d --build
 
       - name: Run Schemathesis

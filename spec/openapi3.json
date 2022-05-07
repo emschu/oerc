@@ -783,7 +783,7 @@
             "format" : "int64",
             "type" : "integer"
           },
-          "problem_count" : {
+          "log_count" : {
             "format" : "int64",
             "type" : "integer"
           },

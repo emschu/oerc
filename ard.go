@@ -286,8 +286,8 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		desc = element.DOM.Find(".bcData a").Each(func(i int, s *goquery.Selection) {
 			text := trimAndSanitizeString(s.Text())
 			if strings.Contains(text, "Sendungsseite im Internet") {
-				attr, e := s.Attr("href")
-				if e {
+				attr, hrefAttrExists := s.Attr("href")
+				if hrefAttrExists {
 					u, err := url2.ParseRequestURI(attr)
 					if err != nil {
 						appLog("Invalid url of program entry's homepage found!")
@@ -420,7 +420,7 @@ func (a *ARDParser) isDateValidToFetch(day *time.Time) (bool, error) {
 		return false, fmt.Errorf("maximum for days in future for ARD is 43")
 	}
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, location)
+	earliestDate := time.Date(2010, 1, 1, 0, 0, 0, 0, location)
 	if day.Before(earliestDate) {
 		return false, fmt.Errorf("maximum for days in past for ARD is %s", earliestDate.Format(time.RFC822))
 	}

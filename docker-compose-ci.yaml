@@ -19,11 +19,11 @@ version: "3"
 
 services:
   db:
-    image: postgres:12.3
+    image: postgres:13.5-alpine
     container_name: oerc-db
     environment:
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: oer_server_dev
+      POSTGRES_DB: oer_server
       TZ: Europe/Berlin
       PGTZ: Europe/Berlin
     restart: unless-stopped

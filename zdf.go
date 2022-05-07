@@ -382,7 +382,7 @@ func (z *ZDFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 		return false, fmt.Errorf("maximum for days in future for ZDF is 43")
 	}
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-	earliestDate := time.Date(2011, 1, 1, 0, 0, 0, 0, location)
+	earliestDate := time.Date(2015, 2, 1, 0, 0, 0, 0, location)
 	if day.Before(earliestDate) {
 		return false, fmt.Errorf("maximum for days in past for ZDF is %s", earliestDate.Format(time.RFC822))
 	}

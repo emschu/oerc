@@ -496,7 +496,7 @@ components:
         image_links_count:
           type: integer
           format: int64
-        problem_count:
+        log_count:
           type: integer
           format: int64
         recommendation_count:
