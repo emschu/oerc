@@ -2,7 +2,7 @@
 DbType: postgres
 DbHost: db
 DbPort: 5432
-DbName: oer_server_dev
+DbName: oer_server
 DbUser: postgres
 DbPassword: root
 DbSSLEnabled: false

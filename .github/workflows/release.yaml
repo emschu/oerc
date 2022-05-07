@@ -1,7 +1,6 @@
 name: OERC - Release
 
 on:
-  pull_request:
   push:
     tags:
       - '*'
