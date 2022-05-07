@@ -1,0 +1,54 @@
+name: OERC - Release
+
+on:
+  pull_request:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        linux_platform: [ 386, amd64, arm, arm64, armv7 ]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build Artifacts
+        run: make release
+      - name: Build Changelog
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{steps.github_release.outputs.changelog}}
+          draft: false
+          prerelease: false
+      - name: upload windows artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/windows/oerc.exe
+          asset_name: oerc-${{ github.ref }}.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+      - name: upload linux artifacts
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/linux-${{ matrix.linux_platform }}/oerc
+          asset_name: oerc-${{ matrix.linux_platform }}-${{ github.ref }}
+          asset_content_type: application/octet-stream
