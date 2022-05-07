@@ -1,3 +1,11 @@
+# db settings
+DbType: postgres
+DbHost: db
+DbPort: 5432
+DbName: oer_server_dev
+DbUser: postgres
+DbPassword: root
+DbSSLEnabled: false
 # general fetch settings
 Debug: false
 ProfilingEnabled: false
@@ -18,14 +26,6 @@ ServerHost: 0.0.0.0
 ServerPort: 8080
 # client server settings
 ClientEnabled: true
-# db settings
-DbType: postgres
-DbHost: db
-DbPort: 5432
-DbName: oer_server_dev
-DbUser: postgres
-DbPassword: root
-DbSSLEnabled: false
 # search settings
 SearchDaysInFuture: 5
 SearchKeywords:

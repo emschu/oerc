@@ -1,5 +1,13 @@
 # oerc configuration file
+# db settings
 # you should at least change all configuration options containing "<" and ">"
+DbType: postgres
+DbHost: localhost
+DbPort: 5432
+DbName: <db_name>
+DbUser: <db_user>
+DbPassword: <db_password>
+DbSSLEnabled: false
 ForceUpdate: false
 TimeToRefreshInMinutes: 360
 DaysInPast: 2
@@ -17,21 +25,11 @@ ServerHost: 127.0.0.1
 ServerPort: 8080
 # client server settings
 ClientEnabled: true
-# db settings
-DbType: postgres
-DbHost: localhost
-DbPort: 5432
-DbName: <db_name>
-DbUser: <db_user>
-DbPassword: <db_password>
-DbSSLEnabled: false
 # search settings
 SearchDaysInFuture: 5
 # feel free to compose the following list of keywords as you want. They are used case-insensitive.
 SearchKeywords:
-  - Die Anstalt
   - Loriot
-  - Satire
 SearchSkipChannels:
   - KIKA
   - ORF Sport +
