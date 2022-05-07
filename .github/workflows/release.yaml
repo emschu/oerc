@@ -38,7 +38,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/windows/oerc.exe
-          asset_name: oerc-${{ github.ref_name }}.exe
+          asset_name: oerc.exe
           asset_content_type: application/vnd.microsoft.portable-executable
 
       - name: upload linux artifacts amd64
@@ -48,7 +48,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/linux-amd64/oerc
-          asset_name: oerc-${{ github.ref_name }}-amd64
+          asset_name: oerc-amd64
           asset_content_type: application/octet-stream
 
       - name: upload linux artifacts 386
@@ -58,7 +58,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/linux-386/oerc
-          asset_name: oerc-${{ github.ref_name }}-386
+          asset_name: oerc-386
           asset_content_type: application/octet-stream
 
       - name: upload linux artifacts arm
@@ -68,7 +68,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/linux-arm/oerc
-          asset_name: oerc-${{ github.ref_name }}-arm
+          asset_name: oerc-arm
           asset_content_type: application/octet-stream
 
       - name: upload linux artifacts arm64
@@ -78,7 +78,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/linux-arm64/oerc
-          asset_name: oerc-${{ github.ref_name }}-arm64
+          asset_name: oerc-arm64
           asset_content_type: application/octet-stream
 
       - name: upload linux artifacts armv7
@@ -88,5 +88,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/linux-armv7/oerc
-          asset_name: oerc-${{ github.ref_name }}-armv7
+          asset_name: oerc-armv7
           asset_content_type: application/octet-stream
