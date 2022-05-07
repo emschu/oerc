@@ -58,7 +58,7 @@ type StatusResponse struct {
 	ProgramEntryCount   uint64           `json:"program_entry_count"`
 	TvShowCount         uint64           `json:"tv_show_count"`
 	ImageLinksCount     uint64           `json:"image_links_count"`
-	ProblemCount        uint64           `json:"problem_count"`
+	LogCount            uint64           `json:"log_count"`
 	RecommendationCount uint64           `json:"recommendation_count"`
 	Version             string           `json:"version"`
 	ServerDateTime      string           `json:"server_date_time"`

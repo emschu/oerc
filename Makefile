@@ -67,8 +67,8 @@ build: ## build dev version of application
 
 .PHONY: lint
 lint: ## linting the code
-	@$(GO) fmt ./...
-	@$(GO_REVIVE) .
+	$(GO) fmt ./...
+	$(GO_REVIVE) .
 
 .PHONY: lint-fix
 lint-fix: ## lint-fix the code
@@ -76,8 +76,8 @@ lint-fix: ## lint-fix the code
 
 .PHONY: test
 test: ## run unit, integration and api tests
-	@$(GO) test -v -race ./...
-	@$(GO) test -v -trace=/dev/null .
+	$(GO) test -v -race ./...
+	$(GO) test -v -trace=/dev/null ./...
 
 .PHONY: integration-test-prepare
 integration-test-prepare: ## start (local) oerc server to run integration tests against

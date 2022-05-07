@@ -496,7 +496,7 @@ components:
         image_links_count:
           type: integer
           format: int64
-        problem_count:
+        log_count:
           type: integer
           format: int64
         recommendation_count:
@@ -697,7 +697,7 @@ components:
         page:
           type: integer
           format: int64
-        page_count:
+        log_count:
           type: integer
           format: int64
         entry_count:
