@@ -90,7 +90,9 @@ func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
 
 	overlapIDs := storeOverlaps(db, collisionMap)
 
-	log.Printf("Processing %d program entry collisions of channel '%s' on day '%s'.\n", len(overlapIDs), channel.Title, day.Format("2006-01-02"))
+	if isDebug() {
+		log.Printf("Processing %d program entry collisions of channel '%s' on day '%s'.\n", len(overlapIDs), channel.Title, day.Format("2006-01-02"))
+	}
 
 	for _, programEntryID := range overlapIDs {
 		processOverlaps(db, &programEntryID)

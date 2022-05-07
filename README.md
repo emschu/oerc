@@ -13,8 +13,8 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 - **Collecting TV program data** of 28 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
 - Running an **HTTP backend server** to access program data in JSON format (`oerc server`)
-- Running a (local) HTTP server to serve a **client web application** in your browser to view the program data and
-  your personal program recommendations (`oerc server`)
+- By default the server contains a small **client web application** for your browser to view the program data and
+  your personal program recommendations
 
 With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
@@ -45,7 +45,21 @@ regions in general.
 ![oerc web client screenshot with overlaps](./docs/screenshot_web_overlaps.png)
 ![oerc web client screenshot with recommendations](./docs/screenshot_web_recommendations.png)
 
-## Installation
+# Setup & Run
+
+## With docker/docker-compose
+
+Clone this repository, and build the binary file for the container:
+```bash
+$ CGO_ENABLED=0 ; GOOS=linux ; GO111MODULE=on go build -o bin/oerc-release -ldflags "-s -w"
+```
+Then:
+```bash
+$ docker-compose build
+$ docker-compose up
+```
+
+## Manual Installation
 
 1. Get this application
 
@@ -53,9 +67,10 @@ regions in general.
 go get -u github.com/emschu/oerc
 ```
 
-2. Set up a PostgreSQL database (12+), configure a database and start it.
-3. Run `oerc init`.
-   This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
+2. Set up a PostgreSQL database (12+), configure a database with a user and start it.
+    - The development section contains a simple docker command to run a local database for development and
+3. Run `oerc init`.   
+   - This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
    You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`,
    `<db_user>`, `<db_password>` in the configuration file to reach the database you've configured in the previous step.
 4. Run `oerc fetch` for the first time and wait until the first program data is collected for you.
@@ -107,6 +122,14 @@ If you don't want to put your configuration at the user's home directory, you ca
 argument for all `oerc` commands.
 
 ```yaml
+# db settings
+DbType: postgres
+DbHost: localhost
+DbPort: 5432
+DbName: <db_name>
+DbUser: <db_user>
+DbPassword: <db_password>
+DbSSLEnabled: false
 # general fetch settings
 ForceUpdate: false
 # don't update entries which were processed already in the last 6 hours
@@ -129,28 +152,12 @@ ServerHost: 127.0.0.1
 ServerPort: 8080
 # client server settings
 ClientEnabled: true
-# db settings
-DbType: postgres
-DbHost: localhost
-DbPort: 5432
-DbName: <db_name>
-DbUser: <db_user>
-DbPassword: <db_password>
-DbSSLEnabled: false
 # search settings
 # only search for recommendations in the next 4 days
 SearchDaysInFuture: 5
 # these are example values. Feel free to create you own list of keywords :)
 SearchKeywords:
-  - Die Anstalt
-  - Max Uthoff
-  - Claus von Wagner
   - Loriot
-  - Zapp
-  - Stromberg
-  - Kroymann
-  - James Bond
-  - Satire
 # these channels won't be recognized during the "search" for recommendations based on your keywords
 SearchSkipChannels:
   - KIKA
@@ -210,10 +217,6 @@ If you want to get the servers up after system (re-)boot, you need to execute
 
 If you do so (enabling both services by default), please keep in mind that the PostgreSQL database needs
 to be available, too, so use systemctl to enable the postgres service as well.
-
-### Containerized run
-
-Will be added in future releases.
 
 ### Channel list
 
@@ -327,13 +330,10 @@ Be sure to run `make build` and `make spec` (if you updated something there) bef
 
 ### Database
 
-#### Development postgres container
+#### Development postgresql container
 
 ```console
-# docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:12.3
-
-// test connection with
-$ psql -U postgres -h 127.0.0.1 -W 
+# docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:13.5-alpine 
 ```
 
 ### Contributing

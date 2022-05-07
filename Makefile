@@ -55,7 +55,7 @@ setup: ## install required project and (dev) dependencies
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
 
-.PHONY: build-frontend
+.PHONY: frontend
 frontend: ## build the frontend and the static rice box file
 	cd client; npm run build-prod
 	$(GO_RICE) embed-go
@@ -63,7 +63,7 @@ frontend: ## build the frontend and the static rice box file
 .PHONY: build
 build: ## build dev version of application
 	$(GO) build -race -o bin/oerc
-	export CGO_ENABLED=0 ; export GOOS=linux ; $(GO) build -o bin/oerc-docker
+	CGO_ENABLED=0 ; GOOS=linux ; $(GO) build -o bin/oerc-release -ldflags "-s -w"
 
 .PHONY: lint
 lint: ## linting the code
