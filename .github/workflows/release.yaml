@@ -10,9 +10,6 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        linux_platform: [ 386, amd64, arm, arm64, armv7 ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -34,6 +31,7 @@ jobs:
           body: ${{steps.github_release.outputs.changelog}}
           draft: false
           prerelease: false
+
       - name: upload windows artifact
         uses: actions/upload-release-asset@v1
         env:
@@ -43,12 +41,53 @@ jobs:
           asset_path: ./bin/windows/oerc.exe
           asset_name: oerc-${{ github.ref }}.exe
           asset_content_type: application/vnd.microsoft.portable-executable
-      - name: upload linux artifacts
+
+      - name: upload linux artifacts amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/linux-${{ matrix.linux_platform }}/oerc
-          asset_name: oerc-${{ matrix.linux_platform }}-${{ github.ref }}
+          asset_path: ./bin/linux-amd64/oerc
+          asset_name: oerc-amd64-${{ github.ref }}
+          asset_content_type: application/octet-stream
+
+      - name: upload linux artifacts 386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/linux-386/oerc
+          asset_name: oerc-386-${{ github.ref }}
+          asset_content_type: application/octet-stream
+
+      - name: upload linux artifacts arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/linux-arm/oerc
+          asset_name: oerc-arm-${{ github.ref }}
+          asset_content_type: application/octet-stream
+
+      - name: upload linux artifacts arm64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/linux-arm64/oerc
+          asset_name: oerc-arm64-${{ github.ref }}
+          asset_content_type: application/octet-stream
+
+      - name: upload linux artifacts armv7
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/linux-armv7/oerc
+          asset_name: oerc-armv7-${{ github.ref }}
           asset_content_type: application/octet-stream

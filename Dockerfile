@@ -15,16 +15,26 @@
 # You should have received a copy of the GNU Affero General Public
 # License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
+
+# Build
+FROM golang:1.17-alpine as build
+RUN mkdir /app
+WORKDIR /app
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download && mkdir /app/project
+COPY . ./project
+RUN cd ./project && go build -o /app/oerc
+
+
 FROM golang:1.17-alpine
-
 MAINTAINER emschu <emschu@mailbox.org>
-
 RUN mkdir /app && apk add --no-cache tzdata;
+WORKDIR /app
 ENV TZ=Europe/Berlin
 
-EXPOSE 8080
-WORKDIR /app
-ADD config/.oerc.docker.yaml /app/.oerc.yaml
-ADD bin/oerc-docker /app/oerc
+COPY --from=build /app/oerc /app/oerc
 RUN chmod +x /app/oerc
+EXPOSE 8080
+ADD config/.oerc.docker.yaml /app/.oerc.yaml
 ENTRYPOINT ["/app/oerc", "-c", "/app/.oerc.yaml"]

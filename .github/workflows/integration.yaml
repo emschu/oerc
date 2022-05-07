@@ -38,7 +38,6 @@ jobs:
       - name: Build oerc and startup server
         run: |
           make setup
-          make release-docker
           docker-compose -f docker-compose-ci.yaml up -d --build
 
       - name: Run Schemathesis

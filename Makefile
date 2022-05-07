@@ -113,11 +113,6 @@ release: clean ## build release packages for multiple platforms
 	GOOS=linux GOARCH=386 $(GO) build -o bin/linux-386/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=amd64 $(GO) build -o bin/linux-amd64/oerc -ldflags "-s -w"
 
-.PHONY: release-docker
-release-docker: clean ## build release version of application for containers
-	GO_ENABLED=0 ; GOOS=linux ; $(GO) build -o bin/oerc-docker -ldflags "-s -w"
-
-
 .PHONY: sonarscan
 sonarscan: ## run sonar scanner against local sonarqube
 	read -p "Enter SONAR_HOST_URL: " SONAR_HOST_URL && read -p "Enter SONAR_LOGIN: " SONAR_LOGIN && \
