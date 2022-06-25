@@ -232,6 +232,11 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 			return
 		}
 
+		if icalContent.startDate.IsZero() || icalContent.endDate.IsZero() || icalContent.is1970Date() {
+			appLog(fmt.Sprintf("Problem with zero date from icallLink '%s'", icalLink))
+			return
+		}
+
 		programEntry.StartDateTime = &icalContent.startDate
 		programEntry.EndDateTime = &icalContent.endDate
 		programEntry.DurationMinutes = int16(icalContent.endDate.Sub(icalContent.startDate).Minutes())
@@ -316,7 +321,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 // method to fetch all tv show data
 func (a *ARDParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
-		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
+		logRecentFetch("Skip update of ard tv shows")
 		return
 	}
 	// Create a Collector specifically for Shopify
@@ -368,6 +373,28 @@ func (a *ARDParser) fetchTVShows() {
 	}
 	collector.Wait()
 	// TODO add tv show post processing: image links + tags + related program entries
+}
+
+// getTimeOfNextUpdate this function returns the next date time a fetch will take place considering the refresh interval of the configuration
+func getTimeOfNextUpdate() time.Time {
+	now := time.Now()
+	if !isRecentlyFetched() || GetAppConf().ForceUpdate {
+		return now
+	}
+	// it is recently fetched, return last update + refresh interval
+	set := getSetting(settingKeyLastFetch)
+	if set != nil && set.ID != 0 && len(set.Value) > 0 {
+		lastUpdateTime, err := time.Parse(time.RFC3339, set.Value)
+		if err != nil {
+			log.Printf("Could not parse '%s' as date", set.Value)
+			return now
+		}
+		location, _ := time.LoadLocation(GetAppConf().TimeZone)
+		lastUpdateTime = lastUpdateTime.In(location)
+
+		return lastUpdateTime.Add(time.Duration(GetAppConf().TimeToRefreshInMinutes) * time.Minute)
+	}
+	return now
 }
 
 // helper method to get a collector instance
@@ -460,7 +487,7 @@ func (a *ARDParser) linkTagsToEntriesDaily(day time.Time) {
 // method to link tags to program entries
 func (a *ARDParser) linkTagsToEntriesGeneral() {
 	if isRecentlyFetched() {
-		log.Printf("Skip update of ard program entry tag search, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
+		logRecentFetch("Skip update of ard program entry tag search")
 		return
 	}
 
@@ -581,4 +608,18 @@ func (a *ARDParser) parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalCon
 		return nil, errors.New("Empty dates detected in ical content. Probably a parser error")
 	}
 	return &content, nil
+}
+
+// is1970Date: method to check if there is a 1970 (begin unix time) time object
+func (i *ICalContent) is1970Date() bool {
+	if i.startDate.IsZero() || i.endDate.IsZero() {
+		return false
+	}
+	if i.startDate.Year() == 1970 && i.startDate.Month() == 1 && i.startDate.Day() == 1 {
+		return true
+	}
+	if i.endDate.Year() == 1970 && i.endDate.Month() == 1 && i.endDate.Day() == 1 {
+		return true
+	}
+	return false
 }

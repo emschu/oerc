@@ -37,6 +37,8 @@ func setupPersistence() {
 		} else {
 			log.Printf("Warning: No DbName is configured!\n")
 		}
+		// set search path to the selected schema
+		db.Exec(fmt.Sprintf("SET search_path TO %s;", GetAppConf().DbSchema))
 	} else {
 		log.Printf("Warning: No TimeZone is configured!\n")
 	}

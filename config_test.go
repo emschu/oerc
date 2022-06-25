@@ -38,6 +38,10 @@ func TestAppConfig(t *testing.T) {
 		t.Fatalf("Config not yet allowed to be valid!")
 	}
 	config.ServerPort = 8000
+	if config.verifyConfiguration() {
+		t.Fatalf("Config not yet allowed to be valid!")
+	}
+	config.DbSchema = "public"
 	if !config.verifyConfiguration() {
 		t.Fatalf("Config should be valid!")
 	}

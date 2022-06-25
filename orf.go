@@ -58,7 +58,7 @@ func (o *ORFParser) preProcess() bool {
 // fetchTvShow: This method checks all the tv shows
 func (o *ORFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
-		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
+		logRecentFetch("Skip update of orf tv shows")
 		return
 	}
 

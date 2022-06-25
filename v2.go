@@ -315,7 +315,7 @@ func getStatusObject() *StatusResponse {
 	db.Model(&ProgramEntry{}).Count(&peCount)
 
 	if peCount > 0 {
-		errMin := db.Raw("SELECT MIN(start_date_time) from program_entries LIMIT 1").Row().Scan(&firstEntry)
+		errMin := db.Raw("SELECT MIN(start_date_time) from program_entries WHERE start_date_time != '1970-01-01 00:00:00'").Row().Scan(&firstEntry)
 		if errMin != nil {
 			log.Fatal("error querying database for MIN(start_date_time)")
 		}

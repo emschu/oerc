@@ -28,6 +28,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 	"io"
 	"io/ioutil"
 	"log"
@@ -99,6 +100,10 @@ func getDb() *gorm.DB {
 				Logger:                 gormLogger,
 				PrepareStmt:            true,
 				FullSaveAssociations:   true,
+				NamingStrategy: schema.NamingStrategy{
+					TablePrefix:   fmt.Sprintf("%s.", conf.DbSchema),
+					SingularTable: false,
+				},
 			})
 			if err != nil {
 				log.Printf("Error connecting to the database. Is it running and configured correctly?\n")
@@ -275,7 +280,6 @@ func generateDateRangeInPastAndFuture(daysInPast, daysInFuture uint) *[]time.Tim
 
 // generateDateRangeBetweenDates: get a slice of dates between a and b
 func generateDateRangeBetweenDates(startDate time.Time, endDate time.Time) *[]time.Time {
-
 	daysBetween := endDate.Sub(startDate).Hours() / 24
 	if daysBetween == 0 {
 		return &[]time.Time{

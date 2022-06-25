@@ -20,13 +20,14 @@
   <div class="column col-12">
     <div class="card">
       <div class="card-body">
-        <h3>Log entries <span *ngIf="logEntries && logEntries.size > 0">({{ logEntries.size }} results)</span></h3>
+        <h3>Log entries <span *ngIf="logEntries && logEntries.size > 0">(Last {{ logEntries.size }} results)</span></h3>
       </div>
     </div>
   </div>
 </div>
-<div class="columns">
-  <div class="column col-12">
+<div class="columns flex-centered">
+  <div class="column col-10">
+
     <div *ngIf="!logEntries || logEntries.size === 0" class="text-center m-2">
       <h3>No log entries available</h3>
     </div>
