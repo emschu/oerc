@@ -1,5 +1,8 @@
 # Changelog oerc
 
+## 0.10.1 - 2022/06/25
+- Add `DbSchema` configuration property tu support arbitrary postgres schema
+- Web-Client: Minor improvements
 
 ## 0.9.18 - 2022/05/07
 - API field change in StatusResponse: `problem_count` -> `log_count`
