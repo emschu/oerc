@@ -26,6 +26,7 @@ import {environment} from '../../environments/environment';
 export class MomentDatePipe implements PipeTransform {
 
   public readonly FULL_DATE_TIME_HUMAN = 'D.MM.YYYY - HH:mm:ss';
+  public readonly MEDIUM_DATE = 'D.MM.YYYY';
   public readonly MEDIUM_TIME = 'HH:mm';
   public readonly MEDIUM_DATE_TIME = 'D.MM.YYYY - HH:mm';
 
@@ -39,6 +40,8 @@ export class MomentDatePipe implements PipeTransform {
       case 'full': break;
       case 'time-medium':
         dateFormat = this.MEDIUM_TIME; break;
+      case 'date-medium':
+        dateFormat = this.MEDIUM_DATE; break;
       case 'full-medium':
         dateFormat = this.MEDIUM_DATE_TIME; break;
     }

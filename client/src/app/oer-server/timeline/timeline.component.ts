@@ -265,7 +265,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
       this.stateService.setShowDeprecatedEntries(value);
 
-      this.items.clear();
+      if (!value) {
+        this.items.clear();
+      }
       this.loadProgramItems();
     });
   }
@@ -413,9 +415,17 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
+    let range = this.timeLine?.getWindow();
+    let currentTlTime;
+    if (range) {
+      currentTlTime = moment(range.start.valueOf()).tz(environment.timezone);
+    } else {
+      currentTlTime = now;
+    }
+
     // load yesterday's program if we are just after midnight to show enough items in the timeline
     const minuteDiff = now.diff(midnight, 'minute', false);
-    this.apiService.fetchProgramForDay(now.toDate());
+    this.apiService.fetchProgramForDay(currentTlTime.toDate());
     if (minuteDiff < 180) {
       this.apiService.fetchProgramForDay(now.clone().subtract('1', 'day').toDate());
     }
@@ -466,9 +476,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    if (!this.apiService.checkIfDayIsFetched(rangeStart)) {
-      this.apiService.fetchProgramForDay(new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate()));
-    } else if (!this.apiService.checkIfDayIsFetched(rangeEnd)) {
+    this.apiService.fetchProgramForDay(new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate()));
+    if (rangeStart.getDay() != rangeEnd.getDay()) {
       this.apiService.fetchProgramForDay(new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), rangeEnd.getDate()));
     }
   }
