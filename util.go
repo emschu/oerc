@@ -275,7 +275,6 @@ func generateDateRangeInPastAndFuture(daysInPast, daysInFuture uint) *[]time.Tim
 
 // generateDateRangeBetweenDates: get a slice of dates between a and b
 func generateDateRangeBetweenDates(startDate time.Time, endDate time.Time) *[]time.Time {
-
 	daysBetween := endDate.Sub(startDate).Hours() / 24
 	if daysBetween == 0 {
 		return &[]time.Time{

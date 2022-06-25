@@ -187,3 +187,12 @@ func (p *Parser) isMoreThanXDaysInPast(day *time.Time, days uint) bool {
 	now := time.Now()
 	return day.Before(now) && now.Sub(*day) > time.Duration(days)*24*time.Hour
 }
+
+func logRecentFetch(customMessage string) {
+	timeOfNextUpdate := getTimeOfNextUpdate()
+	log.Printf("%s, due to recent fetch. Next regular fetch will be at: %s. "+
+		"Use 'forceUpdate' = true to ignore this.",
+		customMessage,
+		timeOfNextUpdate.Format(time.RFC822),
+	)
+}

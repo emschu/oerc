@@ -55,7 +55,7 @@ func (s *SRFParser) preProcess() bool {
 // fetchTvShowSRF: This method checks all the tv shows
 func (s *SRFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
-		log.Printf("Skip update of tv shows, due to recent fetch. Use 'forceUpdate' = true to ignore this.")
+		logRecentFetch("Skip update of srf tv shows")
 		return
 	}
 
