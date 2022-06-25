@@ -96,7 +96,7 @@ func (a *AppConfig) verifyConfiguration() bool {
 		log.Printf("Invalid port number for server provided in configuration!\n")
 		return false
 	}
-	if strings.Trim(a.DbSchema, " ") == "" {
+	if strings.TrimSpace(a.DbSchema) == "" {
 		log.Printf("Invalid empty database schema provided in configuration!\n")
 		return false
 	}
