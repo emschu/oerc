@@ -62,6 +62,7 @@ frontend: ## build the frontend and the static rice box file
 
 .PHONY: build
 build: ## build dev version of application
+	$(GO_RICE) embed-go
 	$(GO) build -race -o bin/oerc
 
 .PHONY: lint

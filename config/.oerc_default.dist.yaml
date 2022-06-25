@@ -5,6 +5,7 @@ DbType: postgres
 DbHost: localhost
 DbPort: 5432
 DbName: <db_name>
+DbSchema: public
 DbUser: <db_user>
 DbPassword: <db_password>
 DbSSLEnabled: false

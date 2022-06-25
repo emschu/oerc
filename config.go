@@ -58,6 +58,7 @@ type AppConfig struct {
 	DbHost                       string   `yaml:"DbHost"`
 	DbPort                       uint32   `yaml:"DbPort"`
 	DbName                       string   `yaml:"DbName"`
+	DbSchema                     string   `yaml:"DbSchema"`
 	DbUser                       string   `yaml:"DbUser"`
 	DbPassword                   string   `yaml:"DbPassword"`
 	DbSSLEnabled                 bool     `yaml:"DbSSLEnabled"`
@@ -93,6 +94,10 @@ func (a *AppConfig) verifyConfiguration() bool {
 	serverPort := a.ServerPort
 	if serverPort == 0 || serverPort > uint16(math.Pow(2, 16)-2) {
 		log.Printf("Invalid port number for server provided in configuration!\n")
+		return false
+	}
+	if strings.Trim(a.DbSchema, " ") == "" {
+		log.Printf("Invalid empty database schema provided in configuration!\n")
 		return false
 	}
 	return true
