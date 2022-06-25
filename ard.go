@@ -232,6 +232,11 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 			return
 		}
 
+		if icalContent.startDate.IsZero() || icalContent.endDate.IsZero() || icalContent.is1970Date() {
+			appLog(fmt.Sprintf("Problem with zero date from icallLink '%s'", icalLink))
+			return
+		}
+
 		programEntry.StartDateTime = &icalContent.startDate
 		programEntry.EndDateTime = &icalContent.endDate
 		programEntry.DurationMinutes = int16(icalContent.endDate.Sub(icalContent.startDate).Minutes())
@@ -581,4 +586,18 @@ func (a *ARDParser) parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalCon
 		return nil, errors.New("Empty dates detected in ical content. Probably a parser error")
 	}
 	return &content, nil
+}
+
+// is1970Date: method to check if there is a 1970 (begin unix time) time object
+func (i *ICalContent) is1970Date() bool {
+	if i.startDate.IsZero() || i.endDate.IsZero() {
+		return false
+	}
+	if i.startDate.Year() == 1970 && i.startDate.Month() == 1 && i.startDate.Day() == 1 {
+		return true
+	}
+	if i.endDate.Year() == 1970 && i.endDate.Month() == 1 && i.endDate.Day() == 1 {
+		return true
+	}
+	return false
 }

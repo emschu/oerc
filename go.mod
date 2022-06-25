@@ -10,6 +10,7 @@ require (
 	github.com/antchfx/xmlquery v1.3.9 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/daaku/go.zipexe v1.0.1 // indirect
+	github.com/gin-contrib/gzip v0.0.5 // indirect
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/gocolly/colly/v2 v2.1.0

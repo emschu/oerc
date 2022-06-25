@@ -20,10 +20,12 @@ package main
 import (
 	"fmt"
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -102,7 +104,19 @@ type Error struct {
 func initRouter() *gin.Engine {
 	r := gin.New()
 	r.RedirectTrailingSlash = true
+
 	r.Use(gin.Logger())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	if appConf.ProxyURL != "" {
+		err := r.SetTrustedProxies([]string{appConf.ProxyURL})
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Problem to trust proxy url '%s'", appConf.ProxyURL))
+			return nil
+		}
+	} else {
+		// trust no proxies - except the user specified one
+		r.SetTrustedProxies(nil)
+	}
 	r.Use(gin.Recovery())
 
 	box := rice.MustFindBox("spec")
@@ -112,13 +126,20 @@ func initRouter() *gin.Engine {
 	r.StaticFS("/spec", box.HTTPBox())
 
 	// define group
-	apiV2 := r.Group("/api/v2")
+	apiPrefix := "/api/v2"
+	apiV2 := r.Group(apiPrefix)
 	apiV2.Use(func(context *gin.Context) {
 		if len(GetAppConf().AccessControlAllowOrigin) > 0 {
 			context.Header("Access-Control-Allow-Origin", fmt.Sprintf("%s", GetAppConf().AccessControlAllowOrigin))
 		} else {
 			log.Println("Warning! Using insecure default value '*' for 'Access-Control-Allow-Origin' (CORS) header. Please specify a value 'AccessControlAllowOrigin' in .oerc.yaml.")
 			context.Header("Access-Control-Allow-Origin", "*")
+		}
+		// enable 10 h caching for /program, /log and /channel endpoints for browsers by default
+		if strings.HasPrefix(context.FullPath(), apiPrefix+"/program") ||
+			context.FullPath() == apiPrefix+"/log" ||
+			strings.HasPrefix(context.FullPath(), apiPrefix+"/channel") {
+			context.Header("Cache-Control", "public, max-age=36000")
 		}
 	})
 
