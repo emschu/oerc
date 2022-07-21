@@ -47,7 +47,7 @@ var (
 	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
 	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
 	ardIcalLinkMatcher      = regexp.MustCompile(`^/ICalendar/iCal---Sendung\?sendung=[0-9]+`)
-	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_-]+\.(jpe?g|png|JPE?G|PNG))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG)))`)
+	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_.-]+\.(jpe?g|png|JPE?G|PNG))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG)))`)
 	ardMainTags             = map[string]string{
 		"Film":            "Film/Alle-Filme/Alle-Filme",
 		"Dokumentation":   "Dokus--Reportagen/Alle-Dokumentationen/Startseite",
@@ -271,7 +271,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		element.DOM.Find(".media-con img").Each(func(i int, selection *goquery.Selection) {
 			attr, srcAttrExists := selection.Attr("src")
 			if !ardImageLinkAttrMatcher.Match([]byte(attr)) {
-				appLog(fmt.Sprintf("Invalid image link detected! program entry hash: '%s'", programEntry.Hash))
+				appLog(fmt.Sprintf("Invalid image link '%s' detected! program entry hash: '%s'", attr, programEntry.Hash))
 				return
 			}
 			for _, existingEntry := range programEntry.ImageLinks {
@@ -295,7 +295,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 				if hrefAttrExists {
 					u, err := url2.ParseRequestURI(attr)
 					if err != nil {
-						appLog("Invalid url of program entry's homepage found!")
+						appLog(fmt.Sprintf("Invalid or unexpected url '%s' of program entry's homepage found!", attr))
 						return
 					}
 					programEntry.Homepage = fmt.Sprintf("%s%s", u.Host, u.RequestURI())
