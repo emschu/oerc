@@ -61,8 +61,14 @@ $ docker-compose up
 
 ## Manual Installation
 
-1. Get this application
+1. To get this application use one of the following commands
 
+### Golang 1.16+
+```shell
+go install github.com/emschu/oerc@latest
+```
+
+### Golang < 1.16
 ```shell
 go get -u github.com/emschu/oerc
 ```
