@@ -155,11 +155,13 @@ func TestErrorRegistering(t *testing.T) {
 		t.Error("Error counter is expected to be 0!")
 	}
 	incrErr()
+	errorCount = atomic.LoadUint64(&globalErrorCounter)
 	if errorCount != 1 {
 		t.Error("Error counter is expected to be 1")
 	}
 	resetErr()
 	checkErr() // should do nothing, because 1 < errorThreshold
+	errorCount = atomic.LoadUint64(&globalErrorCounter)
 	if errorCount != 0 {
 		t.Error("Error counter is expected to be 0!")
 	}
