@@ -17,7 +17,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/pgx/v4 v4.17.1 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.19
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -33,6 +32,6 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.3.9
-	gorm.io/driver/sqlite v1.1.5
+	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 )

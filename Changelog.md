@@ -5,6 +5,7 @@
 - client: add modal if there is no program data
 - small ard parser improvements (mostly for historical data)
 - refine parser log output for easier debugging
+- Golang `1.16` is the current minimal version supported 
 
 ## 0.10.1 - 2022/06/25
 - Add `DbSchema` configuration property tu support arbitrary postgres schema
