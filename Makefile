@@ -49,9 +49,9 @@ clean: ## clean up project
 .PHONY: setup
 setup: ## install required project and (dev) dependencies
 	$(GO) mod download
-	$(GO) get -u github.com/GeertJohan/go.rice
-	$(GO) get -u github.com/GeertJohan/go.rice/rice
-	$(GO) get -u github.com/mgechev/revive
+	$(GO) get github.com/GeertJohan/go.rice
+	$(GO) get github.com/GeertJohan/go.rice/rice
+	$(GO) install github.com/mgechev/revive@latest
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
 
