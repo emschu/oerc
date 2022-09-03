@@ -512,19 +512,23 @@ func sanitizeContent(content *string) string {
 
 // error handling vars
 var (
-	appInError     = false
-	errorCounter   uint64
+	appInError         = false
+	globalErrorCounter uint64
+)
+
+const (
 	errorThreshold uint64 = 20
 )
 
 // incrErr: global error counter increment
 func incrErr() {
-	atomic.AddUint64(&errorCounter, 1)
+	atomic.AddUint64(&globalErrorCounter, 1)
 }
 
 // checkErr: global error check method, if counter is too high, exit application with error exit code 1
 func checkErr() {
-	if !appInError && errorCounter > errorThreshold {
+	errorCount := atomic.LoadUint64(&globalErrorCounter)
+	if !appInError && errorCount > errorThreshold {
 		appInError = true
 	}
 	if appInError {
@@ -535,8 +539,9 @@ func checkErr() {
 
 // resetErr: global error counter reset method
 func resetErr() {
-	if errorCounter != 0 {
-		atomic.StoreUint64(&errorCounter, 0)
+	errorCount := atomic.LoadUint64(&globalErrorCounter)
+	if errorCount != 0 {
+		atomic.StoreUint64(&globalErrorCounter, 0)
 	}
 }
 
@@ -562,14 +567,14 @@ func connectivityCheck() (bool, error) {
 	return true, nil
 }
 
-// method to get general colly collector instance used by ard, srf and orf parsers
-func baseCollector(allowedHost []string) *colly.Collector {
-	c := colly.NewCollector(colly.AllowedDomains(allowedHost...), colly.AllowURLRevisit())
+// method to get general colly collector instance used by all parsers. Allowed hostnames have to be defined to work.
+func baseCollector(allowedHosts []string) *colly.Collector {
+	c := colly.NewCollector(colly.AllowedDomains(allowedHosts...), colly.AllowURLRevisit())
 	c.MaxDepth = 1
 	c.Async = true
 	c.CheckHead = false
 	c.TraceHTTP = false
-	c.UserAgent = "Mozilla/5.0 (Windows NT 6.1; rv:60.0) Gecko/20100101 Firefox/60.0"
+	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0"
 	c.SetRequestTimeout(30 * time.Second)
 
 	// configure proxy
@@ -581,7 +586,7 @@ func baseCollector(allowedHost []string) *colly.Collector {
 		}
 	}
 
-	for _, singleHost := range allowedHost {
+	for _, singleHost := range allowedHosts {
 		limitErr := c.Limit(&colly.LimitRule{
 			DomainGlob:  singleHost + "/**",
 			Parallelism: 4,

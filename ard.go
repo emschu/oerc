@@ -27,7 +27,6 @@ import (
 	"math"
 	url2 "net/url"
 	"regexp"
-	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -47,7 +46,7 @@ var (
 	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
 	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
 	ardIcalLinkMatcher      = regexp.MustCompile(`^/ICalendar/iCal---Sendung\?sendung=[0-9]+`)
-	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_-]+\.(jpe?g|png|JPE?G|PNG))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG)))`)
+	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_.-]+\.(jpe?g|png|JPE?G|PNG|SEA|GIF))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG|sea|gif)))`)
 	ardMainTags             = map[string]string{
 		"Film":            "Film/Alle-Filme/Alle-Filme",
 		"Dokumentation":   "Dokus--Reportagen/Alle-Dokumentationen/Startseite",
@@ -171,7 +170,12 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		find := element.DOM.Find("a")
 		urlOfEntry, attrExists := find.Attr("href")
 		if !attrExists {
-			appLog(fmt.Sprintf("No 'href' attribute on program detail page. EID: %s", eid))
+			if channel.TechnicalID == "28385" && programEntry.Title == "Regionalprogramm" {
+				// Do not log problems with these entries of "Radio Bremen TV". Older entries (e.g. in 2015) do not have a link to program
+			} else {
+				appLog(fmt.Sprintf("No 'href' attribute on program detail page. EID: %s, Title: %s, URL: %s",
+					eid, programEntry.Title, element.Request.URL))
+			}
 			return
 		}
 		if !ardProgramURLMatcher.Match([]byte(urlOfEntry)) {
@@ -217,6 +221,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		// fetch ical-links for proper datetime information
 		icalHref, exists := element.DOM.Find("a[href*=ICalendar]").Attr("href")
 		if !exists {
+			// TODO remove or handle different
 			appLog(fmt.Sprintf("ERROR: No iCal link found for program entry '%s'", programEntry.Hash))
 			return
 		}
@@ -271,7 +276,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		element.DOM.Find(".media-con img").Each(func(i int, selection *goquery.Selection) {
 			attr, srcAttrExists := selection.Attr("src")
 			if !ardImageLinkAttrMatcher.Match([]byte(attr)) {
-				appLog(fmt.Sprintf("Invalid image link detected! program entry hash: '%s'", programEntry.Hash))
+				appLog(fmt.Sprintf("Invalid image link '%s' detected! program entry hash: '%s'", attr, programEntry.Hash))
 				return
 			}
 			for _, existingEntry := range programEntry.ImageLinks {
@@ -293,9 +298,9 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 			if strings.Contains(text, "Sendungsseite im Internet") {
 				attr, hrefAttrExists := s.Attr("href")
 				if hrefAttrExists {
-					u, err := url2.ParseRequestURI(attr)
+					u, err := url2.ParseRequestURI(trimAndSanitizeString(attr))
 					if err != nil {
-						appLog("Invalid url of program entry's homepage found!")
+						appLog(fmt.Sprintf("Invalid or unexpected url '%s' of program entry's homepage found!", attr))
 						return
 					}
 					programEntry.Homepage = fmt.Sprintf("%s%s", u.Host, u.RequestURI())
@@ -320,7 +325,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 
 // method to fetch all tv show data
 func (a *ARDParser) fetchTVShows() {
-	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
+	if !appConf.EnableTVShowCollection || isRecentlyFetched() {
 		logRecentFetch("Skip update of ard tv shows")
 		return
 	}
@@ -419,12 +424,13 @@ func tryToFindTags(eid string) (*[]string, error) {
 		}
 		return false
 	}
-	doc.Find("form[id^=bookmark-checks] .row span[class*=similar-events-bookmark]").Each(func(i int, selection *goquery.Selection) {
-		tagText := trimAndSanitizeString(selection.Text())
-		if !doesTagExist(tagText) {
-			*tags = append(*tags, tagText)
-		}
-	})
+	doc.Find("form[id^=bookmark-checks] .row span[class*=similar-events-bookmark]").
+		Each(func(i int, selection *goquery.Selection) {
+			tagText := trimAndSanitizeString(selection.Text())
+			if !doesTagExist(tagText) {
+				*tags = append(*tags, tagText)
+			}
+		})
 	return tags, nil
 }
 
@@ -433,9 +439,9 @@ func (a *ARDParser) postProcess() {
 	a.linkTagsToEntriesGeneral()
 }
 
-// method which is called after the program entries and tv shows are fetched: empty for ARD
+// preProcess implementation
 func (a *ARDParser) preProcess() bool {
-	a.parallelWorkersCount = runtime.NumCPU()
+	a.parallelWorkersCount = 10
 	return true
 }
 

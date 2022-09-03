@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.10.1"
-APP_VERSION_STR = "0-10-1"
+APP_VERSION_DOT = "0.10.2"
+APP_VERSION_STR = "0-10-2"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -49,9 +49,9 @@ clean: ## clean up project
 .PHONY: setup
 setup: ## install required project and (dev) dependencies
 	$(GO) mod download
-	$(GO) get -u github.com/GeertJohan/go.rice
-	$(GO) get -u github.com/GeertJohan/go.rice/rice
-	$(GO) get -u github.com/mgechev/revive
+	$(GO) get github.com/GeertJohan/go.rice
+	$(GO) get github.com/GeertJohan/go.rice/rice
+	$(GO) install github.com/mgechev/revive@latest
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	pip install --user schemathesis
 

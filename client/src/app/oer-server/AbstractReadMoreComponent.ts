@@ -29,6 +29,7 @@ export abstract class AbstractReadMoreComponent {
   onReadMore(e: any): void {
     if (e.target && e.target.parentNode.classList.contains('keyword-search')) {
       const parentNode: Element = e.target.parentNode;
+      // inject a "span"
       parentNode?.parentNode?.append('</span>');
       if (e.target.nextSibling) {
         e.target.nextSibling.innerText = e.target.nextSibling.innerText.replace('</span>');
