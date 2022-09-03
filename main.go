@@ -89,7 +89,7 @@ func main() {
 					FindOverlaps(newDefaultDateRangeHandlerPadded(1))
 
 					// update counters if something has happened
-					showFetchResults(startTime)
+					showFetchResults(startTime, nil, nil)
 
 					return nil
 				},
@@ -135,7 +135,7 @@ func main() {
 					FindOverlaps(newSpecificDateRangeHandlerPadded(*rangeStart, *rangeEnd, 1))
 
 					// update counters if something has happened
-					showFetchResults(startTime)
+					showFetchResults(startTime, rangeStart, rangeEnd)
 
 					return nil
 				},
@@ -377,7 +377,7 @@ func main() {
 	}
 }
 
-func showFetchResults(startTime time.Time) {
+func showFetchResults(startTime time.Time, start *time.Time, end *time.Time) {
 	if status.TotalCreatedPE > 0 || status.TotalCreatedTVS > 0 ||
 		status.TotalUpdatedPE > 0 || status.TotalUpdatedTVS > 0 {
 		setSetting(settingKeyLastFetch, time.Now().Format(time.RFC3339))
@@ -393,6 +393,11 @@ func showFetchResults(startTime time.Time) {
 		}
 	}
 	setSetting(settingKeyRequestsTotal, strconv.Itoa(int(currentRequestsTotal+status.TotalRequests)))
+	if start != nil && end != nil {
+		// if they are nil, the default fetch time range has been used
+		dateLayout := "2006-01-02"
+		log.Printf("Fetched date range: %s to %s", start.Format(dateLayout), end.Format(dateLayout))
+	}
 	log.Printf("HTTP request counter of this fetch process: %d\n", status.TotalRequests)
 	sub := time.Now().Sub(startTime)
 	log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", sub.Seconds(), sub.Minutes())

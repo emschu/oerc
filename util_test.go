@@ -19,6 +19,7 @@ package main
 
 import (
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -149,16 +150,17 @@ func TestConnectivity(t *testing.T) {
 
 func TestErrorRegistering(t *testing.T) {
 	resetErr()
-	if errorCounter != 0 {
+	errorCount := atomic.LoadUint64(&globalErrorCounter)
+	if errorCount != 0 {
 		t.Error("Error counter is expected to be 0!")
 	}
 	incrErr()
-	if errorCounter != 1 {
+	if errorCount != 1 {
 		t.Error("Error counter is expected to be 1")
 	}
 	resetErr()
 	checkErr() // should do nothing, because 1 < errorThreshold
-	if errorCounter != 0 {
+	if errorCount != 0 {
 		t.Error("Error counter is expected to be 0!")
 	}
 }

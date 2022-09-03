@@ -288,7 +288,6 @@ func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemRe
 // fetchTvShows method to fetch zdf tv shows
 func (z *ZDFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
-		log.Printf(". Use 'forceUpdate' = true to ignore this.")
 		logRecentFetch("Skip update of zdf tv shows")
 		return
 	}
