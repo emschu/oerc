@@ -88,6 +88,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   public timeLine: Timeline | null = null;
   currentProgramEntry: ProgramEntry | null = null;
   isModalOpen = false;
+  isMissingDataModalOpen = false;
 
   // bound to form-switch-control + initial value
   showDeprecatedEntries = new BehaviorSubject(this.stateService.getShowDeprecatedEntries());
@@ -161,6 +162,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
           minDate: moment(value?.data_start_time).format(this._datePickerFormat),
           maxDate: moment(value?.data_end_time).format(this._datePickerFormat),
         });
+      } else {
+        this.isMissingDataModalOpen = true;
+        return;
       }
 
       this.moveToNow();

@@ -67,10 +67,10 @@
               loading="lazy"/><br/>
               <em>Keywords: {{ item.keywords }}</em>
           </td>
-          <td class="col_title" [innerHTML]="item.program_entry?.title | search:item.keywords">
+          <td class="col_title" [innerHTML]="item?.program_entry?.title | search:item.keywords">
           </td>
           <td class="col_description"
-              [innerHTML]="item.program_entry?.description | readMore | search:item.keywords"></td>
+              [innerHTML]="item?.program_entry?.description | readMore | search:item.keywords"></td>
         </tr>
         </tbody>
       </table>
@@ -79,7 +79,7 @@
       <h3>There are no recommended program items available. You should run:
         <pre>oerc search</pre>
         and define some
-        keywords in the configuration file you want to search for.
+        search words in the configuration file first.
       </h3>
     </div>
   </div>

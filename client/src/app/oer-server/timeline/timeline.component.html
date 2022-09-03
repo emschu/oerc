@@ -44,11 +44,15 @@
     </div>
     <span class="divider-vert"></span>
     <div class="p-relative right">
-      <label class="form-switch">
-        <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
-               (ngModelChange)="showDeprecatedEntries.next($event)"/>
-        <i class="form-icon"></i> Show overlaps
-      </label>
+      <div class="col">
+        <label>
+          <label class="form-switch">
+            <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
+                   (ngModelChange)="showDeprecatedEntries.next($event)"/>
+            <i class="form-icon"></i> Show overlaps
+          </label>
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -121,6 +125,23 @@
       </div>
     </div>
 
+    <div class="modal-footer">
+    </div>
+  </div>
+</div>
+
+<div class="modal modal-md missing_program_entries_modal" [ngClass]="{'active': isMissingDataModalOpen}">
+  <a href="#close" class="modal-overlay" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
+  <div class="modal-container scroll-cont">
+    <div class="modal-header">
+      <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
+      <div class="modal-title h5" [innerHTML]="'Program information missing'"></div>
+    </div>
+    <div class="modal-body">
+      <div class="content">
+        <strong>Please run <pre>oerc fetch</pre> and <pre>oerc search</pre></strong>
+      </div>
+    </div>
     <div class="modal-footer">
     </div>
   </div>
