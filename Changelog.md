@@ -1,9 +1,10 @@
 # Changelog oerc
 
-## 0.10.2 - 2022/09/XX
+## 0.10.2 - 2022/09/03
 - Dependency updates of the application and the client
 - client: add modal if there is no program data
 - small ard parser improvements (mostly for historical data)
+- refine parser log output for easier debugging
 
 ## 0.10.1 - 2022/06/25
 - Add `DbSchema` configuration property tu support arbitrary postgres schema
