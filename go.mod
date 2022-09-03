@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/GeertJohan/go.rice v1.0.2
 	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/alitto/pond v1.8.1
 	github.com/antchfx/htmlquery v1.2.5 // indirect
 	github.com/antchfx/xmlquery v1.3.12 // indirect
@@ -17,15 +18,21 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/pgx/v4 v4.17.1 // indirect
+	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/mgechev/revive v1.2.3 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.19
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.6.0
+	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	github.com/urfave/cli/v2 v2.11.2
+	github.com/valyala/fasttemplate v1.2.1 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b // indirect
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
