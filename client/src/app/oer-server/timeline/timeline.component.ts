@@ -26,26 +26,18 @@ import {
   TimelineItem,
   TimelineOptions,
   TimelineWindow
-} from 'vis-timeline/esnext';
-import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential, ProgramResponse} from '../entities';
-import {DeepPartial} from 'vis-data/declarations/data-interface';
+} from 'vis-timeline/esnext/esm';
+import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import moment, {MomentInput} from 'moment-timezone';
 import {environment} from '../../../environments/environment';
-import {first, skip, take} from 'rxjs/operators';
+import {first, skip} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import FlatPickrInstance = flatpickr.Instance;
-import {German} from 'flatpickr/dist/l10n/de';
-import {DataSet} from 'vis-data';
-
-interface SubgroupMappingChannelLevel {
-  [key: string]: ProgramEntry[];
-}
-
-interface SubgroupMappingEntryLevel {
-  [key: string]: number;
-}
+import * as visLanguage from 'flatpickr/dist/l10n/de';
+import * as visData from 'vis-data/esnext/esm';
+import * as visDataTypes from 'vis-data/declarations/data-interface';
 
 // interface GroupOrder {
 //   groupId: number | string;
@@ -62,7 +54,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(public apiService: ApiService,
               private stateService: StateService) {
-    this.items = new DataSet<TimelineItem>();
+    this.items = new visData.DataSet<TimelineItem>();
     this.zoneOffset = moment().tz(environment.timezone).utcOffset();
   }
 
@@ -84,9 +76,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     [4, TimelineComponent.i++],
     [19, TimelineComponent.i++],
   ]);
-  public readonly items: DataSet<TimelineItem>;
-  public timeLine: Timeline | null = null;
-  currentProgramEntry: ProgramEntry | null = null;
+  public readonly items: visData.DataSet<TimelineItem>;
+  public timeLine?: Timeline;
+  currentProgramEntry?: ProgramEntry;
   isModalOpen = false;
   isMissingDataModalOpen = false;
 
@@ -94,12 +86,12 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   showDeprecatedEntries = new BehaviorSubject(this.stateService.getShowDeprecatedEntries());
 
   // subscriptions managed by this component
-  channelSubscription: Subscription | null = null;
-  programSubscription: Subscription | null = null;
-  loadingSubscription: Subscription | null = null;
-  showDeprecatedEntriesSubscription: Subscription | null = null;
+  channelSubscription?: Subscription;
+  programSubscription?: Subscription;
+  loadingSubscription?: Subscription;
+  showDeprecatedEntriesSubscription?: Subscription;
   // private latestSelectedDate: Date | null = null;
-  private dateTimePickrInstance: FlatPickrInstance | null = null;
+  private dateTimePickrInstance?: FlatPickrInstance;
   private readonly zoneOffset: number;
 
   private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
@@ -119,9 +111,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.initTimeLine();
 
-    this.apiService.statusSubject.pipe(skip(1), take(1)).subscribe(value => {
+    this.apiService.statusSubject.pipe(first()).subscribe(statusResponse => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
-        locale: German,
+        locale: visLanguage.German,
         now: moment().tz(environment.timezone).format(this._datePickerFormat),
         enableTime: true,
         allowInput: false,
@@ -134,11 +126,11 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         minuteIncrement: 15,
         mode: 'single',
         defaultDate: moment().tz(environment.timezone).utcOffset(this.zoneOffset).format(this._datePickerFormat),
-        onChange: (selectedDates: Date[], dateStr: string, instance: FlatPickrInstance) => {
+        onChange: (selectedDates: Date[], dateStr: string, _: FlatPickrInstance) => {
           if (selectedDates.length === 0) {
             return;
           }
-          if (this.timeLine != null) {
+          if (this.timeLine) {
             this.timeLine.moveTo(moment(selectedDates[0]).utc(true).toISOString(true), {animation: false});
           }
         },
@@ -157,19 +149,14 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         },
       }) as FlatPickrInstance;
 
-      if (value?.data_start_time && value?.data_end_time) {
+      if (statusResponse?.data_start_time && statusResponse?.data_end_time) {
         this.dateTimePickrInstance.set({
-          minDate: moment(value?.data_start_time).format(this._datePickerFormat),
-          maxDate: moment(value?.data_end_time).format(this._datePickerFormat),
+          minDate: moment(statusResponse?.data_start_time).format(this._datePickerFormat),
+          maxDate: moment(statusResponse?.data_end_time).format(this._datePickerFormat),
         });
-      } else {
-        this.isMissingDataModalOpen = true;
-        return;
       }
-
-      this.moveToNow();
     });
-    this.apiService.updateStatus();
+    this.moveToNow();
   }
 
   ngOnDestroy(): void {
@@ -196,7 +183,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadProgramItems();
 
     // create groups
-    const groups: DataSet<DataGroup> = new DataSet({fieldId: 'id'});
+    const groups: visData.DataSet<DataGroup> = new visData.DataSet({fieldId: 'id'});
     this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (!value) {
         return;
@@ -280,7 +267,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     const now = moment().tz(environment.timezone);
     const midnight = moment().tz(environment.timezone).hour(0).minute(0).second(0);
 
-    if (this.programSubscription === null || this.programSubscription.closed) {
+    if (!this.programSubscription || this.programSubscription.closed) {
       this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
         if (!programResponse || programResponse.program_list?.length === 0) {
           return;
@@ -301,7 +288,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
           };
         });
 
-        const programList: DeepPartial<TimelineItem[]> = [];
+        const programList: visDataTypes.DeepPartial<TimelineItem[]> = [];
 
         function getAdditionalTitleInfo(singleProgramEntry: ProgramEntryEssential): string {
           // todo i18n
@@ -328,8 +315,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         this.items.update(programList);
 
         if (showDeprecatedEntries) {
-          const deprecatedEntries: DeepPartial<TimelineItem[]> = [];
+          const deprecatedEntries: visDataTypes.DeepPartial<TimelineItem[]> = [];
           programEntries.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
+            // this is a very expensive loop
             const overlaps = this.items.get({
               filter: item => {
                 if (item.group !== singleProgramEntry.channel_id) {
@@ -353,6 +341,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
                 ) {
                   return false;
                 }
+                // entries could overlap in 9 ways:
                 if ((t1 === t3 && t2 === t4)
                   || (t1 === t3 && t2 < t4)
                   || (t1 === t3 && t2 > t4)

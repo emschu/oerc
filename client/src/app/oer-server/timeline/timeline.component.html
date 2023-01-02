@@ -57,7 +57,7 @@
   </div>
 </div>
 
-<div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}" *ngIf="currentProgramEntry !== null">
+<div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}" *ngIf="currentProgramEntry">
   <a href="#close" class="modal-overlay" aria-label="Close" (click)="isModalOpen = false"></a>
   <div class="modal-container scroll-cont">
     <div class="modal-header">
@@ -116,7 +116,7 @@
                 </tr>
                 <tr>
                   <td><strong>Last checked at</strong></td>
-                  <td>{{ currentProgramEntry.last_check  | momentDate:'full' }}</td>
+                  <td>{{ currentProgramEntry.last_check | momentDate:'full' }}</td>
                 </tr>
               </table>
             </td>
@@ -135,11 +135,11 @@
   <div class="modal-container scroll-cont">
     <div class="modal-header">
       <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
-      <div class="modal-title h5" [innerHTML]="'Program information missing'"></div>
+      <div class="modal-title h5" [innerText]="'Program information missing'"></div>
     </div>
     <div class="modal-body">
       <div class="content">
-        <strong>Please run <pre>oerc fetch</pre> and <pre>oerc search</pre></strong>
+        <strong>Please run <pre>oerc fetch</pre> and optionally <pre>oerc search</pre></strong>
       </div>
     </div>
     <div class="modal-footer">
