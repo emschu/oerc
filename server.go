@@ -55,10 +55,9 @@ func StartServer() {
 }
 
 func setupMaterializedView() {
-	func() {
-		db := getDb()
-		db.Exec(`drop materialized view status_info`)
-		db.Exec(`create materialized view IF NOT EXISTS status_info as
+	db := getDb()
+	db.Exec(`drop materialized view status_info`)
+	db.Exec(`create materialized view IF NOT EXISTS status_info as
 SELECT min(program_entries.start_date_time) AS data_start_time,
        max(program_entries.end_date_time)   AS data_end_time,
        count(*) as program_entry_count,
@@ -70,10 +69,9 @@ SELECT min(program_entries.start_date_time) AS data_start_time,
        (SELECT count(*) from recommendations) as recommendation_count,
        now() as created_at
 FROM program_entries`)
-		if isDebug() {
-			log.Printf("Materialized status view")
-		}
-	}()
+	if isDebug() {
+		log.Printf("Materialized status view")
+	}
 }
 
 // StatusInfoModel a gorm model for the materialized view
