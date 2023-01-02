@@ -63,14 +63,9 @@ $ docker-compose up
 
 1. To get this application use one of the following commands
 
-### Golang 1.16+
+### Golang 1.18+
 ```shell
 go install github.com/emschu/oerc@latest
-```
-
-### Golang < 1.16
-```shell
-go get -u github.com/emschu/oerc
 ```
 
 2. Set up a PostgreSQL database (12+), configure a database with a user and start it.
@@ -290,12 +285,9 @@ Note: The first column does not necessarily have to correspond to the channel id
 
 ### OpenApi 3 specification
 
-If you run the (backend) server (just run `oerc server`) an OpenApi 3 specification is shipped at
-`http://localhost:8080/spec/openapi3.json`, respectively `/spec/openapi3.yaml`. Or - alternatively - have a look at the
+If you run the (backend) server (`oerc server`) an OpenApi 3 specification is shipped at
+`http://localhost:8080/spec/openapi3.json`, respectively `.yaml`. Or - alternatively - have a look at the
 spec files in [this directory](./docs).
-
-Please notify the maintainer of this project if you build something around the JSON HTTP API oerc
-offers (for the mail address see below in `License` section).
 
 ## License
 
