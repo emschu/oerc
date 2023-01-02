@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.10.2"
-APP_VERSION_STR = "0-10-2"
+APP_VERSION_DOT = "0.11.0"
+APP_VERSION_STR = "0-11-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -119,7 +119,6 @@ sonarscan: ## run sonar scanner against local sonarqube
 						docker run --rm --user="$$(id -u):$$(id -g)" \
 						-e SONAR_HOST_URL=$$SONAR_HOST_URL -e SONAR_LOGIN=$$SONAR_LOGIN \
 						-v "$$(pwd):/usr/src" sonarsource/sonar-scanner-cli
-
 
 .PHONY: version
 version: ## populate the current version defined in this make file

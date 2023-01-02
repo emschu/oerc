@@ -93,7 +93,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.10.2, License: AGPLv3, https://github.com/emschu/oerc
+   0.11.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -299,7 +299,7 @@ offers (for the mail address see below in `License` section).
 
 ## License
 
-This project is licensed under [GNU Affero General Public License 3 or later](./LICENSE).
+This project is licensed under [GNU Affero General Public License 3](./LICENSE).
 
 ```text
 oerc, alias oer-collector

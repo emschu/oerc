@@ -1,4 +1,3 @@
-//
 // oerc, alias oer-collector
 // Copyright (C) 2021 emschu[aet]mailbox.org
 //
@@ -36,7 +35,7 @@ import (
 )
 
 var (
-	version       = "0.10.2"
+	version       = "0.11.0"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
