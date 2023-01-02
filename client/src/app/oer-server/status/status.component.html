@@ -20,13 +20,13 @@
   <tbody>
   <tr>
     <td><strong>Program entries</strong></td>
-    <td>{{ currentStatus.program_entry_count }}</td>
+    <td>{{ currentStatus.program_entry_count | number }}</td>
 
     <td><strong>Image links</strong></td>
-    <td>{{ currentStatus.image_links_count }}</td>
+    <td>{{ currentStatus.image_links_count | number }}</td>
 
     <td><strong>TV shows</strong></td>
-    <td>{{ currentStatus.tv_show_count }}</td>
+    <td>{{ currentStatus.tv_show_count | number }}</td>
     <td><strong>Data time range</strong></td>
     <td *ngIf="currentStatus !== null">{{ currentStatus.data_start_time | momentDate: 'date-medium' }}
       - {{ currentStatus.data_end_time | momentDate : 'full-medium' }}</td><td *ngElse></td>

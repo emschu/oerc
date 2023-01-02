@@ -222,7 +222,7 @@ export class ApiService {
    * @private
    */
   private get<T>(url: string, options = {}): Observable<T> {
-    if (!url.endsWith('/ping') && (this.isInErrorsSubject.getValue() || this.isLiveSubject.getValue() === false)) {
+    if (!url.endsWith('/ping') && ((this.isInErrorsSubject.getValue() || this.isLiveSubject.getValue() === false))) {
       console.log(`api in errors or not live. Skipping request to url ${url}.`);
       return new Observable<T>();
     }
@@ -239,7 +239,6 @@ export class ApiService {
       catchError(err => {
         if (err.name === 'TimeoutError') {
           console.log('request timeout reached!', err);
-          throw err;
         }
         if (!inErrAlready) {
           this._isInErrorsSubject.next(true);

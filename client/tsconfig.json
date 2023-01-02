@@ -16,13 +16,15 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2015",
+    "target": "ES2022",
     "module": "es2020",
     "lib": [
       "es2020",
       "dom"
     ],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "useDefineForClassFields": false,
+    "skipLibCheck": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

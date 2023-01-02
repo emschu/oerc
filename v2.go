@@ -1,4 +1,3 @@
-//
 // oerc, alias oer-collector
 // Copyright (C) 2021 emschu[aet]mailbox.org
 //
@@ -73,18 +72,6 @@ func getCount(model interface{}) uint64 {
 	var count int64
 	db.Model(model).Count(&count)
 	return uint64(count)
-}
-
-func getImageLinksCount() uint64 {
-	return getCount(&ImageLink{})
-}
-
-func getProgramEntryCount() uint64 {
-	return getCount(&ProgramEntry{})
-}
-
-func getTvShowCount() uint64 {
-	return getCount(&TvShow{})
 }
 
 func getProgramYesterdayHandler(c *gin.Context) {
@@ -308,48 +295,25 @@ func getStatusObject() *StatusResponse {
 
 	db := getDb()
 
-	var firstEntry time.Time
-	var peCount int64
-	var lastEntry time.Time
+	var statusInfoModel = StatusInfoModel{}
 
-	db.Model(&ProgramEntry{}).Count(&peCount)
-
-	if peCount > 0 {
-		errMin := db.Raw("SELECT MIN(start_date_time) from program_entries WHERE start_date_time != '1970-01-01 00:00:00'").Row().Scan(&firstEntry)
-		if errMin != nil {
-			log.Fatal("error querying database for MIN(start_date_time)")
-		}
-		errMax := db.Raw("SELECT MAX(end_date_time) from program_entries LIMIT 1").Row().Scan(&lastEntry)
-		if errMax != nil {
-			log.Fatal("error querying database for MAX(end_date_time)")
-		}
-	}
-
-	var firstEntryStr string
-	if firstEntry.IsZero() {
-		firstEntryStr = ""
-	} else {
-		firstEntryStr = firstEntry.Format(time.RFC3339)
-	}
-	var lastEntryStr string
-	if lastEntry.IsZero() {
-		lastEntryStr = ""
-	} else {
-		lastEntryStr = lastEntry.Format(time.RFC3339)
+	statusViewQueryErr := db.Model(StatusInfoModel{}).Find(&statusInfoModel)
+	if statusViewQueryErr.Error != nil {
+		log.Printf("ERROR fetching information from status info table: %s", statusViewQueryErr.Error.Error())
 	}
 
 	var response = StatusResponse{
-		ChannelFamilyCount:  uint64(len(*channelFamilies)),
-		ChannelCount:        uint64(len(*channels)),
-		ImageLinksCount:     getImageLinksCount(),
-		ProgramEntryCount:   getProgramEntryCount(),
-		TvShowCount:         getTvShowCount(),
-		LogCount:            getCount(&LogEntry{}),
-		RecommendationCount: getCount(&Recommendation{}),
+		ChannelFamilyCount:  statusInfoModel.ChannelFamilyCount,
+		ChannelCount:        statusInfoModel.ChannelCount,
+		ImageLinksCount:     statusInfoModel.ImageLinkCount,
+		ProgramEntryCount:   statusInfoModel.ProgramEntryCount,
+		TvShowCount:         statusInfoModel.TvShowCount,
+		LogCount:            statusInfoModel.LogCount,
+		RecommendationCount: statusInfoModel.RecommendationCount,
 		Version:             version,
 		ServerDateTime:      time.Now().Format(time.RFC3339),
-		DataStartTime:       firstEntryStr,
-		DataEndTime:         lastEntryStr,
+		DataStartTime:       statusInfoModel.DataStartTime,
+		DataEndTime:         statusInfoModel.DataEndTime,
 		TvChannels:          channels,
 		TvChannelFamilies:   channelFamilies,
 	}
