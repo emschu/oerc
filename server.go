@@ -89,6 +89,7 @@ type StatusInfoModel struct {
 	DataEndTime         string
 }
 
+// TableName of the materialized view prefixed by db schema
 func (s *StatusInfoModel) TableName() string {
 	return fmt.Sprintf("%s.status_info", appConf.DbSchema)
 }
