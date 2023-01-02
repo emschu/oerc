@@ -1,4 +1,3 @@
-//
 // oerc, alias oer-collector
 // Copyright (C) 2021 emschu[aet]mailbox.org
 //
@@ -336,7 +335,7 @@ func (a *ARDParser) fetchTVShows() {
 	collector.OnHTML(".az-slick > .box > a", func(e *colly.HTMLElement) {
 		var link = e.Attr("href")
 		if !ardTvShowLinkMatcher.Match([]byte(link)) {
-			appLog(fmt.Sprintf("Invalid link '%s' for ard tv show detected. Skipping entry.", link))
+			appLog(fmt.Sprintf("Invalid link '%s%s' for ard tv show detected. Skipping entry.", ardHostWithPrefix, link))
 			return
 		}
 
