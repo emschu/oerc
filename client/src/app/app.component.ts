@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,9 +18,9 @@
  */
 import {ApiService} from './oer-server/api.service';
 import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
-import moment from 'moment-timezone';
-import 'moment/min/locales';
 import {Subscription} from 'rxjs';
+import dayjs from 'dayjs';
+import {environment} from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -40,14 +40,13 @@ export class AppComponent implements OnInit, OnDestroy {
     if (document.hidden) {
       this.apiService.isWindowOpenedSubject.next(false);
     } else {
-      console.log('on page visible');
       this.apiService.isWindowOpenedSubject.next(true);
     }
   }
 
   ngOnInit(): void {
-    moment.locale('de');
     this.apiService.init();
+    dayjs.locale(environment.locale);
     this.isLiveSubscription = this.apiService.isLiveSubject.subscribe(value => {
       if (!this.inited && value !== null) {
         this.inited = true;

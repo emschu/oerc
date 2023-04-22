@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -65,7 +65,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
             this.apiService.isLoadingSubject.next(false);
-          }, 250);
+          }, 300);
         },
         err => {
           this.isInErrors = true;
@@ -74,7 +74,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
             this.apiService.isLoadingSubject.next(false);
-          }, 250);
+          }, 300);
           return new Observable();
         });
     });

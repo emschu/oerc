@@ -1,5 +1,12 @@
 # Changelog oerc
 
+## 0.12.0 - 2023/04/22
+- update dependencies
+- client: ui/ux improvements
+
+## 0.11.0 - 2023/01/03
+- update toolchains and dependencies
+
 ## 0.10.2 - 2022/09/03
 - Dependency updates of the application and the client
 - client: add modal if there is no program data

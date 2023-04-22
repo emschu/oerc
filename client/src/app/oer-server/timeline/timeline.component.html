@@ -1,6 +1,6 @@
 <!--
   ~ oerc, alias oer-collector
-  ~ Copyright (C) 2021 emschu[aet]mailbox.org
+  ~ Copyright (C) 2021-2023 emschu[aet]mailbox.org
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU Affero General Public License as
@@ -71,8 +71,8 @@
         <table class="table">
           <tr>
             <td>
-              <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | momentDate:'full-medium' }}
-              - {{ currentProgramEntry.end_date_time | momentDate:'time-medium' }}
+              <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | appDate:'full-medium' }}
+              - {{ currentProgramEntry.end_date_time | appDate:'time-medium' }}
               ({{ currentProgramEntry.duration_in_minutes }} Minutes)
             </td>
           </tr>
@@ -108,15 +108,15 @@
                 </tr>
                 <tr>
                   <td><strong>Created at</strong></td>
-                  <td>{{ currentProgramEntry.created_at  | momentDate: 'full' }}</td>
+                  <td>{{ currentProgramEntry.created_at  | appDate: 'full' }}</td>
                 </tr>
                 <tr>
                   <td><strong>Updated at</strong></td>
-                  <td>{{ currentProgramEntry.updated_at  | momentDate:'full' }}</td>
+                  <td>{{ currentProgramEntry.updated_at  | appDate:'full' }}</td>
                 </tr>
                 <tr>
                   <td><strong>Last checked at</strong></td>
-                  <td>{{ currentProgramEntry.last_check | momentDate:'full' }}</td>
+                  <td>{{ currentProgramEntry.last_check | appDate:'full' }}</td>
                 </tr>
               </table>
             </td>

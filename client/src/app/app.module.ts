@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -17,18 +17,19 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {LOCALE_ID, NgModule} from '@angular/core';
-import {CommonModule, registerLocaleData} from '@angular/common';
-import localeDe from '@angular/common/locales/de';
+import {CommonModule} from '@angular/common';
+import '@angular/common/locales/global/de';
+import '@angular/common/locales/global/en';
 import {BrowserModule} from '@angular/platform-browser';
-
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {OercClientModule} from './oer-server/oerc-client.module';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {UtilModule} from './util/util.module';
-import { NavComponent } from './nav/nav.component';
-
-registerLocaleData(localeDe);
+import {NavComponent} from './nav/nav.component';
+import {environment} from '../environments/environment';
+import {RouteReuseStrategy} from '@angular/router';
+import {AppRouteReuseStrategy} from './app-route-reuse-strategy';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,9 @@ registerLocaleData(localeDe);
     UtilModule,
   ],
   bootstrap: [AppComponent],
-  providers: [{provide: LOCALE_ID, useValue: 'de'}]
+  providers: [{provide: LOCALE_ID, useValue: environment.locale}, {
+    provide: RouteReuseStrategy, useClass: AppRouteReuseStrategy
+  }]
 })
-export class AppModule { }
+export class AppModule {
+}

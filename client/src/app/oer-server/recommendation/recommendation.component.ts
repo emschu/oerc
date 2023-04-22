@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,10 +20,9 @@ import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {Recommendation} from '../entities';
 import {ApiService} from '../api.service';
 import {AbstractReadMoreComponent} from '../AbstractReadMoreComponent';
-import {environment} from '../../../environments/environment';
-import moment from 'moment-timezone';
 import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-recommendation',
@@ -61,7 +60,7 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
   }
 
   fetchRecommendations(timeExpression: string): void {
-    let from: moment.Moment = moment().tz(environment.timezone);
+    let from: dayjs.Dayjs = dayjs();
     let isNow = false;
 
     switch (timeExpression) {
@@ -70,26 +69,26 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
         break;
       case 'tomorrow':
         from = from.add(1, 'day');
-        from = from.hours(8);
+        from = from.hour(8);
         break;
       case 'dayAfterTomorrow':
         from = from.add(2, 'day');
-        from = from.hours(0);
+        from = from.hour(0);
         break;
       case '20':
-        from = from.hours(20);
+        from = from.hour(20);
         break;
       case '22':
-        from = from.hours(22);
+        from = from.hour(22);
         break;
       case '0':
         from = from.add(1, 'day');
-        from = from.hours(0);
+        from = from.hour(0);
         break;
     }
     if (!isNow) {
       from = from.minute(0);
-      from = from.seconds(0);
+      from = from.second(0);
       from = from.millisecond(0);
     }
     this.apiService.isLoadingSubject.next(true);

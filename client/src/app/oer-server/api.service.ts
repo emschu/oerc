@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@ import {Channel, ChannelResponse, LogEntryResponse, Pong, ProgramEntry, ProgramR
 import {IdType} from 'vis-timeline';
 import {catchError, first, tap, timeout} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
-import {Moment} from 'moment-timezone';
+import dayjs from 'dayjs';
 
 @Injectable({
   providedIn: 'root'
@@ -128,10 +128,9 @@ export class ApiService {
     return this.get<LogEntryResponse>(this.apiEndpoint + '/log');
   }
 
-  public recommendations(from: null | Moment = null): Observable<Recommendation[]> {
+  public recommendations(from: null | dayjs.Dayjs = null): Observable<Recommendation[]> {
     let queryParams = '';
     if (from) {
-      from = from.tz(environment.timezone).utc(false);
       queryParams += 'from=' + encodeURIComponent(from.toISOString());
     }
     if (queryParams.length > 0) {

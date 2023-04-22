@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,20 +19,19 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {SpinnerComponent} from './spinner/spinner.component';
-import { MomentDatePipe } from './moment-date.pipe';
-
+import { AppDatePipe } from './app-date.pipe';
 
 @NgModule({
   declarations: [
     SpinnerComponent,
-    MomentDatePipe
+    AppDatePipe
   ],
   imports: [
     CommonModule
   ],
   exports: [
     SpinnerComponent,
-    MomentDatePipe,
+    AppDatePipe,
   ]
 })
 export class UtilModule { }

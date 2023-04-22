@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2023 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,7 @@ export const environment = {
   production: true,
   serverEndpoint: '/api/v2',
   apiRequestTimeoutInSecs: 60,
-  timezone: 'Europe/Berlin',
+  locale: 'de',
   appVersion: packageInfo.version,
   defaultSettingShowDeprecatedEntries: false,
 };
