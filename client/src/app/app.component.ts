@@ -19,7 +19,6 @@
 import {ApiService} from './oer-server/api.service';
 import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import moment from 'moment-timezone';
-import 'moment/min/locales';
 import {Subscription} from 'rxjs';
 
 @Component({

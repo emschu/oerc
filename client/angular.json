@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "client": {
+    "oerc-client": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -35,7 +35,11 @@
               "node_modules/flatpickr/dist/flatpickr.css",
               "src/styles.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "./node_modules/vis-data/standalone/umd/vis-data.min.js",
+              "./node_modules/vis-util/standalone/umd/vis-util.min.js",
+              "./node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"
+            ],
             "vendorChunk": true,
             "extractLicenses": false,
             "buildOptimizer": false,
@@ -45,7 +49,8 @@
             "allowedCommonJsDependencies": [
               "xss",
               "moment",
-              "moment-timezone"
+              "component-emitter",
+              "flatpickr/dist/l10n/de"
             ]
           },
           "configurations": {
@@ -67,7 +72,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "1750kb",
-                  "maximumError": "2.5mb"
+                  "maximumError": "3.0mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -81,19 +86,19 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "client:build",
+            "browserTarget": "oerc-client:build",
             "proxyConfig": "src/proxy.conf.json"
           },
           "configurations": {
             "production": {
-              "browserTarget": "client:build:production"
+              "browserTarget": "oerc-client:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "client:build"
+            "browserTarget": "oerc-client:build"
           }
         },
         "test": {
@@ -117,11 +122,11 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "client:serve"
+            "devServerTarget": "oerc-client:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "client:serve:production"
+              "devServerTarget": "oerc-client:serve:production"
             }
           }
         },
@@ -134,10 +139,13 @@
             ]
           }
         }
+      },
+      "i18n": {
+        "sourceLocale": "en-GB"
       }
     }
   },
-  "defaultProject": "client",
+  "defaultProject": "oerc-client",
   "cli": {
     "defaultCollection": "@angular-eslint/schematics"
   },

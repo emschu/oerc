@@ -17,18 +17,16 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {LOCALE_ID, NgModule} from '@angular/core';
-import {CommonModule, registerLocaleData} from '@angular/common';
-import localeDe from '@angular/common/locales/de';
+import {CommonModule} from '@angular/common';
+import '@angular/common/locales/global/de';
+import '@angular/common/locales/global/en';
 import {BrowserModule} from '@angular/platform-browser';
-
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {OercClientModule} from './oer-server/oerc-client.module';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {UtilModule} from './util/util.module';
 import { NavComponent } from './nav/nav.component';
-
-registerLocaleData(localeDe);
 
 @NgModule({
   declarations: [
