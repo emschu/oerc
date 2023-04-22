@@ -88,7 +88,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.11.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.12.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -198,11 +198,9 @@ KillMode=process
 WantedBy=multi-user.target
 ```
 
-*Note*: You *must* replace `<path_to_oerc_bin>` in with a correct path to the `oerc` binary. If you don't know how to do
-this
-type `which oerc`.
+*Note*: You *must* replace `<path_to_oerc_bin>` with an absolute path to the `oerc` binary (`which oerc`).
 
-Copy the modified system service templates to your systemd services directory, e.g. `/etc/systemd/system` and reload the
+Copy the modified system service templates to your systemd services directory, e.g. `/etc/systemd/system`, and reload the
 systemd daemon by executing
 
 `$ sudo systemctl daemon-reload`.
@@ -213,48 +211,16 @@ After the last command you can use
 
 to start (or stop) the services.
 
-If you want to get the servers up after system (re-)boot, you need to execute
+To (not) start the service on boot, type
 
 `$ sudo systemctl [enable|disable] oerc`.
 
-If you do so (enabling both services by default), please keep in mind that the PostgreSQL database needs
-to be available, too, so use systemctl to enable the postgres service as well.
+If you enable both services by default, please keep in mind that the PostgreSQL database needs
+to be available too, so ensure to enable the postgres database service as well.
 
 ### Channel list
 
-Note: The first column does not necessarily have to correspond to the channel id in the database.
-
-| No. | Channel          | Version |
-|-----|------------------|---------|
-| 1   | ARD              | v2      |
-| 2   | ZDF              | v2      |
-| 3   | 3Sat             | v2      |
-| 4   | ARTE             | v2      |
-| 5   | ZDFInfo          | v2      |
-| 6   | ZDFNeo           | v2      |
-| 7   | Phoenix          | v2      |
-| 8   | KiKa             | v2      |
-| 9   | ARD One          | v2      |
-| 10  | Tagesschau24     | v2      |
-| 11  | ARD Alpha        | v2      |
-| 12  | SWR RP Fernsehen | v2      |
-| 13  | WDR Fernsehen    | v2      |
-| 14  | SWR BW Fernsehen | v2      |
-| 15  | SR Fernsehen     | v2      |
-| 16  | Radio Bremen TV  | v2      |
-| 17  | RBB Fernsehen    | v2      |
-| 18  | NDR Fernsehen    | v2      |
-| 19  | MDR Fernsehen    | v2      |
-| 20  | HR Fernsehen     | v2      |
-| 21  | BR Fernsehen     | v2      |
-| 22  | ORF eins         | v2      |
-| 23  | ORF 2            | v2      |
-| 24  | ORF III          | v2      |
-| 25  | ORF Sport +      | v2      |
-| 26  | SRF-1            | v2      |
-| 27  | SRF-zwei         | v2      |
-| 28  | SRF-info         | v2      |
-
+**Channels:** ARD, ZDF, 3Sat, ARTE, ZDFInfo, ZDFNeo, Phoenix, KiKa, ARD One, Tagesschau24, ARD Alpha, SWR RP Fernsehen,WDR Fernsehen, SWR BW Fernsehen,SR Fernsehen, Radio Bremen TV, RBB Fernsehen, NDR Fernsehen, MDR Fernsehen, HR Fernsehen, BR Fernsehen, ORF eins, ORF 2, ORF III, ORF Sport +, SRF-1, SRF-zwei, SRF-info.
 ### Time range import limits
 
 | Channel family | Earliest date   | Latest date     |
@@ -286,8 +252,8 @@ Note: The first column does not necessarily have to correspond to the channel id
 ### OpenApi 3 specification
 
 If you run the (backend) server (`oerc server`) an OpenApi 3 specification is shipped at
-`http://localhost:8080/spec/openapi3.json`, respectively `.yaml`. Or - alternatively - have a look at the
-spec files in [this directory](./docs).
+`http://localhost:8080/spec/openapi3.json`, respectively `.yaml`. Or have a look at the
+API specification files in [this directory](./docs).
 
 ## License
 
@@ -295,7 +261,7 @@ This project is licensed under [GNU Affero General Public License 3](./LICENSE).
 
 ```text
 oerc, alias oer-collector
-Copyright (C) 2021 emschu[aet]mailbox.org
+Copyright (C) 2021-23 emschu[aet]mailbox.org
 
 This program is free software: you can redistribute it and/or modify 
 it under the terms of the GNU Affero General Public License as 
