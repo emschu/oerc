@@ -65,7 +65,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
             this.apiService.isLoadingSubject.next(false);
-          }, 250);
+          }, 300);
         },
         err => {
           this.isInErrors = true;
@@ -74,7 +74,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
             this.apiService.isLoadingSubject.next(false);
-          }, 250);
+          }, 300);
           return new Observable();
         });
     });

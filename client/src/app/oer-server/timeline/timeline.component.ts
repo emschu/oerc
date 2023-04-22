@@ -29,15 +29,15 @@ import {
 } from 'vis-timeline/esnext/esm';
 import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
 import {BehaviorSubject, Subscription} from 'rxjs';
-import moment, {MomentInput} from 'moment-timezone';
 import {environment} from '../../../environments/environment';
 import {first, skip} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import FlatPickrInstance = flatpickr.Instance;
-import * as visLanguage from 'flatpickr/dist/l10n/de';
-import * as visData from 'vis-data/esnext/esm';
+import * as flatPickrLang from 'flatpickr/dist/l10n/de';
 import * as visDataTypes from 'vis-data/declarations/data-interface';
+import {DataSet} from 'vis-data/esnext/esm';
+import dayjs from 'dayjs';
 
 // interface GroupOrder {
 //   groupId: number | string;
@@ -54,8 +54,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(public apiService: ApiService,
               private stateService: StateService) {
-    this.items = new visData.DataSet<TimelineItem>();
-    this.zoneOffset = moment().tz(environment.timezone).utcOffset();
+    this.items = new DataSet<TimelineItem>();
   }
 
   private static i = 0;
@@ -76,7 +75,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     [4, TimelineComponent.i++],
     [19, TimelineComponent.i++],
   ]);
-  public readonly items: visData.DataSet<TimelineItem>;
+  public readonly items: DataSet<TimelineItem>;
   public timeLine?: Timeline;
   currentProgramEntry?: ProgramEntry;
   isModalOpen = false;
@@ -92,7 +91,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   showDeprecatedEntriesSubscription?: Subscription;
   // private latestSelectedDate: Date | null = null;
   private dateTimePickrInstance?: FlatPickrInstance;
-  private readonly zoneOffset: number;
 
   private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
 
@@ -113,8 +111,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.apiService.statusSubject.pipe(first()).subscribe(statusResponse => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
-        locale: visLanguage.German,
-        now: moment().tz(environment.timezone).format(this._datePickerFormat),
+        locale: flatPickrLang.German,
+        now: dayjs().locale(environment.locale).format(),
         enableTime: true,
         allowInput: false,
         time_24hr: true,
@@ -125,34 +123,34 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         enableSeconds: false,
         minuteIncrement: 15,
         mode: 'single',
-        defaultDate: moment().tz(environment.timezone).utcOffset(this.zoneOffset).format(this._datePickerFormat),
+        defaultDate: dayjs().locale(environment.locale).format(),
         onChange: (selectedDates: Date[], dateStr: string, _: FlatPickrInstance) => {
           if (selectedDates.length === 0) {
             return;
           }
           if (this.timeLine) {
-            this.timeLine.moveTo(moment(selectedDates[0]).utc(true).toISOString(true), {animation: false});
+            this.timeLine.moveTo(dayjs(selectedDates[0]).toISOString(), {animation: false});
           }
         },
         parseDate: (dateString, format) => {
-          const timezonedDate = moment(dateString, format).tz(environment.timezone);
+          const timezonedDate = dayjs(dateString, format).locale(environment.locale);
           return new Date(
             timezonedDate.year(),
             timezonedDate.month(),
             timezonedDate.date(),
-            timezonedDate.hours(),
-            timezonedDate.minutes()
+            timezonedDate.hour(),
+            timezonedDate.minute()
           );
         },
         formatDate: (date, format) => {
-          return moment(date).format(format);
+          return dayjs(date).format(format);
         },
       }) as FlatPickrInstance;
 
       if (statusResponse?.data_start_time && statusResponse?.data_end_time) {
         this.dateTimePickrInstance.set({
-          minDate: moment(statusResponse?.data_start_time).format(this._datePickerFormat),
-          maxDate: moment(statusResponse?.data_end_time).format(this._datePickerFormat),
+          minDate: dayjs(statusResponse?.data_start_time).format(),
+          maxDate: dayjs(statusResponse?.data_end_time).format(),
         });
       }
     });
@@ -183,7 +181,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadProgramItems();
 
     // create groups
-    const groups: visData.DataSet<DataGroup> = new visData.DataSet({fieldId: 'id'});
+    const groups: DataSet<DataGroup> = new DataSet({fieldId: 'id'});
     this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (!value) {
         return;
@@ -200,18 +198,15 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     // Configuration for the Timeline
-    const now = moment().tz(environment.timezone).utcOffset(this.zoneOffset);
+    const now = dayjs().locale(environment.locale);
     const options: TimelineOptions = {
       align: 'center',
-      locale: 'de',
+      locale: environment.locale,
       stack: false,
       stackSubgroups: true,
       start: now.clone().subtract(1, 'hour').toISOString(),
       end: now.clone().add(3, 'hour').toISOString(),
       timeAxis: {scale: 'minute', step: 15},
-      moment: (date: MomentInput | undefined) => {
-        return moment(date).tz(environment.timezone).utcOffset(this.zoneOffset);
-      },
       orientation: 'top',
       zoomable: true,
       showCurrentTime: true,
@@ -250,8 +245,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.timeLine.on('rangechanged', this.rangeChange.bind(this));
     this.timeLine.on('doubleClick', this.itemClicked.bind(this));
-    // TODO
-    // this.timeLine?.addCustomTime(moment().hour(20).minute(15).toDate());
 
     this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
       this.stateService.setShowDeprecatedEntries(value);
@@ -264,8 +257,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadProgramItems(): void {
-    const now = moment().tz(environment.timezone);
-    const midnight = moment().tz(environment.timezone).hour(0).minute(0).second(0);
+    const now = dayjs().locale(environment.locale);
+    const midnight = dayjs().locale(environment.locale).hour(0).minute(0).second(0);
 
     if (!this.programSubscription || this.programSubscription.closed) {
       this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
@@ -292,7 +285,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
         function getAdditionalTitleInfo(singleProgramEntry: ProgramEntryEssential): string {
           // todo i18n
-          return ' | CreatedAt: ' + moment(singleProgramEntry.created_at).tz(environment.timezone).format('d.M HH:mm:SS');
+          return ' | CreatedAt: ' + dayjs(singleProgramEntry.created_at).locale(environment.locale).format('D.M HH:mm:SS');
         }
 
         programEntries.forEach(singleProgramEntry => {
@@ -411,7 +404,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     let range = this.timeLine?.getWindow();
     let currentTlTime;
     if (range) {
-      currentTlTime = moment(range.start.valueOf()).tz(environment.timezone);
+      currentTlTime = dayjs(range.start.valueOf()).locale(environment.locale);
     } else {
       currentTlTime = now;
     }
@@ -420,7 +413,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     const minuteDiff = now.diff(midnight, 'minute', false);
     this.apiService.fetchProgramForDay(currentTlTime.toDate());
     if (minuteDiff < 180) {
-      this.apiService.fetchProgramForDay(now.clone().subtract('1', 'day').toDate());
+      this.apiService.fetchProgramForDay(now.clone().subtract(1, 'day').toDate());
     }
   }
 
@@ -454,7 +447,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   moveToNow(): void {
-    this.dateTimePickrInstance?.setDate(moment().tz(environment.timezone).utc(false).format(this._datePickerFormat), false);
+    this.dateTimePickrInstance?.setDate(dayjs().locale(environment.locale).format(), false);
     this.dateTimePickrInstance?._debouncedChange();
   }
 

@@ -31,14 +31,18 @@ export class NavComponent implements OnInit, OnDestroy {
   currentSearchPhrase = '';
   isLoading = false;
 
-  private searchPhraseSubscription: Subscription|null = null;
-  private isLoadingSubscription: Subscription|null = null;
+  private searchPhraseSubscription: Subscription | null = null;
+  private isLoadingSubscription: Subscription | null = null;
+  private searchTextElement: HTMLElement | null = null;
 
   constructor(public apiService: ApiService,
               public searchService: SearchService,
-              private router: Router) { }
+              private router: Router) {
+  }
 
   ngOnInit(): void {
+    this.searchTextElement = document.getElementById('search_text');
+
     this.searchPhraseSubscription = this.searchService.lastSearchStringSubject.subscribe(value => {
       if (value !== this.currentSearchPhrase) {
         this.currentSearchPhrase = value;
@@ -47,14 +51,14 @@ export class NavComponent implements OnInit, OnDestroy {
     this.isLoadingSubscription = this.apiService.isLoadingSubject.subscribe(value => {
       this.isLoading = value;
     });
+    this.searchTextElement?.focus();
   }
 
   searchFor(): void {
-    const elementById = document.getElementById('search_text');
-    if (elementById instanceof HTMLInputElement) {
-      const searchWord = elementById?.value;
+    if (this.searchTextElement instanceof HTMLInputElement) {
+      const searchWord = this.searchTextElement?.value;
       if (searchWord.length > 2) {
-        this.router.navigate(['/search'], {queryParams: {query: searchWord}});
+        this.router.navigate(['/search'], {queryParams: {query: searchWord}, skipLocationChange: false, onSameUrlNavigation: 'reload'});
       }
     }
   }

@@ -26,7 +26,10 @@ import {AppComponent} from './app.component';
 import {OercClientModule} from './oer-server/oerc-client.module';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {UtilModule} from './util/util.module';
-import { NavComponent } from './nav/nav.component';
+import {NavComponent} from './nav/nav.component';
+import {environment} from '../environments/environment';
+import {RouteReuseStrategy} from '@angular/router';
+import {AppRouteReuseStrategy} from './app-route-reuse-strategy';
 
 @NgModule({
   declarations: [
@@ -42,6 +45,9 @@ import { NavComponent } from './nav/nav.component';
     UtilModule,
   ],
   bootstrap: [AppComponent],
-  providers: [{provide: LOCALE_ID, useValue: 'de'}]
+  providers: [{provide: LOCALE_ID, useValue: environment.locale}, {
+    provide: RouteReuseStrategy, useClass: AppRouteReuseStrategy
+  }]
 })
-export class AppModule { }
+export class AppModule {
+}

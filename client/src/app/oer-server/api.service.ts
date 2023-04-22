@@ -23,7 +23,7 @@ import {Channel, ChannelResponse, LogEntryResponse, Pong, ProgramEntry, ProgramR
 import {IdType} from 'vis-timeline';
 import {catchError, first, tap, timeout} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
-import {Moment} from 'moment-timezone';
+import dayjs from 'dayjs';
 
 @Injectable({
   providedIn: 'root'
@@ -128,10 +128,9 @@ export class ApiService {
     return this.get<LogEntryResponse>(this.apiEndpoint + '/log');
   }
 
-  public recommendations(from: null | Moment = null): Observable<Recommendation[]> {
+  public recommendations(from: null | dayjs.Dayjs = null): Observable<Recommendation[]> {
     let queryParams = '';
     if (from) {
-      from = from.tz(environment.timezone).utc(false);
       queryParams += 'from=' + encodeURIComponent(from.toISOString());
     }
     if (queryParams.length > 0) {

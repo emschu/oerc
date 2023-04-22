@@ -38,7 +38,8 @@
             "scripts": [
               "./node_modules/vis-data/standalone/umd/vis-data.min.js",
               "./node_modules/vis-util/standalone/umd/vis-util.min.js",
-              "./node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"
+              "./node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js",
+              "./node_modules/dayjs/locale/de.js"
             ],
             "vendorChunk": true,
             "extractLicenses": false,

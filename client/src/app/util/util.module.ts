@@ -19,20 +19,19 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {SpinnerComponent} from './spinner/spinner.component';
-import { MomentDatePipe } from './moment-date.pipe';
-
+import { AppDatePipe } from './app-date.pipe';
 
 @NgModule({
   declarations: [
     SpinnerComponent,
-    MomentDatePipe
+    AppDatePipe
   ],
   imports: [
     CommonModule
   ],
   exports: [
     SpinnerComponent,
-    MomentDatePipe,
+    AppDatePipe,
   ]
 })
 export class UtilModule { }

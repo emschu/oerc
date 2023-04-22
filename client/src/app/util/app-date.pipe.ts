@@ -17,22 +17,22 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import { Pipe, PipeTransform } from '@angular/core';
-import moment, {MomentInput} from 'moment-timezone';
 import {environment} from '../../environments/environment';
+import dayjs, {Dayjs} from 'dayjs';
 
 @Pipe({
-  name: 'momentDate'
+  name: 'appDate'
 })
-export class MomentDatePipe implements PipeTransform {
+export class AppDatePipe implements PipeTransform {
 
   public readonly FULL_DATE_TIME_HUMAN = 'D.MM.YYYY - HH:mm:ss';
   public readonly MEDIUM_DATE = 'D.MM.YYYY';
   public readonly MEDIUM_TIME = 'HH:mm';
   public readonly MEDIUM_DATE_TIME = 'D.MM.YYYY - HH:mm';
 
-  transform(value: MomentInput, ...args: string[]): string {
+  transform(value: dayjs.ConfigType, ...args: string[]): string {
     if (args.length === 0) {
-      console.error('empty value for momentDate pipe received!');
+      console.error('empty value for appDate pipe received!');
       return 'empty';
     }
     let dateFormat = this.FULL_DATE_TIME_HUMAN;
@@ -45,7 +45,6 @@ export class MomentDatePipe implements PipeTransform {
       case 'full-medium':
         dateFormat = this.MEDIUM_DATE_TIME; break;
     }
-    return moment(value).tz(environment.timezone).format(dateFormat);
+    return dayjs(value).locale(environment.locale).format(dateFormat);
   }
-
 }
