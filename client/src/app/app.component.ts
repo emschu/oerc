@@ -19,8 +19,6 @@
 import {ApiService} from './oer-server/api.service';
 import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
-import dayjs from 'dayjs';
-import {environment} from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -46,7 +44,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.apiService.init();
-    dayjs.locale(environment.locale);
     this.isLiveSubscription = this.apiService.isLiveSubject.subscribe(value => {
       if (!this.inited && value !== null) {
         this.inited = true;
