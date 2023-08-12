@@ -1,5 +1,8 @@
 # Changelog oerc
 
+## 0.13.0 - 2023/08/12
+- update dependencies
+
 ## 0.12.0 - 2023/04/22
 - update dependencies
 - client: ui/ux improvements
