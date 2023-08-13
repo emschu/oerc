@@ -1,5 +1,9 @@
 # Changelog oerc
 
+## 0.13.0 - 2023/08/12
+- update dependencies
+- Use new SRF JSON API instead of markup parsing, fixing fetch process for SRF
+
 ## 0.12.0 - 2023/04/22
 - update dependencies
 - client: ui/ux improvements

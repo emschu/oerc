@@ -15,9 +15,11 @@
 // You should have received a copy of the GNU Affero General Public
 // License along with this program.
 // If not, see <https://www.gnu.org/licenses/>.
-#timeline {
+#program_timeline {
+  min-width: 500px;
   width: 100%;
-  margin: 2rem auto;
+  margin: 1rem auto;
+
 }
 
 .menu {
@@ -72,9 +74,11 @@
     .item-technical-detail-table {
       tr {
         margin: 0 .5rem;
+
         td {
           margin: 0 .5rem;
           padding: 0 .5rem;
+
           &:nth-child(2) {
             border-left: dotted #0A4C95 2px;
           }
@@ -97,8 +101,8 @@
 
 .date-range {
   text-align: center;
+
   .date-range-picker {
     width: 8rem;
   }
 }
-

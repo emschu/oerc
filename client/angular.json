@@ -38,8 +38,7 @@
             "scripts": [
               "./node_modules/vis-data/standalone/umd/vis-data.min.js",
               "./node_modules/vis-util/standalone/umd/vis-util.min.js",
-              "./node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js",
-              "./node_modules/dayjs/locale/de.js"
+              "./node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"
             ],
             "vendorChunk": true,
             "extractLicenses": false,
@@ -51,7 +50,8 @@
               "xss",
               "moment",
               "component-emitter",
-              "flatpickr/dist/l10n/de"
+              "flatpickr/dist/l10n/de",
+              "dayjs"
             ]
           },
           "configurations": {
@@ -146,9 +146,10 @@
       }
     }
   },
-  "defaultProject": "oerc-client",
   "cli": {
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   },
   "schematics": {
     "@angular-eslint/schematics:application": {

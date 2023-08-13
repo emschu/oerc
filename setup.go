@@ -125,11 +125,25 @@ func handleChannelsSetup() {
 			db.Where("hash = ?", c.Hash).First(&channel)
 			if channel.ID == 0 {
 				db.Create(&c)
+			} else {
+				// update
+				channel.Title = c.Title
+				channel.URL = c.URL
+				channel.TechnicalID = c.TechnicalID
+				channel.Homepage = c.Homepage
+
+				db.Save(&channel)
 			}
 			channelCounter++
 		}
 		if verboseGlobal {
 			log.Printf("%s: %d channels present", channelFam.Title, channelCounter)
 		}
+
+		// srf changed the identifier of srf-2 to srf-zwei
+		db.Delete(
+			&Channel{},
+			"hash = 'srf-2'",
+		)
 	}
 }

@@ -33,11 +33,11 @@ import {environment} from '../../../environments/environment';
 import {first, skip} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
-import FlatPickrInstance = flatpickr.Instance;
 import * as flatPickrLang from 'flatpickr/dist/l10n/de';
 import * as visDataTypes from 'vis-data/declarations/data-interface';
 import {DataSet} from 'vis-data/esnext/esm';
 import dayjs from 'dayjs';
+import FlatPickrInstance = flatpickr.Instance;
 
 // interface GroupOrder {
 //   groupId: number | string;
@@ -285,7 +285,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
         function getAdditionalTitleInfo(singleProgramEntry: ProgramEntryEssential): string {
           // todo i18n
-          return ' | CreatedAt: ' + dayjs(singleProgramEntry.created_at).locale(environment.locale).format('D.M HH:mm:SS');
+          return ' | CreatedAt: ' + dayjs(singleProgramEntry.created_at).locale(environment.locale).format('D.M HH:mm:ss');
         }
 
         programEntries.forEach(singleProgramEntry => {
