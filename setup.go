@@ -125,14 +125,15 @@ func handleChannelsSetup() {
 			db.Where("hash = ?", c.Hash).First(&channel)
 			if channel.ID == 0 {
 				db.Create(&c)
+			} else {
+				// update
+				channel.Title = c.Title
+				channel.URL = c.URL
+				channel.TechnicalID = c.TechnicalID
+				channel.Homepage = c.Homepage
+
+				db.Save(&channel)
 			}
-			channel.Title = c.Title
-			channel.URL = c.URL
-			channel.TechnicalID = c.TechnicalID
-			channel.Homepage = c.Homepage
-
-			db.Save(&channel)
-
 			channelCounter++
 		}
 		if verboseGlobal {

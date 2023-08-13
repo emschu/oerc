@@ -187,8 +187,8 @@ func (s *SRFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 		return false, fmt.Errorf("invalid day")
 	}
 
-	if s.isMoreThanXDaysInFuture(day, 30) {
-		return false, fmt.Errorf("maximum for days in future for SRF is 30")
+	if s.isMoreThanXDaysInFuture(day, 42) {
+		return false, fmt.Errorf("maximum for days in future for SRF is 42")
 	}
 
 	if s.isMoreThanXDaysInPast(day, 15) {
