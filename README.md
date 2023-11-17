@@ -67,7 +67,7 @@ $ docker-compose up
 
 1. To get this application use one of the following commands
 
-### Golang 1.18+
+### Golang 1.19+
 ```shell
 go install github.com/emschu/oerc@latest
 ```
