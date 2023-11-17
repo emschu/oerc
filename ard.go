@@ -325,7 +325,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 // method to fetch all tv show data
 func (a *ARDParser) fetchTVShows() {
 	if !appConf.EnableTVShowCollection || isRecentlyFetched() {
-		logRecentFetch("Skip update of ard tv shows")
+		a.logRecentFetch("Skip update of ard tv shows")
 		return
 	}
 	// Create a Collector specifically for Shopify
@@ -492,7 +492,7 @@ func (a *ARDParser) linkTagsToEntriesDaily(day time.Time) {
 // method to link tags to program entries
 func (a *ARDParser) linkTagsToEntriesGeneral() {
 	if isRecentlyFetched() {
-		logRecentFetch("Skip update of ard program entry tag search")
+		a.logRecentFetch("Skip update of ard program entry tag search")
 		return
 	}
 

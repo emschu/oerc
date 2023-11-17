@@ -23,6 +23,15 @@ import (
 	"time"
 )
 
+// Parser common data structure of all parsers
+type Parser struct {
+	ChannelFamilyKey     string
+	ChannelFamily        ChannelFamily
+	db                   *gorm.DB
+	dateRangeHandler     dateRangeHandler
+	parallelWorkersCount int
+}
+
 // ParserInterface all parsers should implement this interface
 type ParserInterface interface {
 	handleDay(chn Channel, day time.Time) // process a single day for a single channel
@@ -44,6 +53,7 @@ type defaultDateRangeHandler struct {
 	DaysInPast   uint
 	DaysInFuture uint
 }
+
 type specificDateRangeHandler struct {
 	StartDateTime time.Time
 	EndDateTime   time.Time
@@ -83,15 +93,6 @@ func (d *defaultDateRangeHandler) getDateRange() *[]time.Time {
 
 func (s *specificDateRangeHandler) getDateRange() *[]time.Time {
 	return generateDateRangeBetweenDates(s.StartDateTime, s.EndDateTime)
-}
-
-// Parser common data structure of all parsers
-type Parser struct {
-	ChannelFamilyKey     string
-	ChannelFamily        ChannelFamily
-	db                   *gorm.DB
-	dateRangeHandler     dateRangeHandler
-	parallelWorkersCount int
 }
 
 // Fetch generic fetch function ready to handle all parsers, sets ChannelFamily and DB to the instance
@@ -187,7 +188,7 @@ func (p *Parser) isMoreThanXDaysInPast(day *time.Time, days uint) bool {
 	return day.Before(now) && now.Sub(*day) > time.Duration(days)*24*time.Hour
 }
 
-func logRecentFetch(customMessage string) {
+func (p *Parser) logRecentFetch(customMessage string) {
 	timeOfNextUpdate := getTimeOfNextUpdate()
 	log.Printf("%s, due to recent fetch. Next regular fetch will be at: %s. "+
 		"Use 'forceUpdate' = true to ignore this.",

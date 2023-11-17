@@ -57,7 +57,7 @@ func StartServer() {
 func setupMaterializedView() {
 	db := getDb()
 	db.Exec(`drop materialized view status_info`)
-	db.Exec(`create materialized view IF NOT EXISTS status_info as
+	db.Exec(`create materialized view status_info as
 SELECT min(program_entries.start_date_time) AS data_start_time,
        max(program_entries.end_date_time)   AS data_end_time,
        count(*) as program_entry_count,

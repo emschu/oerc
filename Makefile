@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.13.0"
-APP_VERSION_STR = "0-13-0"
+APP_VERSION_DOT = "0.14.0"
+APP_VERSION_STR = "0-14-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -39,7 +39,7 @@ all: help
 
 .PHONY: help
 help: ## show this help
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v grep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 .PHONY: clean
 clean: ## clean up project
