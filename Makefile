@@ -53,12 +53,11 @@ setup: ## install required project and (dev) dependencies
 	$(GO) get github.com/GeertJohan/go.rice/rice
 	$(GO) install github.com/mgechev/revive@latest
 	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
-	pip install --user schemathesis
+	python -m pip install --user schemathesis
 
 .PHONY: frontend
 frontend: ## build the frontend and the static rice box file
 	cd client; npm run build-prod
-	$(GO_RICE) embed-go
 
 .PHONY: build
 build: ## build dev version of application
@@ -127,3 +126,4 @@ version: ## populate the current version defined in this make file
 	sed -r -i 's/"version": "([0-9]+.[0-9]+.[0-9]+)"/"version": "'$(APP_VERSION_DOT)'"/g' client/package.json
 	cd client; npm i;
 	make frontend
+	$(GO_RICE) embed-go
