@@ -137,17 +137,16 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 			log.Fatalf("Could not find configuration file at '%s'", homeDirConfigFile)
 		}
 		return nil
-	} else {
-		if verboseGlobal {
-			log.Printf("Loading configuration from file '%s'.\n", homeDirConfigFile)
-		}
-		if homeDirCfgFileStat.Mode().IsRegular() {
-			loadYaml(homeDirConfigFile)
-			return &homeDirConfigFile
-		}
-		if allowFail {
-			log.Fatalf("Path '%s' is not a valid regular file.", homeDirConfigFile)
-		}
+	}
+	if verboseGlobal {
+		log.Printf("Loading configuration from file '%s'.\n", homeDirConfigFile)
+	}
+	if homeDirCfgFileStat.Mode().IsRegular() {
+		loadYaml(homeDirConfigFile)
+		return &homeDirConfigFile
+	}
+	if allowFail {
+		log.Fatalf("Path '%s' is not a valid regular file.", homeDirConfigFile)
 	}
 	return nil
 }
