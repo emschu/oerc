@@ -12,8 +12,6 @@ jobs:
   oerc-integration:
     name: Schemathesis Integration Tests
     runs-on: ubuntu-latest
-    needs:
-      - oerc-build
     strategy:
       matrix:
         python-version: [ '3.10' ]
