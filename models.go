@@ -50,6 +50,8 @@ type ManagedRecord struct {
 type Channel struct {
 	BaseModel
 	ManagedRecord
+
+	IsDeprecated bool `gorm:"default:false;not null" json:"is_deprecated"`
 }
 
 // TvShow entity

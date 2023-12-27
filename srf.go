@@ -202,6 +202,7 @@ func (s *SRFParser) newSrfCollector() *colly.Collector {
 	return baseCollector([]string{srfHost})
 }
 
+// SrfApiResponse Definition of SRF api response object
 type SrfApiResponse struct {
 	Data []struct {
 		Channel struct {

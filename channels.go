@@ -31,6 +31,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28106",
 				Homepage:    "https://ard.de",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -40,6 +41,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28107",
 				Homepage:    "https://www.br.de/fernsehen/index.html",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -49,6 +51,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28108",
 				Homepage:    "https://www.hr-fernsehen.de/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -58,6 +61,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28229",
 				Homepage:    "https://www.mdr.de/tv/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -67,6 +71,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28226",
 				Homepage:    "https://www.ndr.de",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -76,6 +81,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28205",
 				Homepage:    "https://www.rbb-online.de/fernsehen/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -85,6 +91,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28385",
 				Homepage:    "https://www.radiobremen.de/fernsehen/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -94,6 +101,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28486",
 				Homepage:    "https://www.sr.de/sr/home/fernsehen/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -103,6 +111,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28113",
 				Homepage:    "https://www.swrfernsehen.de/tv-programm/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -112,6 +121,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28231",
 				Homepage:    "https://www.swrfernsehen.de/tv-programm/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -121,6 +131,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28111",
 				Homepage:    "http://www.wdr.de/tv/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -130,6 +141,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28487",
 				Homepage:    "http://www.br.de/fernsehen/ard-alpha/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -139,6 +151,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28721",
 				Homepage:    "http://programm.tagesschau24.de/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -148,6 +161,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28722",
 				Homepage:    "http://www.one.ard.de/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -157,6 +171,7 @@ func getArdChannels() *[]Channel {
 				TechnicalID: "28008",
 				Homepage:    "http://www.kika.de/",
 			},
+			IsDeprecated: false,
 		},
 	}
 }
@@ -171,6 +186,7 @@ func getZdfChannels() *[]Channel {
 				TechnicalID: "zdf",
 				Homepage:    "http://www.zdf.de/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -180,6 +196,7 @@ func getZdfChannels() *[]Channel {
 				TechnicalID: "zdfinfo",
 				Homepage:    "https://www.zdf.de/dokumentation/zdfinfo-doku",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -189,6 +206,7 @@ func getZdfChannels() *[]Channel {
 				TechnicalID: "zdfneo",
 				Homepage:    "https://www.zdf.de/sender/zdfneo",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -198,6 +216,7 @@ func getZdfChannels() *[]Channel {
 				TechnicalID: "phoenix",
 				Homepage:    "http://www.phoenix.de/",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -207,6 +226,7 @@ func getZdfChannels() *[]Channel {
 				TechnicalID: "3sat",
 				Homepage:    "https://www.3sat.de",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -216,6 +236,7 @@ func getZdfChannels() *[]Channel {
 				TechnicalID: "arte",
 				Homepage:    "https://www.arte.tv/de",
 			},
+			IsDeprecated: false,
 		},
 	}
 }
@@ -230,6 +251,7 @@ func getSrfChannels() *[]Channel {
 				TechnicalID: "23FFBE1B-65CE-4188-ADD2-C724186C2C9F",
 				Homepage:    "https://www.srf.ch/tv",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -239,6 +261,7 @@ func getSrfChannels() *[]Channel {
 				TechnicalID: "E4D5AD08-C1E8-46A3-BB58-4875051D60D2",
 				Homepage:    "https://www.srf.ch/tv/srf-2",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -248,6 +271,7 @@ func getSrfChannels() *[]Channel {
 				TechnicalID: "34c2819e-e715-43d7-9026-40a443152a97",
 				Homepage:    "https://www.srf.ch/tv",
 			},
+			IsDeprecated: false,
 		},
 	}
 }
@@ -262,6 +286,7 @@ func getOrfChannels() *[]Channel {
 				TechnicalID: "orf1",
 				Homepage:    "http://tv.orf.at/program/orf1",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -271,6 +296,7 @@ func getOrfChannels() *[]Channel {
 				TechnicalID: "orf2",
 				Homepage:    "http://tv.orf.at/program/orf2",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -280,6 +306,7 @@ func getOrfChannels() *[]Channel {
 				TechnicalID: "orf3",
 				Homepage:    "https://tv.orf.at/orf3",
 			},
+			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
@@ -289,6 +316,7 @@ func getOrfChannels() *[]Channel {
 				TechnicalID: "orfs",
 				Homepage:    "http://sport.orf.at/",
 			},
+			IsDeprecated: false,
 		},
 	}
 }

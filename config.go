@@ -111,9 +111,8 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 		if err != nil {
 			if allowFail {
 				log.Fatal(err)
-			} else {
-				return nil
 			}
+			return nil
 		}
 		if providedFilePath.Mode().IsRegular() {
 			log.Printf("Loading configuration from file '%s'.\n", cleanedPath)
@@ -127,9 +126,8 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 	if err != nil {
 		if allowFail {
 			log.Fatalf("Home dir cannot be accessed - error: %v", err)
-		} else {
-			return nil
 		}
+		return nil
 	}
 	// then look in ~/.oerc.yaml
 	homeDirConfigFile := fmt.Sprintf("%s/%s", homeDir, ".oerc.yaml")
@@ -137,9 +135,8 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 	if errHomeDir != nil {
 		if allowFail {
 			log.Fatalf("Could not find configuration file at '%s'", homeDirConfigFile)
-		} else {
-			return nil
 		}
+		return nil
 	} else {
 		if verboseGlobal {
 			log.Printf("Loading configuration from file '%s'.\n", homeDirConfigFile)

@@ -125,7 +125,7 @@ func getExcludedChannelsFromSearch(db *gorm.DB) *[]uint {
 	var excludedChannelIds = make([]uint, len(GetAppConf().SearchSkipChannels))
 	for _, channel := range GetAppConf().SearchSkipChannels {
 		var channelEntry Channel
-		db.Model(&Channel{}).Where("title = ?", channel).First(&channelEntry)
+		db.Model(&Channel{}).Where("is_deprecated is false AND title = ?", channel).First(&channelEntry)
 		if channelEntry.ID > 0 {
 			excludedChannelIds = append(excludedChannelIds, channelEntry.ID)
 		} else {
