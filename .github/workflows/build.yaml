@@ -9,7 +9,7 @@ on:
       - '*'
 
 jobs:
-  oerc-integration:
+  oerc-build:
     name: Project Build
     runs-on: ubuntu-latest
     strategy:
