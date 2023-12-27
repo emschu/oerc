@@ -12,8 +12,8 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 
 - **Collecting TV program data** of 28 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
-- Running an **HTTP backend server** to access program data in JSON format (`oerc server`)
-- By default the server contains a small **client web application** for your browser to view the program data and
+- Running an **HTTP server** to access program data in a simple Web-UI (`oerc server`)
+- By default, the server contains a small **client web application** for your browser to view the program data and
   your personal program recommendations
 
 With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
@@ -47,6 +47,10 @@ regions in general.
 
 # Setup & Run
 
+## Download and start
+Download the `oerc` binary from [here](https://github.com/emschu/oerc/releases) for your platform,
+make it executable, and you are ready to start.
+
 ## With docker/docker-compose
 
 Clone this repository, and build the binary file for the container:
@@ -63,7 +67,7 @@ $ docker-compose up
 
 1. To get this application use one of the following commands
 
-### Golang 1.18+
+### Golang 1.20+
 ```shell
 go install github.com/emschu/oerc@latest
 ```
@@ -88,7 +92,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.13.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.14.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -157,7 +161,7 @@ ClientEnabled: true
 # search settings
 # only search for recommendations in the next 4 days
 SearchDaysInFuture: 5
-# these are example values. Feel free to create you own list of keywords :)
+# these are example values. Feel free to create your own list of keywords :)
 SearchKeywords:
   - Loriot
 # these channels won't be recognized during the "search" for recommendations based on your keywords

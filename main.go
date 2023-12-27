@@ -35,7 +35,7 @@ import (
 )
 
 var (
-	version       = "0.13.0"
+	version       = "0.14.0"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -146,6 +146,8 @@ func main() {
 				Action: func(c *cli.Context) error {
 					Startup(c)
 					defer Shutdown()
+
+					setupMaterializedView()
 
 					object := getStatusObject()
 					object.TvChannels = nil

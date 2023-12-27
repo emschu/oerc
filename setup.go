@@ -96,6 +96,7 @@ func handleChannelFamiliesSetup() {
 func handleChannelsSetup() {
 	db := getDb()
 
+	var listOfUpdatedChannels []uint
 	var channelFamilies []ChannelFamily
 	db.Find(&channelFamilies)
 	for _, channelFam := range channelFamilies {
@@ -122,9 +123,10 @@ func handleChannelsSetup() {
 			var channel Channel
 			c.ChannelFamily = channelFam
 
-			db.Where("hash = ?", c.Hash).First(&channel)
+			db.Where("hash = ? AND is_deprecated is false", c.Hash).First(&channel)
 			if channel.ID == 0 {
 				db.Create(&c)
+				listOfUpdatedChannels = append(listOfUpdatedChannels, c.ID)
 			} else {
 				// update
 				channel.Title = c.Title
@@ -133,17 +135,22 @@ func handleChannelsSetup() {
 				channel.Homepage = c.Homepage
 
 				db.Save(&channel)
+				listOfUpdatedChannels = append(listOfUpdatedChannels, channel.ID)
 			}
 			channelCounter++
 		}
 		if verboseGlobal {
 			log.Printf("%s: %d channels present", channelFam.Title, channelCounter)
 		}
+	}
 
-		// srf changed the identifier of srf-2 to srf-zwei
-		db.Delete(
-			&Channel{},
-			"hash = 'srf-2'",
-		)
+	// cleanup deprecation status of channels
+	var notUpdatedChannels []Channel
+	db.Model(&Channel{}).Where("is_deprecated = false AND id not IN(?)", listOfUpdatedChannels).Find(&notUpdatedChannels)
+
+	for _, deprecatedChannel := range notUpdatedChannels {
+		deprecatedChannel.IsDeprecated = true
+		db.Save(&deprecatedChannel)
+		log.Printf("Deprecating channel #%d with name '%s'\n", deprecatedChannel.ID, deprecatedChannel.Title)
 	}
 }

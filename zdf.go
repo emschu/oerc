@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	pendingHashes              sync.Map
+	pendingHashes              sync.Map // to avoid duplicate entries
 	zdfTvShowLinkMatcher       = regexp.MustCompile(`^https?://(www\.)?zdf.de/.*`)
 	zdfTvShowExternalIDMatcher = regexp.MustCompile(`[a-zA-Z0-9_-]+`)
 )
@@ -95,10 +95,11 @@ func (z *ZDFParser) getZdfAPIKey() (*string, error) {
 
 // method to process a single day of a single channel
 func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
-	startDateStr := day.Format(time.RFC3339)
-	endDate := day.AddDate(0, 0, 1)
-	endDateStr := endDate.Format(time.RFC3339)
+	var startDateStr = day.Format(time.RFC3339)
+	var endDate = day.AddDate(0, 0, 1)
+	var endDateStr = endDate.Format(time.RFC3339)
 
+	// TODO pagination?
 	apiURL := fmt.Sprintf(
 		"%s&tvServices=%s&from=%s&to=%s&page=1",
 		zdfAPIProgramEntries,
@@ -126,7 +127,11 @@ func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 			broadcast.Title,
 			broadcast.TvServiceID,
 		})
-		z.db.Model(ProgramEntry{}).Where("hash = ?", hash).Where("channel_id = ?", channel.ID).Preload("ImageLinks").Find(&programEntry)
+		z.db.Model(ProgramEntry{}).
+			Where("hash = ?", hash).
+			Where("channel_id = ?", channel.ID).
+			Preload("ImageLinks").
+			Find(&programEntry)
 		programEntry.Hash = hash
 		if programEntry.ID >= 0 && programEntry.isRecentlyUpdated() {
 			atomic.AddUint64(&status.TotalSkippedPE, 1)
@@ -134,6 +139,7 @@ func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 		}
 		_, ok := pendingHashes.Load(hash)
 		if ok {
+			// the same hash is already getting added
 			continue
 		}
 		pendingHashes.Store(hash, true)
@@ -287,7 +293,7 @@ func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemRe
 // fetchTvShows method to fetch zdf tv shows
 func (z *ZDFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
-		logRecentFetch("Skip update of zdf tv shows")
+		z.logRecentFetch("Skip update of zdf tv shows")
 		return
 	}
 	var tvShowGroups = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0+-+9"}

@@ -18,15 +18,7 @@
  */
 import {AfterViewInit, Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
-import {
-  DataGroup,
-  IdType,
-  Timeline,
-  TimelineEventPropertiesResult,
-  TimelineItem,
-  TimelineOptions,
-  TimelineWindow
-} from 'vis-timeline/esnext/esm';
+import {DataGroup, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline/esnext/esm';
 import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import {environment} from '../../../environments/environment';
@@ -35,8 +27,11 @@ import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import * as flatPickrLang from 'flatpickr/dist/l10n/de';
 import * as visDataTypes from 'vis-data/declarations/data-interface';
+import {UpdateItem} from 'vis-data/declarations/data-interface';
 import {DataSet} from 'vis-data/esnext/esm';
 import dayjs from 'dayjs';
+import {DataItem} from 'vis-timeline';
+import {DataInterface} from 'vis-data';
 import FlatPickrInstance = flatpickr.Instance;
 
 // interface GroupOrder {
@@ -54,28 +49,43 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(public apiService: ApiService,
               private stateService: StateService) {
-    this.items = new DataSet<TimelineItem>();
+    this.items = new DataSet();
+    this.channels = [];
   }
 
   private static i = 0;
-  static channelMap = new Map<number, number>([
-    [1, TimelineComponent.i++],
-    [16, TimelineComponent.i++],
-    [9, TimelineComponent.i++],
-    [5, TimelineComponent.i++],
-    [20, TimelineComponent.i++],
-    [21, TimelineComponent.i++],
-    [17, TimelineComponent.i++],
-    [18, TimelineComponent.i++],
-    [14, TimelineComponent.i++],
-    [13, TimelineComponent.i++],
-    [2, TimelineComponent.i++],
-    [12, TimelineComponent.i++],
-    [11, TimelineComponent.i++],
-    [4, TimelineComponent.i++],
-    [19, TimelineComponent.i++],
-  ]);
-  public readonly items: DataSet<TimelineItem>;
+  static channelPreferencesMap = [
+    'ARD – Das Erste',
+    'ZDF',
+    '3Sat',
+    'ARTE',
+    'Phoenix',
+    'ZDFinfo',
+    'ZDFneo',
+    'SWR RP Fernsehen',
+    'NDR Fernsehen',
+    'RBB Fernsehen',
+    'Tagesschau24',
+    'WDR Fernsehen',
+    'ARD ALPHA',
+    'ARD One',
+    'MDR Fernsehen',
+    'SWR BW Fernsehen',
+    'BR Fernsehen',
+    'HR Fernsehen',
+    'SR Fernsehen',
+    'KIKA',
+    'Radio Bremen TV',
+    'ORF eins',
+    'ORF 2',
+    'ORF III',
+    'ORF Sport +',
+    'SRF 1',
+    'SRF info',
+    'SRF zwei'
+  ];
+  public channels: Channel[];
+  public items: DataInterface<DataItem, 'id'>;
   public timeLine?: Timeline;
   currentProgramEntry?: ProgramEntry;
   isModalOpen = false;
@@ -96,18 +106,22 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * TODO: make configuration option
-   * @param singleChannelID an id
+   * @param singleChannelTitle an id
    * @private
    */
-  private static getGroupOrder(singleChannelID: number): number {
-    if (TimelineComponent.channelMap.has(singleChannelID)) {
-      return TimelineComponent.channelMap.get(singleChannelID) as number;
+  private static getGroupOrder(singleChannelTitle: string | undefined): number {
+    if (singleChannelTitle && TimelineComponent.channelPreferencesMap.indexOf(singleChannelTitle) > -1) {
+      return TimelineComponent.channelPreferencesMap.indexOf(singleChannelTitle);
     }
     return 100;
   }
 
   ngOnInit(): void {
     this.initTimeLine();
+    this.apiService.channels().pipe(first()).subscribe((it) => {
+        const channels = it.data;
+      }
+    );
 
     this.apiService.statusSubject.pipe(first()).subscribe(statusResponse => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
@@ -228,7 +242,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         if (a.id === b.id) {
           return 0;
         }
-        return TimelineComponent.getGroupOrder(a.id as number) > TimelineComponent.getGroupOrder(b.id as number) ? 1 : -1;
+        return TimelineComponent.getGroupOrder(a.content?.toString()) > TimelineComponent.getGroupOrder(b.content?.toString()) ? 1 : -1;
       },
       margin: {
         item: 5,
@@ -248,9 +262,8 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
       this.stateService.setShowDeprecatedEntries(value);
-
       if (!value) {
-        this.items.clear();
+        this.items = new DataSet();
       }
       this.loadProgramItems();
     });
@@ -281,7 +294,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
           };
         });
 
-        const programList: visDataTypes.DeepPartial<TimelineItem[]> = [];
+        const programList: visDataTypes.DeepPartial<DataItem[]> = [];
 
         function getAdditionalTitleInfo(singleProgramEntry: ProgramEntryEssential): string {
           // todo i18n
@@ -305,10 +318,10 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
             className: singleProgramEntry.is_deprecated ? 'deprecated-item' : '',
           });
         });
-        this.items.update(programList);
+        this.items.getDataSet().update(programList);
 
         if (showDeprecatedEntries) {
-          const deprecatedEntries: visDataTypes.DeepPartial<TimelineItem[]> = [];
+          const deprecatedEntries: visDataTypes.DeepPartial<UpdateItem<DataItem, 'id'>[]> = [];
           programEntries.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
             // this is a very expensive loop
             const overlaps = this.items.get({
@@ -392,7 +405,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
               className: 'deprecated-item'
             });
           });
-          this.items.updateOnly(deprecatedEntries);
+          this.items.getDataSet().updateOnly(deprecatedEntries);
         }
 
         setTimeout(() => {

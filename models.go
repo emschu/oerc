@@ -22,6 +22,18 @@ import (
 	"time"
 )
 
+const materializedStatusView = `SELECT min(program_entries.start_date_time) AS data_start_time,
+	max(program_entries.end_date_time)   AS data_end_time,
+	count(*) as program_entry_count,
+	(SELECT count(*) from channel_families) as channel_family_count,
+	(SELECT count(*) from channels) as channel_count,
+	(SELECT count(*) from image_links) as image_link_count,
+	(SELECT count(*) from tv_shows) as tv_show_count,
+	(SELECT count(*) from log_entries) as log_count,
+	(SELECT count(*) from recommendations) as recommendation_count,
+	now() as created_at
+	FROM program_entries`
+
 // BaseModel base model for all entities
 type BaseModel struct {
 	ID        uint      `gorm:"primary_key" json:"id"`
@@ -50,6 +62,8 @@ type ManagedRecord struct {
 type Channel struct {
 	BaseModel
 	ManagedRecord
+
+	IsDeprecated bool `gorm:"default:false;not null" json:"is_deprecated"`
 }
 
 // TvShow entity

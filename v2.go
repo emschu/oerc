@@ -56,7 +56,7 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramRe
 func getChannels() *[]Channel {
 	db := getDb()
 	var channels []Channel
-	db.Model(&Channel{}).Preload("ChannelFamily").Find(&channels)
+	db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Find(&channels)
 	return &channels
 }
 

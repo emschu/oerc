@@ -53,7 +53,7 @@ func (s *SRFParser) preProcess() bool {
 // fetchTvShowSRF: This method checks all the tv shows
 func (s *SRFParser) fetchTVShows() {
 	if !GetAppConf().EnableTVShowCollection || isRecentlyFetched() {
-		logRecentFetch("Skip update of srf tv shows")
+		s.logRecentFetch("Skip update of srf tv shows")
 		return
 	}
 
@@ -202,6 +202,7 @@ func (s *SRFParser) newSrfCollector() *colly.Collector {
 	return baseCollector([]string{srfHost})
 }
 
+// SrfApiResponse Definition of SRF api response object
 type SrfApiResponse struct {
 	Data []struct {
 		Channel struct {
