@@ -147,6 +147,8 @@ func main() {
 					Startup(c)
 					defer Shutdown()
 
+					setupMaterializedView()
+
 					object := getStatusObject()
 					object.TvChannels = nil
 					object.TvChannelFamilies = nil

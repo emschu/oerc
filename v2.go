@@ -295,8 +295,6 @@ func getStatusObject() *StatusResponse {
 
 	db := getDb()
 
-	db.Raw("REFRESH MATERIALIZED VIEW order_summary", nil)
-
 	var statusInfoModel = StatusInfoModel{}
 
 	statusViewQueryErr := db.Model(StatusInfoModel{}).Find(&statusInfoModel)

@@ -1,5 +1,12 @@
 # Changelog oerc
 
+## 0.14.0 - 2023/11/17
+- go 1.19
+- dependency update
+- Add dynamic channel integration into UI, static sorting
+- Channels can be deprecated now: Mechanism to add and deprecate channels in channel list
+- Improve update handling of materialized view for fast status info
+
 ## 0.13.0 - 2023/08/12
 - update dependencies
 - Use new SRF JSON API instead of markup parsing, fixing fetch process for SRF
