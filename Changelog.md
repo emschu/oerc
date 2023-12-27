@@ -1,7 +1,7 @@
 # Changelog oerc
 
 ## 0.14.0 - 2023/11/17
-- go 1.19
+- go 1.20
 - dependency update
 - Add dynamic channel integration into UI, static sorting
 - Channels can be deprecated now: Mechanism to add and deprecate channels in channel list

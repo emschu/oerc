@@ -1,6 +1,6 @@
 module github.com/emschu/oerc
 
-go 1.19
+go 1.20
 
 require (
 	github.com/GeertJohan/go.rice v1.0.3
