@@ -42,7 +42,7 @@ jobs:
       - name: npm install
         run: |
           cd client
-          npm install --omit=optional
+          npm install
 
       - name: Build Go Codebase
         run: make build
