@@ -91,30 +91,6 @@ export enum AdapterFamilyEnum {
   SRF = 'SRF',
 }
 
-export enum ChannelKeyEnum {
-  ARD = 'ARD',
-  ZDF = 'ZDF',
-  ZDF_INFO = 'ZDF_INFO',
-  ZDF_NEO = 'ZDF_NEO',
-  DREISAT = 'DREISAT',
-  ARTE = 'ARTE',
-  BR = 'BR',
-  HR = 'HR',
-  MDR = 'MDR',
-  NDR = 'NDR',
-  RBB = 'RBB',
-  RADIO_BREMEN_TV = 'RADIO_BREMEN_TV',
-  SR = 'SR',
-  SWR_BW = 'SWR_BW',
-  SWR_RP = 'SWR_RP',
-  WDR = 'WDR',
-  ALPHA = 'ALPHA',
-  TAGESSCHAU_24 = 'TAGESSCHAU_24',
-  ONE = 'ONE',
-  KIKA = 'KIKA',
-  PHOENIX = 'PHOENIX',
-}
-
 export interface ProgramEntry {
   id: number;
   created_at: Date;
