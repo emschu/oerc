@@ -64,7 +64,7 @@ func (z *ZDFParser) preProcess() bool {
 	}
 	z.zdfAPIKey = *zdfAPIKey
 
-	z.parallelWorkersCount = 4
+	z.parallelWorkersCount = 3
 	return true
 }
 

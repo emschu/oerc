@@ -65,9 +65,8 @@ $ docker-compose up
 
 ## Manual Installation
 
-1. To get this application use one of the following commands
+1. To obtain this application use the following command
 
-### Golang 1.20+
 ```shell
 go install github.com/emschu/oerc@latest
 ```
@@ -92,7 +91,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.14.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.15.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria

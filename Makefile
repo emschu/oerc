@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.14.0"
-APP_VERSION_STR = "0-14-0"
+APP_VERSION_DOT = "0.15.0"
+APP_VERSION_STR = "0-15-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)

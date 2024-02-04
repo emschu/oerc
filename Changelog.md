@@ -1,6 +1,10 @@
 # Changelog oerc
 
-## 0.14.0 - 2023/11/17
+## 0.15.0 - 2024/02-04
+- Fix ORF fetching
+- update go and npm dependencies
+
+## 0.14.0 - 2023/12/27
 - go 1.20
 - dependency update
 - Add dynamic channel integration into UI, static sorting

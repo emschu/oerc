@@ -178,7 +178,7 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 
 		var url string
 		url, _ = detailLink.Attr("href")
-		url = fmt.Sprintf("%s%s", orfProgramHostWithPrefix, url)
+		url = fmt.Sprintf("%s/%s", orfProgramHostWithPrefix, url)
 
 		if len(url) > 0 && !orfProgramEntryLinkMatcher.MatchString(url) {
 			appLog(fmt.Sprintf("Unexpected/Invalid orf program entry on page '%s'. Skipping entry with url '%s'.",
