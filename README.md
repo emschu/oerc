@@ -91,7 +91,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.15.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.16.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -301,7 +301,7 @@ Be sure to run `make build` and `make spec` (if you updated something there) bef
 #### Development postgresql container
 
 ```console
-# docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:13.5-alpine 
+# docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:14-alpine 
 ```
 
 ### Contributing

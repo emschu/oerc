@@ -1,5 +1,9 @@
 # Changelog oerc
 
+## 0.16.0 - 2024/07/04
+- Golang 1.21
+- Dependency update
+
 ## 0.15.0 - 2024/02-04
 - Fix ORF fetching
 - update go and npm dependencies
