@@ -19,7 +19,7 @@ version: "3"
 
 services:
   db:
-    image: postgres:13.5-alpine
+    image: postgres:14.15-alpine
     container_name: oerc-db
     environment:
       POSTGRES_PASSWORD: root
@@ -52,7 +52,7 @@ services:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: 'nc -zv 127.0.0.1 8080'
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 5s
       timeout: 5s
       retries: 10
