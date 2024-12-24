@@ -17,7 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 # Build
-FROM golang:1.22-alpine as build
+FROM golang:1.23-alpine as build
 RUN mkdir /app
 WORKDIR /app
 COPY go.mod ./
@@ -27,7 +27,7 @@ COPY . ./project
 RUN cd ./project && go build -o /app/oerc
 
 
-FROM golang:1.22-alpine
+FROM golang:1.23-alpine
 MAINTAINER emschu <emschu@mailbox.org>
 RUN mkdir /app && apk add --no-cache tzdata;
 WORKDIR /app
