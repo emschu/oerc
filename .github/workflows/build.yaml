@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         node-version: [ '20.x' ]
-        go-version: [ '1.21', '1.22']
+        go-version: [ '1.22', '1.23' ]
 
     steps:
       - uses: actions/checkout@v3
