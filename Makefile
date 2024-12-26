@@ -1,6 +1,6 @@
 #
 # oerc, alias oer-collector
-# Copyright (C) 2021-2023 emschu[aet]mailbox.org
+# Copyright (C) 2021-2024 emschu[aet]mailbox.org
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.16.0"
-APP_VERSION_STR = "0-16-0"
+APP_VERSION_DOT = "0.17.0"
+APP_VERSION_STR = "0-17-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)

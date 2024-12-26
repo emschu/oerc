@@ -1,6 +1,6 @@
 #
 # oerc, alias oer-collector
-# Copyright (C) 2021-2023 emschu[aet]mailbox.org
+# Copyright (C) 2021-2024 emschu[aet]mailbox.org
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -17,7 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 # Build
-FROM golang:1.21-alpine as build
+FROM golang:1.23-alpine as build
 RUN mkdir /app
 WORKDIR /app
 COPY go.mod ./
@@ -27,7 +27,7 @@ COPY . ./project
 RUN cd ./project && go build -o /app/oerc
 
 
-FROM golang:1.21-alpine
+FROM golang:1.23-alpine
 MAINTAINER emschu <emschu@mailbox.org>
 RUN mkdir /app && apk add --no-cache tzdata;
 WORKDIR /app

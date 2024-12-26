@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2023 emschu[aet]mailbox.org
+// Copyright (C) 2021-2024 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -486,7 +486,7 @@ func getSearchHandler(context *gin.Context) {
 
 	db := getDb()
 	var programEntryList []ProgramEntry
-	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
+	db.Model(&ProgramEntry{}).Where("start_date_time >= (NOW() - interval '1 day') AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
 		Offset(int(offset)).Limit(int(limit)).
 		Order("start_date_time ASC").
 		Preload("ImageLinks").

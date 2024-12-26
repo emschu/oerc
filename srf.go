@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2023 emschu[aet]mailbox.org
+// Copyright (C) 2021-2024 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -112,7 +112,7 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 		log.Printf(errorMessage)
 		return
 	}
-	var apiObject SrfApiResponse
+	var apiObject srfApiResponse
 	jsonErr := json.Unmarshal([]byte(*response), &apiObject)
 	if jsonErr != nil {
 		errorMessage := fmt.Sprintf("Cannot decode SRF API response to JSON\n")
@@ -173,9 +173,7 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 				programEntry.considerTagExists(&srfEntry.Genre)
 			}
 
-			if !programEntry.doesImageLinkExist(srfEntry.ImageURL) {
-				programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: srfEntry.ImageURL})
-			}
+			programEntry.considerImageLinkExists(trimAndSanitizeString(srfEntry.ImageURL))
 
 			programEntry.saveProgramEntryRecord(s.db)
 		}
@@ -202,8 +200,8 @@ func (s *SRFParser) newSrfCollector() *colly.Collector {
 	return baseCollector([]string{srfHost})
 }
 
-// SrfApiResponse Definition of SRF api response object
-type SrfApiResponse struct {
+// srfApiResponse Definition of SRF api response object
+type srfApiResponse struct {
 	Data []struct {
 		Channel struct {
 			Livestream struct {

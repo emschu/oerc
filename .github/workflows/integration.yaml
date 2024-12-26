@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.10' ]
+        python-version: [ '3.11' ]
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: '1.21'
+          go-version: '1.23'
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -36,6 +36,9 @@ jobs:
           key: ${{ runner.os }}-pip
           restore-keys: |
             ${{ runner.os }}-pip-cache-oerc
+
+      - name: Install libraries
+        run: sudo apt-get install -y docker-compose
 
       - name: Build oerc and startup server
         run: |

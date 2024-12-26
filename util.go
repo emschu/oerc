@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2023 emschu[aet]mailbox.org
+// Copyright (C) 2021-2024 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -449,27 +449,6 @@ func buildHash(in []string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(val)))
 }
 
-// considerTagExists: adds a tag to the program entry.
-func (p *ProgramEntry) considerTagExists(mainTagName *string) {
-	var existingTags []string
-	if len(p.Tags) > 0 {
-		existingTags = strings.Split(p.Tags, ";")
-	} else {
-		existingTags = []string{}
-	}
-	for _, tag := range existingTags {
-		if tag == *mainTagName {
-			return
-		}
-	}
-	existingTags = append(existingTags, trimAndSanitizeString(*mainTagName))
-	if verboseGlobal {
-		log.Printf("Save new tag '%s' to program entry #%d\n", *mainTagName, p.ID)
-	}
-
-	p.Tags = strings.Join(existingTags, ";")
-}
-
 // this definition is important for default values
 var settings = map[string]string{
 	settingKeyLastFetch:             "",
@@ -548,7 +527,6 @@ func resetErr() {
 // general connectivity check, should be called on startup of the fetch process
 func connectivityCheck() (bool, error) {
 	hostsToCheck := &[]string{
-		ardHostWithPrefix,
 		zdfHost,
 		orfHostWithPrefix,
 		srfHostWithPrefix,

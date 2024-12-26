@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2023 emschu[aet]mailbox.org
+// Copyright (C) 2021-2024 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -20,7 +20,7 @@ import "testing"
 
 func TestGetChannels(t *testing.T) {
 	ardChannels := getArdChannels()
-	if len(*ardChannels) != 15 {
+	if len(*ardChannels) != 14 {
 		t.Fatalf("Invalid amount of ard channels: %d", len(*ardChannels))
 	}
 	zdfChannels := getZdfChannels()
