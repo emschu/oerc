@@ -77,7 +77,7 @@ func (z *ZDFParser) getZdfAPIKey() (*string, error) {
 		return nil, fmt.Errorf("problem fetching zdf url '%s'", apiURL)
 	}
 	var apiToken string
-	doc.Find("script").Each(func(i int, selection *goquery.Selection) {
+	doc.Find("script").Each(func(_ int, selection *goquery.Selection) {
 		html, _ := selection.Html()
 		if strings.Contains(html, "IMPORTANT CONFIGURATION!") {
 			extractionPattern := regexp.MustCompile(`apiToken: &#39;(.*)&#39;`)
@@ -200,7 +200,7 @@ func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 }
 
 // atm only useful in zdf context
-func (p *ProgramEntry) handleProgramImageLinks(broadcast *ZdfBroadcast) {
+func (p *ProgramEntry) handleProgramImageLinks(broadcast *zdfBroadcast) {
 	if broadcast == nil || p == nil {
 		// nothing to do here
 		return
@@ -231,7 +231,7 @@ func (p *ProgramEntry) handleProgramImageLinks(broadcast *ZdfBroadcast) {
 	}
 }
 
-func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastResponse, error) {
+func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*zdfBroadcastResponse, error) {
 	headers := map[string]string{
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
@@ -245,7 +245,7 @@ func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastRespon
 		log.Println(errMsg)
 		return nil, err
 	}
-	var response ZdfBroadcastResponse
+	var response zdfBroadcastResponse
 	jsonErr := json.Unmarshal([]byte(*resp), &response)
 	if jsonErr != nil {
 		errMsg := fmt.Sprintf("Invalid json format in zdf api response. url: '%s'", apiURL)
@@ -256,7 +256,7 @@ func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastRespon
 	return &response, nil
 }
 
-func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemResponse, error) {
+func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*zdfProgramItemResponse, error) {
 	headers := map[string]string{
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
@@ -270,7 +270,7 @@ func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*ZdfProgramItemRe
 		log.Println(errMsg)
 		return nil, err
 	}
-	var response ZdfProgramItemResponse
+	var response zdfProgramItemResponse
 	jsonErr := json.Unmarshal([]byte(*resp), &response)
 	if jsonErr != nil {
 		errMsg := fmt.Sprintf("Invalid json format: %s", jsonErr.Error())
@@ -302,7 +302,7 @@ func (z *ZDFParser) fetchTVShows() {
 			appLog(fmt.Sprintf("Problem with http call to zdf %v", err))
 			continue
 		}
-		document.Find(".b-content-teaser-item h3 a").Each(func(i int, selection *goquery.Selection) {
+		document.Find(".b-content-teaser-item h3 a").Each(func(_ int, selection *goquery.Selection) {
 			tvShowPage := selection.AttrOr("href", "")
 			if len(tvShowPage) > 0 {
 				tvShowLinks = append(tvShowLinks, zdfHost+tvShowPage)
@@ -385,13 +385,13 @@ func (z *ZDFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	return true, nil
 }
 
-// ZdfBroadcastResponse api response struct definitions
-type ZdfBroadcastResponse struct {
-	BroadCasts []ZdfBroadcast `json:"http://zdf.de/rels/cmdm/broadcasts"`
+// zdfBroadcastResponse api response struct definitions
+type zdfBroadcastResponse struct {
+	BroadCasts []zdfBroadcast `json:"http://zdf.de/rels/cmdm/broadcasts"`
 }
 
-// ZdfBroadcast zdf api object
-type ZdfBroadcast struct {
+// zdfBroadcast zdf api object
+type zdfBroadcast struct {
 	PosID                 string    `json:"posId"`
 	PlayoutID             string    `json:"playoutId"`
 	AirtimeBegin          time.Time `json:"airtimeBegin"`
@@ -402,19 +402,19 @@ type ZdfBroadcast struct {
 	Title                 string    `json:"title"`
 	SubTitle              string    `json:"subtitle"`
 	Text                  string    `json:"text"`
-	Images                ZdfImage  `json:"http://zdf.de/rels/image"`
+	Images                zdfImage  `json:"http://zdf.de/rels/image"`
 	TvServiceID           string    `json:"tvServiceId"`
 	ProgrammeItem         string    `json:"http://zdf.de/rels/cmdm/programme-item"`
 }
 
-// ZdfImage zdf api object
-type ZdfImage struct {
+// zdfImage zdf api object
+type zdfImage struct {
 	Source  string          `json:"source"`
-	Layouts ZdfImageLayouts `json:"layouts"`
+	Layouts zdfImageLayouts `json:"layouts"`
 }
 
-// ZdfImageLayouts zdf api object
-type ZdfImageLayouts struct {
+// zdfImageLayouts zdf api object
+type zdfImageLayouts struct {
 	W2400 string `json:"2400x1350,omitempty"`
 	W1920 string `json:"1920x1080,omitempty"`
 	W1280 string `json:"1280x720,omitempty"`
@@ -426,8 +426,8 @@ type ZdfImageLayouts struct {
 	W240  string `json:"240x270,omitempty"`
 }
 
-// ZdfProgramItemResponse zdf api object
-type ZdfProgramItemResponse struct {
+// zdfProgramItemResponse zdf api object
+type zdfProgramItemResponse struct {
 	Category string `json:"category,omitempty"`
 	Genre    string `json:"genre,omitempty"`
 }

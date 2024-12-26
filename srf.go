@@ -112,7 +112,7 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 		log.Printf(errorMessage)
 		return
 	}
-	var apiObject SrfApiResponse
+	var apiObject srfApiResponse
 	jsonErr := json.Unmarshal([]byte(*response), &apiObject)
 	if jsonErr != nil {
 		errorMessage := fmt.Sprintf("Cannot decode SRF API response to JSON\n")
@@ -200,8 +200,8 @@ func (s *SRFParser) newSrfCollector() *colly.Collector {
 	return baseCollector([]string{srfHost})
 }
 
-// SrfApiResponse Definition of SRF api response object
-type SrfApiResponse struct {
+// srfApiResponse Definition of SRF api response object
+type srfApiResponse struct {
 	Data []struct {
 		Channel struct {
 			Livestream struct {

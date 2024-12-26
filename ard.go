@@ -162,17 +162,17 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	}
 }
 
-func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ArdApiChannelProgramItem, bool) {
+func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ardApiChannelProgramItem, bool) {
 	formattedDate := day.Format("2006-01-02")
 	// the following line generated the URL we fetch the program entries of a single channel of a single day
 	url := fmt.Sprintf("%s/program/api/program?day=%s&channelIds=%s&mode=channel", ardHostWithPrefix, formattedDate, channel.Hash)
 
-	response, err := getArdApiResponseForDailyProgramByChannel[ArdDailyProgramOfChannelResponse](url)
+	response, err := getArdApiResponseForDailyProgramByChannel[ardDailyProgramOfChannelResponse](url)
 	if err != nil {
 		appLog(fmt.Sprintf("error in call to ard url '%s': %v", url, err))
 		return nil, true
 	}
-	var flattenedProgramItems []ArdApiChannelProgramItem
+	var flattenedProgramItems []ardApiChannelProgramItem
 	for _, channel := range response.Channels {
 		for _, slot := range channel.TimeSlots {
 			for _, item := range slot {
@@ -271,7 +271,7 @@ func (a *ARDParser) fetchTVShows() {
 		tvShowApiURLs = append(tvShowApiURLs, fmt.Sprintf("%s%s", ardMediaThekApiTvShowPath, categoryString))
 	}
 	for _, apiUrl := range tvShowApiURLs {
-		response, err := getArdApiResponseForTvShows[ArdApiTvShowResponse](fmt.Sprintf("%s?pageSize=10", apiUrl))
+		response, err := getArdApiResponseForTvShows[ardApiTvShowResponse](fmt.Sprintf("%s?pageSize=10", apiUrl))
 		if err != nil {
 			appLog(fmt.Sprintf("Problem fetching URL for tv show:'%s'", apiUrl))
 			continue
@@ -281,7 +281,7 @@ func (a *ARDParser) fetchTVShows() {
 		var pageCount = int(math.Ceil(float64(totalElementsOfCategory / ardApiPageSizeLimit)))
 
 		for page := 0; page < pageCount; page++ {
-			response, err = getArdApiResponseForTvShows[ArdApiTvShowResponse](fmt.Sprintf("%s?pageSize=%d&pageNumber=%d", apiUrl, ardApiPageSizeLimit, page))
+			response, err = getArdApiResponseForTvShows[ardApiTvShowResponse](fmt.Sprintf("%s?pageSize=%d&pageNumber=%d", apiUrl, ardApiPageSizeLimit, page))
 
 			for _, teaser := range response.Teasers {
 				var hash = buildHash([]string{
@@ -356,7 +356,7 @@ func (a *ARDParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	return true, nil
 }
 
-type ArdDailyProgramOfChannelResponse struct {
+type ardDailyProgramOfChannelResponse struct {
 	Links struct {
 		Self struct {
 			Type  string `json:"type"`
@@ -364,7 +364,7 @@ type ArdDailyProgramOfChannelResponse struct {
 			Href  string `json:"href"`
 		} `json:"self"`
 	} `json:"links"`
-	Channels      []ArdApiChannel `json:"channels"`
+	Channels      []ardApiChannel `json:"channels"`
 	TrackingPiano struct {
 		PageTitle         string `json:"page_title"`
 		PageInstitutionId string `json:"page_institution_id"`
@@ -382,14 +382,14 @@ type ArdDailyProgramOfChannelResponse struct {
 	CreationDate time.Time `json:"creationDate"`
 }
 
-type ArdApiChannel struct {
+type ardApiChannel struct {
 	Id            string `json:"id"`
 	TrackingPiano struct {
 		WidgetType  string `json:"widget_type"`
 		WidgetTitle string `json:"widget_title"`
 		WidgetId    string `json:"widget_id"`
 	} `json:"trackingPiano"`
-	TimeSlots          [][]ArdApiChannelProgramItem `json:"timeSlots"`
+	TimeSlots          [][]ardApiChannelProgramItem `json:"timeSlots"`
 	PublicationService struct {
 		Name    string `json:"name"`
 		Partner string `json:"partner"`
@@ -403,7 +403,7 @@ type ArdApiChannel struct {
 	} `json:"localChannelList"`
 }
 
-type ArdApiChannelProgramItem struct {
+type ardApiChannelProgramItem struct {
 	Id    string `json:"id"`
 	Links struct {
 		Self struct {
@@ -530,7 +530,7 @@ type ArdApiChannelProgramItem struct {
 	TrackingSplit int    `json:"trackingSplit,omitempty"`
 }
 
-type ArdApiTvShowResponse struct {
+type ardApiTvShowResponse struct {
 	AZContent       bool   `json:"aZContent"`
 	CompilationType string `json:"compilationType"`
 	Id              string `json:"id"`
@@ -553,7 +553,7 @@ type ArdApiTvShowResponse struct {
 	} `json:"links"`
 	Size          string               `json:"size"`
 	Swipeable     bool                 `json:"swipeable"`
-	Teasers       []ArdApiTvShowTeaser `json:"teasers"`
+	Teasers       []ardApiTvShowTeaser `json:"teasers"`
 	Title         string               `json:"title"`
 	TitleVisible  bool                 `json:"titleVisible"`
 	TrackingPiano struct {
@@ -566,7 +566,7 @@ type ArdApiTvShowResponse struct {
 	UserVisibility string `json:"userVisibility"`
 }
 
-type ArdApiTvShowTeaser struct {
+type ardApiTvShowTeaser struct {
 	AvailableSeasons []string `json:"availableSeasons,omitempty"`
 	BinaryFeatures   []string `json:"binaryFeatures,omitempty"`
 	CoreAssetType    string   `json:"coreAssetType,omitempty"`
