@@ -486,7 +486,7 @@ func getSearchHandler(context *gin.Context) {
 
 	db := getDb()
 	var programEntryList []ProgramEntry
-	db.Model(&ProgramEntry{}).Where("start_date_time >= NOW() AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
+	db.Model(&ProgramEntry{}).Where("start_date_time >= (NOW() - interval '1 day') AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
 		Offset(int(offset)).Limit(int(limit)).
 		Order("start_date_time ASC").
 		Preload("ImageLinks").
