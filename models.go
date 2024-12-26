@@ -19,6 +19,8 @@ package main
 // database struct(ure) models
 
 import (
+	"log"
+	"strings"
 	"time"
 )
 
@@ -124,4 +126,44 @@ type Recommendation struct {
 	ChannelID      uint         `gorm:"index;not null" json:"channel_id"`
 	StartDateTime  *time.Time   `gorm:"index;not null" json:"start_date_time"`
 	Keywords       string       `gorm:"size:1024" json:"keywords"`
+}
+
+func (p *ProgramEntry) doesImageLinkExist(url string) bool {
+	for _, entryDetails := range p.ImageLinks {
+		if entryDetails.URL == url {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *ProgramEntry) considerImageLinkExists(url string) {
+	for _, entryDetails := range p.ImageLinks {
+		if entryDetails.URL == url {
+			return
+		}
+	}
+	p.ImageLinks = append(p.ImageLinks, ImageLink{URL: url})
+	return
+}
+
+// considerTagExists: adds a tag to the program entry.
+func (p *ProgramEntry) considerTagExists(mainTagName *string) {
+	var existingTags []string
+	if len(p.Tags) > 0 {
+		existingTags = strings.Split(p.Tags, ";")
+	} else {
+		existingTags = []string{}
+	}
+	for _, tag := range existingTags {
+		if tag == *mainTagName {
+			return
+		}
+	}
+	existingTags = append(existingTags, trimAndSanitizeString(*mainTagName))
+	if verboseGlobal {
+		log.Printf("Save new tag '%s' to program entry #%d\n", *mainTagName, p.ID)
+	}
+
+	p.Tags = strings.Join(existingTags, ";")
 }

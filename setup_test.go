@@ -37,7 +37,7 @@ func TestSetupPersistence(t *testing.T) {
 
 	// test channels are set up
 	channels := getChannels()
-	if len(*channels) != 28 {
+	if len(*channels) != 27 {
 		t.Fatalf("Invalid number of channels after db setup: %d.\n", len(*channels))
 	}
 	// test channel families are set up

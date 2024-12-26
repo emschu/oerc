@@ -20,7 +20,7 @@ import "testing"
 
 func TestGetChannels(t *testing.T) {
 	ardChannels := getArdChannels()
-	if len(*ardChannels) != 15 {
+	if len(*ardChannels) != 14 {
 		t.Fatalf("Invalid amount of ard channels: %d", len(*ardChannels))
 	}
 	zdfChannels := getZdfChannels()

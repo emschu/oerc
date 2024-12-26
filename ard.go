@@ -29,18 +29,17 @@ import (
 )
 
 const (
-	ardHost                       = "programm-api.ard.de"
-	ardHostWithPrefix             = "https://" + ardHost
-	ardMediaThekApiHost           = "api.ardmediathek.de"
-	ardMediaThekApiHostWithPrefix = "https://" + ardMediaThekApiHost
-	ardMediaThekApiTvShowPath     = "https://" + ardMediaThekApiHost + "/page-gateway/widgets/ard/editorials/"
+	ardHost                   = "programm-api.ard.de"
+	ardHostWithPrefix         = "https://" + ardHost
+	ardMediaThekApiHost       = "api.ardmediathek.de"
+	ardMediaThekApiTvShowPath = "https://" + ardMediaThekApiHost + "/page-gateway/widgets/ard/editorials/"
+	ardDefaultImageWidth      = "600"
 )
 
 var (
-	// TODO add most recent matchers after update
-	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
-	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
-	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_.-]+\.(jpe?g|png|JPE?G|PNG|SEA|GIF))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG|sea|gif)))`)
+	ardProgramURLMatcher   = regexp.MustCompile(`^https:\/\/www\.ardmediathek\.de\/video\/.+`)
+	ardProgramPageMatcher  = regexp.MustCompile(`^https:\/\/programm\-api\.ard\.de\/program\/api\/teaser\?teaserId=.+`)
+	ardImageLinkUrlMatcher = regexp.MustCompile(`^https:\/\/api\.ardmediathek\.de\/image-service\/image.+`)
 )
 
 // ARDParser struct of ard parser code
@@ -52,27 +51,9 @@ type ARDParser struct {
 // method to process a single day of a single channel
 func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	db := a.db
-	// fire fetching all program entries from all channels for the defined time range
-	formattedDate := day.Format("2006-01-02")
-	// the following line generated the URL we fetch the program entries of
-	url := fmt.Sprintf("%s/program/api/program?day=%s&channelIds=%s&mode=channel", ardHostWithPrefix, formattedDate, channel.Hash)
-
-	response, err := getArdApiResponseForDailyProgramByChannel[ArdDailyProgramOfChannelResponse](url)
-	if err != nil {
-		appLog(fmt.Sprintf("error in call to ard url '%s': %v", url, err))
+	flattenedProgramItems, done := a.fetchProgramItemsOfDay(channel, day)
+	if done {
 		return
-	}
-	var flattenedProgramItems []ArdApiChannelProgramItem
-	for _, channel := range response.Channels {
-		for _, slot := range channel.TimeSlots {
-			for _, item := range slot {
-				flattenedProgramItems = append(flattenedProgramItems, item)
-			}
-		}
-	}
-
-	if verboseGlobal {
-		log.Printf("Received response from url '%s': %v", url, response)
 	}
 
 	var programEntryList = &[]ProgramEntry{}
@@ -80,7 +61,6 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	for _, item := range flattenedProgramItems {
 		programEntry := ProgramEntry{}
 
-		// get eid
 		eid := strings.TrimSpace(item.Id)
 		programEntry.Hash = buildHash([]string{
 			eid,
@@ -111,13 +91,14 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		programEntry.Title = entryTitle
 		programEntry.Description = trimAndSanitizeString(item.Synopsis)
 
-		var startDate, endDate time.Time = item.BroadcastedOn, item.BroadcastEnd
+		var startDate, endDate = item.BroadcastedOn, item.BroadcastEnd
 		// atm it is not clear which information "BeginNet" contains - sometimes it seems to be the real broadcasting _end_ time.
 		//if !item.BeginNet.IsZero() {
 		//	startDate = item.BeginNet
 		//}
 		if startDate.IsZero() || endDate.IsZero() || startDate.After(endDate) {
 			appLog(fmt.Sprintf("Invalid start date '%s' or end date '%s' for program entry with hash '%s'", startDate, endDate, programEntry.Hash))
+			atomic.AddUint64(&status.TotalSkippedPE, 1)
 			continue
 		}
 
@@ -125,58 +106,84 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		programEntry.EndDateTime = &endDate
 		programEntry.DurationMinutes = int16(programEntry.EndDateTime.Sub(*programEntry.StartDateTime).Minutes())
 
-		// item.Duration is in seconds
-		if int(programEntry.DurationMinutes) < ((item.Duration/60)-5) || int(programEntry.DurationMinutes) > ((item.Duration/60)+5) {
-			appLog(fmt.Sprintf("Duration mismatch in program entry with hash '%s': %d != %d", programEntry.Hash, programEntry.DurationMinutes, item.Duration))
+		programEntry.URL = trimAndSanitizeString(item.Video.WebUrl)
+		if programEntry.URL != "" && !ardProgramURLMatcher.Match([]byte(programEntry.URL)) {
+			appLog(fmt.Sprintf("Invalid url '%s' for program entry with hash '%s'. Skipping.", programEntry.URL, programEntry.Hash))
+			atomic.AddUint64(&status.TotalSkippedPE, 1)
+			continue
+		}
+		programEntry.Homepage = trimAndSanitizeString(item.Links.Self.Href)
+		if programEntry.Homepage != "" && !ardProgramPageMatcher.Match([]byte(programEntry.Homepage)) {
+			appLog(fmt.Sprintf("Invalid home page '%s' for program entry with hash '%s'. Skipping.", programEntry.Homepage, programEntry.Hash))
+			atomic.AddUint64(&status.TotalSkippedPE, 1)
+			continue
 		}
 
-		// TODO validate urls
-		programEntry.URL = trimAndSanitizeString(item.Video.WebUrl)
-		programEntry.Homepage = trimAndSanitizeString(item.Links.Self.Href)
 		// link channel and channel family
 		programEntry.ChannelID = channel.ID
 		programEntry.ChannelFamilyID = a.ChannelFamily.ID
 
-		programEntry.saveProgramEntryRecord(db)
-
 		// handle tags
 		if item.Grouping.Title != "" {
-			var entryTags = strings.Split(programEntry.Tags, ";")
-			entryTags = addEntryToSliceIfNotExists(entryTags, item.Grouping.Title)
-			programEntry.Tags = strings.Join(entryTags, ";")
+			groupingTitle := trimAndSanitizeString(item.Grouping.Title)
+			programEntry.considerTagExists(&groupingTitle)
 		}
 
 		// image links
-		var entryImageLinks = programEntry.ImageLinks
 		if item.Video.ImageUrl != "" && len(item.Video.ImageUrl) > 5 {
-			entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
-				URL: item.Video.ImageUrl,
-			})
+			programEntry.considerImageLinkExists(item.Video.ImageUrl)
 		} else {
 			if item.Images.Aspect16X9.Src != "" && len(item.Images.Aspect16X9.Src) > 5 {
-				entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
-					URL: strings.Replace(item.Images.Aspect16X9.Src, "{width}", "500", 1),
-				})
+				programEntry.considerImageLinkExists(strings.Replace(item.Images.Aspect16X9.Src, "{width}", ardDefaultImageWidth, 1))
 			} else if item.Images.Aspect1X1.Src != "" && len(item.Images.Aspect1X1.Src) > 5 {
-				entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
-					URL: strings.Replace(item.Images.Aspect1X1.Src, "{width}", "500", 1),
-				})
+				programEntry.considerImageLinkExists(strings.Replace(item.Images.Aspect1X1.Src, "{width}", ardDefaultImageWidth, 1))
 			} else if item.Images.Aspect16X7.Src != "" && len(item.Images.Aspect16X7.Src) > 5 {
-				entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
-					URL: strings.Replace(item.Images.Aspect16X7.Src, "{width}", "500", 1),
-				})
+				programEntry.considerImageLinkExists(strings.Replace(item.Images.Aspect16X7.Src, "{width}", ardDefaultImageWidth, 1))
 			}
 		}
-		programEntry.ImageLinks = entryImageLinks
 
-		*programEntryList = append(*programEntryList, programEntry)
+		if len(programEntry.ImageLinks) > 0 {
+			for _, img := range programEntry.ImageLinks {
+				if !ardImageLinkUrlMatcher.MatchString(img.URL) {
+					appLog(fmt.Sprintf("Found invalid image link '%s' for program entry with hash '%s'. Skipping.", img.URL, programEntry.Hash))
+					atomic.AddUint64(&status.TotalSkippedPE, 1)
+					continue
+				}
+			}
+		}
 
 		programEntry.saveProgramEntryRecord(db)
+
+		*programEntryList = append(*programEntryList, programEntry)
 	}
 
 	if verboseGlobal && len(*programEntryList) > 0 {
 		log.Printf("ard channel program list has %d entries\n", len(*programEntryList))
 	}
+}
+
+func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ArdApiChannelProgramItem, bool) {
+	formattedDate := day.Format("2006-01-02")
+	// the following line generated the URL we fetch the program entries of a single channel of a single day
+	url := fmt.Sprintf("%s/program/api/program?day=%s&channelIds=%s&mode=channel", ardHostWithPrefix, formattedDate, channel.Hash)
+
+	response, err := getArdApiResponseForDailyProgramByChannel[ArdDailyProgramOfChannelResponse](url)
+	if err != nil {
+		appLog(fmt.Sprintf("error in call to ard url '%s': %v", url, err))
+		return nil, true
+	}
+	var flattenedProgramItems []ArdApiChannelProgramItem
+	for _, channel := range response.Channels {
+		for _, slot := range channel.TimeSlots {
+			for _, item := range slot {
+				flattenedProgramItems = append(flattenedProgramItems, item)
+			}
+		}
+	}
+	if verboseGlobal {
+		log.Printf("Received response from url '%s': %v", url, response)
+	}
+	return flattenedProgramItems, false
 }
 
 func getArdApiResponseForDailyProgramByChannel[T any](url string) (*T, error) {
@@ -261,7 +268,6 @@ func (a *ARDParser) fetchTVShows() {
 	var tvShowApiURLs = make([]string, 0)
 	for _, category := range tvShowCategories {
 		categoryString := strings.TrimSuffix(base64.StdEncoding.EncodeToString([]byte("ARD."+category)), "=")
-		// TODO validate urls
 		tvShowApiURLs = append(tvShowApiURLs, fmt.Sprintf("%s%s", ardMediaThekApiTvShowPath, categoryString))
 	}
 	for _, apiUrl := range tvShowApiURLs {
@@ -341,13 +347,11 @@ func (a *ARDParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	if day == nil {
 		return false, fmt.Errorf("invalid day")
 	}
-	if a.isMoreThanXDaysInFuture(day, 43) { // = six weeks in future + today
-		return false, fmt.Errorf("maximum for days in future for ARD is 43")
+	if a.isMoreThanXDaysInFuture(day, 8) { // = six weeks in future + today
+		return false, fmt.Errorf("maximum for days in future for ARD is 8")
 	}
-	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-	earliestDate := time.Date(2010, 1, 1, 0, 0, 0, 0, location)
-	if day.Before(earliestDate) {
-		return false, fmt.Errorf("maximum for days in past for ARD is %s", earliestDate.Format(time.RFC822))
+	if a.isMoreThanXDaysInPast(day, 8) {
+		return false, fmt.Errorf("maximum for days in past for ARD is 8")
 	}
 	return true, nil
 }

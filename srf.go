@@ -173,9 +173,7 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 				programEntry.considerTagExists(&srfEntry.Genre)
 			}
 
-			if !programEntry.doesImageLinkExist(srfEntry.ImageURL) {
-				programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: srfEntry.ImageURL})
-			}
+			programEntry.considerImageLinkExists(trimAndSanitizeString(srfEntry.ImageURL))
 
 			programEntry.saveProgramEntryRecord(s.db)
 		}

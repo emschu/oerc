@@ -74,7 +74,7 @@ func (z *ZDFParser) getZdfAPIKey() (*string, error) {
 
 	doc, err := getDocument(apiURL)
 	if doc == nil || err != nil {
-		return nil, fmt.Errorf("Problem fetching url '%s'", apiURL)
+		return nil, fmt.Errorf("problem fetching zdf url '%s'", apiURL)
 	}
 	var apiToken string
 	doc.Find("script").Each(func(i int, selection *goquery.Selection) {
@@ -229,15 +229,6 @@ func (p *ProgramEntry) handleProgramImageLinks(broadcast *ZdfBroadcast) {
 	if len(broadcast.Images.Layouts.W240) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W240) {
 		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W240})
 	}
-}
-
-func (p *ProgramEntry) doesImageLinkExist(url string) bool {
-	for _, entryDetails := range p.ImageLinks {
-		if entryDetails.URL == url {
-			return true
-		}
-	}
-	return false
 }
 
 func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*ZdfBroadcastResponse, error) {

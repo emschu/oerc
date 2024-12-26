@@ -449,27 +449,6 @@ func buildHash(in []string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(val)))
 }
 
-// considerTagExists: adds a tag to the program entry.
-func (p *ProgramEntry) considerTagExists(mainTagName *string) {
-	var existingTags []string
-	if len(p.Tags) > 0 {
-		existingTags = strings.Split(p.Tags, ";")
-	} else {
-		existingTags = []string{}
-	}
-	for _, tag := range existingTags {
-		if tag == *mainTagName {
-			return
-		}
-	}
-	existingTags = append(existingTags, trimAndSanitizeString(*mainTagName))
-	if verboseGlobal {
-		log.Printf("Save new tag '%s' to program entry #%d\n", *mainTagName, p.ID)
-	}
-
-	p.Tags = strings.Join(existingTags, ";")
-}
-
 // this definition is important for default values
 var settings = map[string]string{
 	settingKeyLastFetch:             "",
@@ -692,18 +671,4 @@ func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
 	}
 	dateTime = dateTime.In(location)
 	return dateTime, false
-}
-
-func addEntryToSliceIfNotExists[T comparable](entryTags []T, item T) []T {
-	var isContained = false
-	for _, tag := range entryTags {
-		if tag == item {
-			isContained = true
-			break
-		}
-	}
-	if !isContained {
-		entryTags = append(entryTags, item)
-	}
-	return entryTags
 }
