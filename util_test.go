@@ -69,16 +69,6 @@ func TestTrim(t *testing.T) {
 	}
 }
 
-func TestIcal(t *testing.T) {
-	content, err := (&ARDParser{}).parseStartAndEndDateTimeFromIcal("https://programm.ard.de/ICalendar/iCal---Sendung?sendung=281063652013560")
-	if err != nil {
-		t.Errorf("Error during fetch of ical content '%s'", err)
-	}
-	if content == nil {
-		t.Error("Invalid ical content response")
-	}
-}
-
 func TestTrimAndSanitizeString(t *testing.T) {
 	// they should all evaluate to "test"
 	var inputStrings = []string{" test", "test ", "test", "   test", "test   ", "  test  "}

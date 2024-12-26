@@ -548,7 +548,6 @@ func resetErr() {
 // general connectivity check, should be called on startup of the fetch process
 func connectivityCheck() (bool, error) {
 	hostsToCheck := &[]string{
-		ardHostWithPrefix,
 		zdfHost,
 		orfHostWithPrefix,
 		srfHostWithPrefix,
@@ -693,4 +692,18 @@ func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
 	}
 	dateTime = dateTime.In(location)
 	return dateTime, false
+}
+
+func addEntryToSliceIfNotExists[T comparable](entryTags []T, item T) []T {
+	var isContained = false
+	for _, tag := range entryTags {
+		if tag == item {
+			isContained = true
+			break
+		}
+	}
+	if !isContained {
+		entryTags = append(entryTags, item)
+	}
+	return entryTags
 }

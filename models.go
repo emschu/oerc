@@ -97,7 +97,7 @@ type ProgramEntry struct {
 type ImageLink struct {
 	BaseModel
 
-	URL            string `gorm:"size:1024" json:"url"`
+	URL            string `gorm:"size:2048" json:"url"`
 	ProgramEntryID uint   `gorm:"index" json:"program_entry_id"`
 }
 
