@@ -25,10 +25,10 @@ func getArdChannels() *[]Channel {
 	return &[]Channel{
 		{
 			ManagedRecord: ManagedRecord{
-				Title:       "ARD – Das Erste",
+				Title:       "Das Erste",
 				URL:         "",
-				Hash:        "28106",
-				TechnicalID: "28106",
+				Hash:        "daserste",
+				TechnicalID: "daserste",
 				Homepage:    "https://ard.de",
 			},
 			IsDeprecated: false,
@@ -37,9 +37,9 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "BR Fernsehen",
 				URL:         "",
-				Hash:        "28107",
-				TechnicalID: "28107",
-				Homepage:    "https://www.br.de/fernsehen/index.html",
+				Hash:        "br",
+				TechnicalID: "br",
+				Homepage:    "https://www.br.de",
 			},
 			IsDeprecated: false,
 		},
@@ -47,8 +47,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "HR Fernsehen",
 				URL:         "",
-				Hash:        "28108",
-				TechnicalID: "28108",
+				Hash:        "hr",
+				TechnicalID: "hr",
 				Homepage:    "https://www.hr-fernsehen.de/",
 			},
 			IsDeprecated: false,
@@ -57,8 +57,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "MDR Fernsehen",
 				URL:         "",
-				Hash:        "28229",
-				TechnicalID: "28229",
+				Hash:        "mdr",
+				TechnicalID: "mdr",
 				Homepage:    "https://www.mdr.de/tv/",
 			},
 			IsDeprecated: false,
@@ -67,8 +67,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "NDR Fernsehen",
 				URL:         "",
-				Hash:        "28226",
-				TechnicalID: "28226",
+				Hash:        "ndr",
+				TechnicalID: "ndr",
 				Homepage:    "https://www.ndr.de",
 			},
 			IsDeprecated: false,
@@ -77,8 +77,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "RBB Fernsehen",
 				URL:         "",
-				Hash:        "28205",
-				TechnicalID: "28205",
+				Hash:        "rbb",
+				TechnicalID: "rbb",
 				Homepage:    "https://www.rbb-online.de/fernsehen/",
 			},
 			IsDeprecated: false,
@@ -87,8 +87,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "Radio Bremen TV",
 				URL:         "",
-				Hash:        "28385",
-				TechnicalID: "28385",
+				Hash:        "radiobremen",
+				TechnicalID: "radiobremen",
 				Homepage:    "https://www.radiobremen.de/fernsehen/",
 			},
 			IsDeprecated: false,
@@ -97,29 +97,19 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "SR Fernsehen",
 				URL:         "",
-				Hash:        "28486",
-				TechnicalID: "28486",
+				Hash:        "sr",
+				TechnicalID: "sr",
 				Homepage:    "https://www.sr.de/sr/home/fernsehen/",
 			},
 			IsDeprecated: false,
 		},
 		{
 			ManagedRecord: ManagedRecord{
-				Title:       "SWR BW Fernsehen",
+				Title:       "SWR Fernsehen",
 				URL:         "",
-				Hash:        "28113",
-				TechnicalID: "28113",
-				Homepage:    "https://www.swrfernsehen.de/tv-programm/",
-			},
-			IsDeprecated: false,
-		},
-		{
-			ManagedRecord: ManagedRecord{
-				Title:       "SWR RP Fernsehen",
-				URL:         "",
-				Hash:        "28231",
-				TechnicalID: "28231",
-				Homepage:    "https://www.swrfernsehen.de/tv-programm/",
+				Hash:        "swr",
+				TechnicalID: "swr",
+				Homepage:    "https://www.swr.de",
 			},
 			IsDeprecated: false,
 		},
@@ -127,8 +117,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "WDR Fernsehen",
 				URL:         "",
-				Hash:        "28111",
-				TechnicalID: "28111",
+				Hash:        "wdr",
+				TechnicalID: "wdr",
 				Homepage:    "http://www.wdr.de/tv/",
 			},
 			IsDeprecated: false,
@@ -137,8 +127,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "ARD ALPHA",
 				URL:         "",
-				Hash:        "28487",
-				TechnicalID: "28487",
+				Hash:        "alpha",
+				TechnicalID: "alpha",
 				Homepage:    "http://www.br.de/fernsehen/ard-alpha/",
 			},
 			IsDeprecated: false,
@@ -147,8 +137,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "Tagesschau24",
 				URL:         "",
-				Hash:        "28721",
-				TechnicalID: "28721",
+				Hash:        "tagesschau24",
+				TechnicalID: "tagesschau24",
 				Homepage:    "http://programm.tagesschau24.de/",
 			},
 			IsDeprecated: false,
@@ -157,8 +147,8 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "ARD One",
 				URL:         "",
-				Hash:        "28722",
-				TechnicalID: "28722",
+				Hash:        "one",
+				TechnicalID: "one",
 				Homepage:    "http://www.one.ard.de/",
 			},
 			IsDeprecated: false,
@@ -167,12 +157,19 @@ func getArdChannels() *[]Channel {
 			ManagedRecord: ManagedRecord{
 				Title:       "KIKA",
 				URL:         "",
-				Hash:        "28008",
-				TechnicalID: "28008",
+				Hash:        "kika",
+				TechnicalID: "kika",
 				Homepage:    "http://www.kika.de/",
 			},
 			IsDeprecated: false,
 		},
+		// also available: [
+		//  "3sat 3sat",
+		//  "arte ARTE",
+		//  "kika KiKA",
+		//  "phoenix phoenix",
+		// ]
+
 	}
 }
 
@@ -331,6 +328,6 @@ func getChannelFamily(db *gorm.DB, channelFamilyID string) *ChannelFamily {
 // method to get all channels of a given ChannelFamily
 func getChannelsOfFamily(db *gorm.DB, channelFamilyRecord *ChannelFamily) []Channel {
 	var channels []Channel
-	db.Where("channel_family_id = ?", &channelFamilyRecord.ID).Find(&channels)
+	db.Where("channel_family_id = ? and is_deprecated = false", &channelFamilyRecord.ID).Find(&channels)
 	return channels
 }

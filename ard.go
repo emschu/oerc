@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2023 emschu[aet]mailbox.org
+// Copyright (C) 2021-2024 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -17,98 +17,30 @@
 package main
 
 import (
-	"bufio"
-	"errors"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/gocolly/colly/v2"
 	"log"
 	"math"
-	url2 "net/url"
 	"regexp"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 )
 
 const (
-	ardHost                   = "programm.ard.de"
-	ardHostWithPrefix         = "https://" + ardHost
-	ardHostWithPrefixInsecure = "http://" + ardHost
-	ardTagHost                = "/TV/Programm/Load/Similar35?eid="
-	ardMainTagPage            = "/TV/Themenschwerpunkte/"
+	ardHost                       = "programm-api.ard.de"
+	ardHostWithPrefix             = "https://" + ardHost
+	ardMediaThekApiHost           = "api.ardmediathek.de"
+	ardMediaThekApiHostWithPrefix = "https://" + ardMediaThekApiHost
+	ardMediaThekApiTvShowPath     = "https://" + ardMediaThekApiHost + "/page-gateway/widgets/ard/editorials/"
 )
 
 var (
-	ardEidMatcher           = regexp.MustCompile(`eid[0-9]+`)
+	// TODO add most recent matchers after update
 	ardProgramURLMatcher    = regexp.MustCompile(`^/TV/Programm/Sender/.*`)
 	ardTvShowLinkMatcher    = regexp.MustCompile(`^/TV/Sendungen-von-A-bis-Z/.*/.{0,16}`)
-	ardIcalLinkMatcher      = regexp.MustCompile(`^/ICalendar/iCal---Sendung\?sendung=[0-9]+`)
 	ardImageLinkAttrMatcher = regexp.MustCompile(`^((/sendungsbilder/original/[0-9]+/[a-zA-Z0-9_.-]+\.(jpe?g|png|JPE?G|PNG|SEA|GIF))|((https?://programm.ard.de)?/files/.*\.(jpe?g|png|JPE?G|PNG|sea|gif)))`)
-	ardMainTags             = map[string]string{
-		"Film":            "Film/Alle-Filme/Alle-Filme",
-		"Dokumentation":   "Dokus--Reportagen/Alle-Dokumentationen/Startseite",
-		"Kultur":          "Musik-und-Kultur/Alle-Kultursendungen/Startseite",
-		"Ratgeber":        "Ratgeber-der-ARD/Alle-Ratgeber/Alle-Ratgeber",
-		"Magazin":         "Ratgeber-der-ARD/Magazine/Startseite",
-		"Serie":           "Serien--Soaps/Serien-von-A-bis-Z/Startseite/Serien-von-A-bis-Z",
-		"Unterhaltung":    "Unterhaltung/Alle-Unterhaltungssendungen/Startseite",
-		"Show/Quiz":       "Unterhaltung/Show--Quiz/Startseite",
-		"Kabarett/Comedy": "Unterhaltung/Kabarett--Comedy/Startseite",
-		"Zoogeschichten":  "Unterhaltung/Zoogeschichten/Startseite",
-	}
-	ardSubTags = map[string]string{
-		"Herzgefühl":            "Film/Herzgefuehl/Startseite",
-		"Komödie":               "Film/Komoedie/Startseite",
-		"Klassiker":             "Film/Klassiker/Startseite",
-		"Heimatfilme":           "Film/Heimatfilme/Startseite",
-		"Krimi":                 "Film/Krimi/Startseite",
-		"Tatort":                "Film/Tatort/Startseite",
-		"Polizeiruf 110":        "Film/Polizeiruf-110/Startseite",
-		"Drama":                 "Film/Drama/Startseite",
-		"Western":               "Film/Western/Startseite",
-		"Kurzfilm":              "Film/Kurzfilm/Startseite",
-		"Polit-Talkshow":        "Politik/Polit-Talkshows/Startseite",
-		"Nachrichten":           "Politik/Nachrichten/Startseite",
-		"Aktuelle-Reportagen":   "Politik/Aktuelle-Reportagen/Startseite",
-		"Polit-Magazine":        "Politik/Politmagazine/Startseite",
-		"Geschichte":            "Dokus--Reportagen/Geschichte/Startseite",
-		"Kultur":                "Dokus--Reportagen/Kultur/Startseite",
-		"Tiere":                 "Dokus--Reportagen/Tiere/Startseite",
-		"Gesundheit":            "Dokus--Reportagen/Gesundheit/Startseite",
-		"Umwelt/Natur":          "Dokus--Reportagen/Umwelt-und-Natur/Startseite",
-		"Reisen":                "Dokus--Reportagen/Reisen/Startseite",
-		"Eisenbahn":             "Dokus--Reportagen/Eisenbahn/Startseite",
-		"Wissenschaft":          "Dokus--Reportagen/Wissenschaft/Startseite",
-		"Wissensmagazin":        "Dokus--Reportagen/Wissensmagazine/Startseite",
-		"Klassik/Oper/Tanz":     "Musik-und-Kultur/Klassik-Oper--Tanz/Startseite",
-		"Popkultur":             "Musik-und-Kultur/Popkultur/Startseite",
-		"Jazz":                  "Musik-und-Kultur/Jazz/Startseite",
-		"Literatur":             "Musik-und-Kultur/Literatur/Startseite",
-		"Architektur":           "Musik-und-Kultur/Architektur/Startseite",
-		"Kultur-Dokumentation":  "Musik-und-Kultur/Kultur-Dokumentationen/Startseite",
-		"Kulturmagazine":        "Musik-und-Kultur/Kulturmagazine/Startseite",
-		"Heim-/Gartenratgeber":  "Ratgeber-der-ARD/Heim-und-Garten/Startseite",
-		"Reiseratgeber":         "Ratgeber-der-ARD/Reisen/Startseite",
-		"Gesundheitsratgeber":   "Ratgeber-der-ARD/Gesundheit/Startseite",
-		"Natur-/Umweltratgeber": "Ratgeber-der-ARD/Natur-und-Umwelt/Startseite",
-		"Magazin":               "Ratgeber-der-ARD/Magazine/Startseite",
-		"Coronavirus":           "Ratgeber-der-ARD/Coronavirus/Startseite",
-		"Kochen":                "Kochen/Alle-Sendungen/Startseite",
-		"Fußball":               "Sport/Fussball-im-TV/Startseite",
-		"Sport":                 "Sport/Alle-Sportsendungen/Startseite",
-		"Sportmagazin":          "Sport/Sportmagazine/Startseite",
-		"Soap/Telenovela":       "Serien--Soaps/Soaps-und-Telenovelas/Startseite/Startseite",
-		"Dokusoap":              "Serien--Soaps/Dokusoaps/Startseite",
-		"Show/Quiz":             "Unterhaltung/Show--Quiz/Startseite",
-		"Kabarett/Comedy":       "Unterhaltung/Kabarett--Comedy/Startseite",
-		"Schlager/Volksmusik":   "Unterhaltung/Schlager--Volksmusik/Startseite",
-		"Talkshow":              "Unterhaltung/Talkshows/Startseite",
-		"Zoogeschichten":        "Unterhaltung/Zoogeschichten/Startseite",
-		"Fernsehgottesdienst":   "Kirche-und-Religion/Fernsehgottesdienste/Startseite",
-		"Religion":              "Kirche-und-Religion/Religion-Fernsehen/Startseite",
-	}
 )
 
 // ARDParser struct of ard parser code
@@ -120,27 +52,44 @@ type ARDParser struct {
 // method to process a single day of a single channel
 func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	db := a.db
-	// Create a Collector specifically for ard
-	c := a.newArdCollector()
+	// fire fetching all program entries from all channels for the defined time range
+	formattedDate := day.Format("2006-01-02")
+	// the following line generated the URL we fetch the program entries of
+	url := fmt.Sprintf("%s/program/api/program?day=%s&channelIds=%s&mode=channel", ardHostWithPrefix, formattedDate, channel.Hash)
+
+	response, err := getArdApiResponseForDailyProgramByChannel[ArdDailyProgramOfChannelResponse](url)
+	if err != nil {
+		appLog(fmt.Sprintf("error in call to ard url '%s': %v", url, err))
+		return
+	}
+	var flattenedProgramItems []ArdApiChannelProgramItem
+	for _, channel := range response.Channels {
+		for _, slot := range channel.TimeSlots {
+			for _, item := range slot {
+				flattenedProgramItems = append(flattenedProgramItems, item)
+			}
+		}
+	}
+
+	if verboseGlobal {
+		log.Printf("Received response from url '%s': %v", url, response)
+	}
 
 	var programEntryList = &[]ProgramEntry{}
-	c.OnHTML(".event-list li[class^=eid]", func(element *colly.HTMLElement) {
+	// fill program entry list
+	for _, item := range flattenedProgramItems {
 		programEntry := ProgramEntry{}
 
 		// get eid
-		eid := ardEidMatcher.FindString(element.Attr("class"))
+		eid := strings.TrimSpace(item.Id)
 		programEntry.Hash = buildHash([]string{
 			eid,
+			item.NumericId,
+			fmt.Sprintf("%d", int(channel.ID)),
 			fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
 			"program-entry",
 		})
 
-		// this is safe because the query selector for this closure handles this
-		eid = strings.Replace(eid, "eid", "", 1)
-		if len(eid) > 256 {
-			appLog(fmt.Sprint("Invalid eid detected. length > 256"))
-			return
-		}
 		programEntry.TechnicalID = eid
 
 		// if there already is a program entry with this technical_id, use the original record
@@ -149,177 +98,127 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		if entry.ID != 0 {
 			if entry.isRecentlyUpdated() {
 				atomic.AddUint64(&status.TotalSkippedPE, 1)
-				return
+				continue
 			}
 			programEntry = entry
 		}
+		// else create a new record
 
-		title := trimAndSanitizeString(element.DOM.Find("span.title").Text())
-		subtitle := trimAndSanitizeString(element.DOM.Find("span.subtitle").Text())
+		var entryTitle = trimAndSanitizeString(item.CoreTitle)
+		if item.CoreSubline != "" {
+			entryTitle += " - " + trimAndSanitizeString(item.CoreSubline)
+		}
+		programEntry.Title = entryTitle
+		programEntry.Description = trimAndSanitizeString(item.Synopsis)
 
-		// subtitle (nested span) is removed from title and added to description
-		title = trimAndSanitizeString(strings.Replace(title, subtitle, "", 1))
-		programEntry.Title = title
-		// reset description field
-		programEntry.Description = ""
-		if len(subtitle) > 0 {
-			programEntry.Description = subtitle + ". "
+		var startDate, endDate time.Time = item.BroadcastedOn, item.BroadcastEnd
+		// atm it is not clear which information "BeginNet" contains - sometimes it seems to be the real broadcasting _end_ time.
+		//if !item.BeginNet.IsZero() {
+		//	startDate = item.BeginNet
+		//}
+		if startDate.IsZero() || endDate.IsZero() || startDate.After(endDate) {
+			appLog(fmt.Sprintf("Invalid start date '%s' or end date '%s' for program entry with hash '%s'", startDate, endDate, programEntry.Hash))
+			continue
 		}
 
-		find := element.DOM.Find("a")
-		urlOfEntry, attrExists := find.Attr("href")
-		if !attrExists {
-			if channel.TechnicalID == "28385" && programEntry.Title == "Regionalprogramm" {
-				// Do not log problems with these entries of "Radio Bremen TV". Older entries (e.g. in 2015) do not have a link to program
-			} else {
-				appLog(fmt.Sprintf("No 'href' attribute on program detail page. EID: %s, Title: %s, URL: %s",
-					eid, programEntry.Title, element.Request.URL))
-			}
-			return
-		}
-		if !ardProgramURLMatcher.Match([]byte(urlOfEntry)) {
-			appLog(fmt.Sprintf("Invalid url '%s' on program detail page detected.", urlOfEntry))
-			return
+		programEntry.StartDateTime = &startDate
+		programEntry.EndDateTime = &endDate
+		programEntry.DurationMinutes = int16(programEntry.EndDateTime.Sub(*programEntry.StartDateTime).Minutes())
+
+		// item.Duration is in seconds
+		if int(programEntry.DurationMinutes) < ((item.Duration/60)-5) || int(programEntry.DurationMinutes) > ((item.Duration/60)+5) {
+			appLog(fmt.Sprintf("Duration mismatch in program entry with hash '%s': %d != %d", programEntry.Hash, programEntry.DurationMinutes, item.Duration))
 		}
 
-		programEntry.URL = ardHostWithPrefix + urlOfEntry
+		// TODO validate urls
+		programEntry.URL = trimAndSanitizeString(item.Video.WebUrl)
+		programEntry.Homepage = trimAndSanitizeString(item.Links.Self.Href)
 		// link channel and channel family
 		programEntry.ChannelID = channel.ID
 		programEntry.ChannelFamilyID = a.ChannelFamily.ID
 
+		programEntry.saveProgramEntryRecord(db)
+
+		// handle tags
+		if item.Grouping.Title != "" {
+			var entryTags = strings.Split(programEntry.Tags, ";")
+			entryTags = addEntryToSliceIfNotExists(entryTags, item.Grouping.Title)
+			programEntry.Tags = strings.Join(entryTags, ";")
+		}
+
+		// image links
+		var entryImageLinks = programEntry.ImageLinks
+		if item.Video.ImageUrl != "" && len(item.Video.ImageUrl) > 5 {
+			entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
+				URL: item.Video.ImageUrl,
+			})
+		} else {
+			if item.Images.Aspect16X9.Src != "" && len(item.Images.Aspect16X9.Src) > 5 {
+				entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
+					URL: strings.Replace(item.Images.Aspect16X9.Src, "{width}", "500", 1),
+				})
+			} else if item.Images.Aspect1X1.Src != "" && len(item.Images.Aspect1X1.Src) > 5 {
+				entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
+					URL: strings.Replace(item.Images.Aspect1X1.Src, "{width}", "500", 1),
+				})
+			} else if item.Images.Aspect16X7.Src != "" && len(item.Images.Aspect16X7.Src) > 5 {
+				entryImageLinks = addEntryToSliceIfNotExists(entryImageLinks, ImageLink{
+					URL: strings.Replace(item.Images.Aspect16X7.Src, "{width}", "500", 1),
+				})
+			}
+		}
+		programEntry.ImageLinks = entryImageLinks
+
 		*programEntryList = append(*programEntryList, programEntry)
-	})
-
-	// fire fetching all program entries from all channels for the defined time range
-	formattedDate := day.Format("02.01.2006")
-	// the following line generated the URL we fetch the program entries of
-	url := fmt.Sprintf("%s/TV/Programm/Sender?datum=%s&hour=0&sender=%s", ardHostWithPrefix, formattedDate, channel.Hash)
-	err := c.Visit(url)
-	if err != nil {
-		appLog(fmt.Sprintf("error in call to url '%s': %v", url, err))
-	}
-	c.Wait()
-
-	if verboseGlobal && len(*programEntryList) > 0 {
-		log.Printf("program list has %d entries\n", len(*programEntryList))
-	}
-
-	if len(*programEntryList) == 0 {
-		return
-	}
-
-	c2 := c.Clone()
-	var programEntry *ProgramEntry
-
-	// this is called for each single program detail page
-	c2.OnHTML("body .program-con", func(element *colly.HTMLElement) {
-		if programEntry == nil {
-			appLog(fmt.Sprintf("No program entry pointer found. This should never happen."))
-			return
-		}
-		// fetch ical-links for proper datetime information
-		icalHref, exists := element.DOM.Find("a[href*=ICalendar]").Attr("href")
-		if !exists {
-			// TODO remove or handle different
-			appLog(fmt.Sprintf("ERROR: No iCal link found for program entry '%s'", programEntry.Hash))
-			return
-		}
-		if !ardIcalLinkMatcher.Match([]byte(icalHref)) {
-			appLog(fmt.Sprintf("Invalid iCal link found for program entry hash '%s'", programEntry.Hash))
-			return
-		}
-		icalLink := ardHostWithPrefix + icalHref
-
-		icalContent, err := a.parseStartAndEndDateTimeFromIcal(icalLink)
-		if icalContent == nil || err != nil {
-			appLog(fmt.Sprintf("Problem fetching ical at link '%s'", icalLink))
-			return
-		}
-
-		if icalContent.startDate.IsZero() || icalContent.endDate.IsZero() || icalContent.is1970Date() {
-			appLog(fmt.Sprintf("Problem with zero date from icallLink '%s'", icalLink))
-			return
-		}
-
-		programEntry.StartDateTime = &icalContent.startDate
-		programEntry.EndDateTime = &icalContent.endDate
-		programEntry.DurationMinutes = int16(icalContent.endDate.Sub(icalContent.startDate).Minutes())
-
-		// add "tags"
-		tags, tagErr := tryToFindTags(programEntry.TechnicalID)
-		if tagErr != nil {
-			tagErrMsg := fmt.Sprintf("Problem fetching tags of eid '%s'. %v.", programEntry.TechnicalID, tagErr)
-			appLog(tagErrMsg)
-			return
-		}
-		programEntry.Tags = strings.Join(*tags, ";")
-
-		descrSelector := fmt.Sprintf("#mehr-%s .eventText", programEntry.TechnicalID)
-		desc := element.DOM.Find(descrSelector)
-		text := desc.Text()
-		if !strings.HasPrefix(programEntry.Description, "Keine weiteren Informationen") {
-			programEntry.Description += trimAndSanitizeString(text)
-		}
-
-		if len(programEntry.Description) == 0 {
-			// try an alternative description location
-			descr2Selector := fmt.Sprintf("div.detail-top div.eventText")
-			desc = element.DOM.Find(descr2Selector)
-			programEntry.Description = trimAndSanitizeString(desc.Text())
-			if len(programEntry.Description) == 0 {
-				programEntry.Description = "Keine weiteren Informationen"
-			}
-		}
-
-		// add image links
-		element.DOM.Find(".media-con img").Each(func(i int, selection *goquery.Selection) {
-			attr, srcAttrExists := selection.Attr("src")
-			if !ardImageLinkAttrMatcher.Match([]byte(attr)) {
-				appLog(fmt.Sprintf("Invalid image link '%s' detected! program entry hash: '%s'", attr, programEntry.Hash))
-				return
-			}
-			for _, existingEntry := range programEntry.ImageLinks {
-				if existingEntry.URL == (ardHostWithPrefix+attr) || existingEntry.URL == (ardHostWithPrefixInsecure+attr) {
-					// already exists
-					return
-				}
-			}
-			if srcAttrExists {
-				if !strings.HasPrefix(attr, ardHostWithPrefix) && !strings.HasPrefix(attr, ardHostWithPrefixInsecure) {
-					attr = ardHostWithPrefix + attr
-				}
-				programEntry.ImageLinks = append(programEntry.ImageLinks, ImageLink{URL: attr})
-			}
-		})
-
-		desc = element.DOM.Find(".bcData a").Each(func(i int, s *goquery.Selection) {
-			text := trimAndSanitizeString(s.Text())
-			if strings.Contains(text, "Sendungsseite im Internet") {
-				attr, hrefAttrExists := s.Attr("href")
-				if hrefAttrExists {
-					u, err := url2.ParseRequestURI(trimAndSanitizeString(attr))
-					if err != nil {
-						appLog(fmt.Sprintf("Invalid or unexpected url '%s' of program entry's homepage found!", attr))
-						return
-					}
-					programEntry.Homepage = fmt.Sprintf("%s%s", u.Host, u.RequestURI())
-				}
-			}
-		})
 
 		programEntry.saveProgramEntryRecord(db)
-	})
-
-	for _, pe := range *programEntryList {
-		programEntry = &pe
-		err := c2.Visit(pe.URL)
-		if err != nil {
-			appLog(fmt.Sprintf("Error in ard tv show call to url '%s':%v", ardHostWithPrefix+pe.URL, err))
-		}
-		c2.Wait()
 	}
 
-	a.linkTagsToEntriesDaily(day)
+	if verboseGlobal && len(*programEntryList) > 0 {
+		log.Printf("ard channel program list has %d entries\n", len(*programEntryList))
+	}
+}
+
+func getArdApiResponseForDailyProgramByChannel[T any](url string) (*T, error) {
+	headers := map[string]string{}
+	resp, err := doGetRequest(url, headers, 3)
+	if resp == nil || err != nil {
+		errMsg := fmt.Sprintf("Problem fetching URL '%s' with error '%v'", url, err)
+		appLog(errMsg)
+		log.Println(errMsg)
+		return nil, err
+	}
+	var response T
+	jsonErr := json.Unmarshal([]byte(*resp), &response)
+	if jsonErr != nil {
+		errMsg := fmt.Sprintf("Invalid json format in ard api response. url: '%s'", url)
+		appLog(errMsg)
+		log.Println(errMsg)
+		return nil, jsonErr
+	}
+	return &response, nil
+}
+
+func getArdApiResponseForTvShows[T any](url string) (*T, error) {
+	headers := map[string]string{
+		"Host": ardMediaThekApiHost,
+	}
+	resp, err := doGetRequest(url, headers, 3)
+	if resp == nil || err != nil {
+		errMsg := fmt.Sprintf("Problem fetching URL '%s' with error '%v'", url, err)
+		appLog(errMsg)
+		log.Println(errMsg)
+		return nil, err
+	}
+	var response T
+	jsonErr := json.Unmarshal([]byte(*resp), &response)
+	if jsonErr != nil {
+		errMsg := fmt.Sprintf("Invalid json format in ard api response. url: '%s'", url)
+		appLog(errMsg)
+		log.Println(errMsg)
+		return nil, jsonErr
+	}
+	return &response, nil
 }
 
 // method to fetch all tv show data
@@ -328,55 +227,83 @@ func (a *ARDParser) fetchTVShows() {
 		a.logRecentFetch("Skip update of ard tv shows")
 		return
 	}
-	// Create a Collector specifically for Shopify
-	collector := a.newArdCollector()
 
-	// Create a callback on the XPath query searching for the URLs
-	collector.OnHTML(".az-slick > .box > a", func(e *colly.HTMLElement) {
-		var link = e.Attr("href")
-		if !ardTvShowLinkMatcher.Match([]byte(link)) {
-			appLog(fmt.Sprintf("Invalid link '%s%s' for ard tv show detected. Skipping entry.", ardHostWithPrefix, link))
-			return
-		}
-
-		var title = trimAndSanitizeString(e.ChildAttr("img", "title"))
-		if link == "" || title == "" {
-			appLog(fmt.Sprintf("ERR: empty link or title in URL '%s'", e.Request.URL.EscapedPath()))
-			return
-		}
-		var hash = buildHash([]string{
-			fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
-			title,
-			"tv-show",
-		})
-		url := ardHost + link
-		var tvShow = &TvShow{
-			ManagedRecord: ManagedRecord{
-				Title:           title,
-				URL:             url,
-				Hash:            hash,
-				Homepage:        url,
-				ChannelFamily:   a.ChannelFamily,
-				ChannelFamilyID: a.ChannelFamily.ID, // 0 = ard
-			},
-		}
-
-		show := TvShow{}
-		a.db.Model(&TvShow{}).Where("hash = ?", hash).Find(&show)
-		if show.ID != 0 {
-			tvShow.ID = show.ID
-		}
-		tvShow.saveTvShowRecord(a.db)
-	})
-
-	// Start the collector
-	tvShowURL := ardHostWithPrefix + "/TV/Sendungen-von-A-bis-Z/Startseite?page=&char=all"
-	err := collector.Visit(tvShowURL)
-	if err != nil {
-		appLog(fmt.Sprintf("Problem scraping URL '%s'", tvShowURL))
+	// build set of urls to fetch tv shows from
+	var tvShowCategories = []string{
+		"a",
+		"b",
+		"c",
+		"d",
+		"e",
+		"f",
+		"g",
+		"h",
+		"i",
+		"j",
+		"k",
+		"l",
+		"m",
+		"n",
+		"o",
+		"p",
+		"q",
+		"r",
+		"s",
+		"t",
+		"u",
+		"v",
+		"w",
+		"x",
+		"y",
+		"z",
+		"#",
 	}
-	collector.Wait()
-	// TODO add tv show post processing: image links + tags + related program entries
+	var tvShowApiURLs = make([]string, 0)
+	for _, category := range tvShowCategories {
+		categoryString := strings.TrimSuffix(base64.StdEncoding.EncodeToString([]byte("ARD."+category)), "=")
+		// TODO validate urls
+		tvShowApiURLs = append(tvShowApiURLs, fmt.Sprintf("%s%s", ardMediaThekApiTvShowPath, categoryString))
+	}
+	for _, apiUrl := range tvShowApiURLs {
+		response, err := getArdApiResponseForTvShows[ArdApiTvShowResponse](fmt.Sprintf("%s?pageSize=10", apiUrl))
+		if err != nil {
+			appLog(fmt.Sprintf("Problem fetching URL for tv show:'%s'", apiUrl))
+			continue
+		}
+		var totalElementsOfCategory = response.Pagination.TotalElements
+		var ardApiPageSizeLimit = 200
+		var pageCount = int(math.Ceil(float64(totalElementsOfCategory / ardApiPageSizeLimit)))
+
+		for page := 0; page < pageCount; page++ {
+			response, err = getArdApiResponseForTvShows[ArdApiTvShowResponse](fmt.Sprintf("%s?pageSize=%d&pageNumber=%d", apiUrl, ardApiPageSizeLimit, page))
+
+			for _, teaser := range response.Teasers {
+				var hash = buildHash([]string{
+					fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
+					trimAndSanitizeString(teaser.LongTitle),
+					"tv-show",
+				})
+				url := teaser.Links.Self.Href
+				var tvShow = &TvShow{
+					ManagedRecord: ManagedRecord{
+						Title:           trimAndSanitizeString(teaser.LongTitle),
+						URL:             url,
+						Hash:            hash,
+						Homepage:        url,
+						ChannelFamily:   a.ChannelFamily,
+						ChannelFamilyID: a.ChannelFamily.ID,
+					},
+				}
+
+				show := TvShow{}
+				a.db.Model(&TvShow{}).Where("hash = ?", hash).Find(&show)
+				if show.ID != 0 {
+					tvShow.ID = show.ID
+				}
+				tvShow.saveTvShowRecord(a.db)
+			}
+		}
+	}
 }
 
 // getTimeOfNextUpdate this function returns the next date time a fetch will take place considering the refresh interval of the configuration
@@ -401,42 +328,8 @@ func getTimeOfNextUpdate() time.Time {
 	return now
 }
 
-// helper method to get a collector instance
-func (a *ARDParser) newArdCollector() *colly.Collector {
-	return baseCollector([]string{ardHost})
-}
-
-// method to identify the "tags" a program entry has
-func tryToFindTags(eid string) (*[]string, error) {
-	var tags = &[]string{}
-
-	var url = fmt.Sprintf("%s%s%s", ardHostWithPrefix, ardTagHost, eid)
-	doc, err := getDocument(url)
-	if doc == nil || err != nil {
-		return tags, err
-	}
-	doesTagExist := func(name string) bool {
-		for _, existingTag := range *tags {
-			if existingTag == name {
-				return true
-			}
-		}
-		return false
-	}
-	doc.Find("form[id^=bookmark-checks] .row span[class*=similar-events-bookmark]").
-		Each(func(i int, selection *goquery.Selection) {
-			tagText := trimAndSanitizeString(selection.Text())
-			if !doesTagExist(tagText) {
-				*tags = append(*tags, tagText)
-			}
-		})
-	return tags, nil
-}
-
 // method which is called after the program entries and tv shows are fetched
-func (a *ARDParser) postProcess() {
-	a.linkTagsToEntriesGeneral()
-}
+func (a *ARDParser) postProcess() {}
 
 // preProcess implementation
 func (a *ARDParser) preProcess() bool {
@@ -459,172 +352,293 @@ func (a *ARDParser) isDateValidToFetch(day *time.Time) (bool, error) {
 	return true, nil
 }
 
-// method to link tags to program entries of a single day
-func (a *ARDParser) linkTagsToEntriesDaily(day time.Time) {
-	if isRecentlyFetched() && !GetAppConf().ForceUpdate {
-		return
-	}
-
-	// handle main tags
-	for mainTagName, tagURLPart := range ardMainTags {
-		formattedDate := day.Format("02.01.2006")
-		dailyURL := fmt.Sprintf(
-			"%s%s%s?datum=%s&hour=0&ajaxPageLoad=1",
-			ardHostWithPrefix,
-			ardMainTagPage,
-			tagURLPart,
-			formattedDate,
-		)
-		eidList := a.getEIDsOfUrls([]string{dailyURL})
-
-		var programEntry ProgramEntry
-		if len(eidList) > 0 {
-			if len(eidList) == 1 {
-				a.db.Model(ProgramEntry{}).Where("technical_id LIKE ?", eidList[0]).Find(&programEntry)
-			} else {
-				a.db.Model(ProgramEntry{}).Where("technical_id IN(?)", eidList).Find(&programEntry)
-			}
-			programEntry.considerTagExists(&mainTagName)
-		}
-	}
+type ArdDailyProgramOfChannelResponse struct {
+	Links struct {
+		Self struct {
+			Type  string `json:"type"`
+			Title string `json:"title"`
+			Href  string `json:"href"`
+		} `json:"self"`
+	} `json:"links"`
+	Channels      []ArdApiChannel `json:"channels"`
+	TrackingPiano struct {
+		PageTitle         string `json:"page_title"`
+		PageInstitutionId string `json:"page_institution_id"`
+		PageInstitution   string `json:"page_institution"`
+		PageChapter2      string `json:"page_chapter2"`
+		PageChapter1      string `json:"page_chapter1"`
+		PageId            string `json:"page_id"`
+	} `json:"trackingPiano"`
+	TimeSlots []struct {
+		Title       string    `json:"title"`
+		HeightUnits int       `json:"heightUnits"`
+		EndDate     string    `json:"endDate"`
+		StartDate   time.Time `json:"startDate"`
+	} `json:"timeSlots"`
+	CreationDate time.Time `json:"creationDate"`
 }
 
-// method to link tags to program entries
-func (a *ARDParser) linkTagsToEntriesGeneral() {
-	if isRecentlyFetched() {
-		a.logRecentFetch("Skip update of ard program entry tag search")
-		return
-	}
-
-	// handle sub-tags
-	for subTagName, tagURLPart := range ardSubTags {
-		previewURL := fmt.Sprintf("%s%s%s?ajaxPageLoad=1", ardHostWithPrefix, ardMainTagPage, tagURLPart)
-		archiveURL := fmt.Sprintf("%s&archiv=1", previewURL)
-		eidList := a.getEIDsOfUrls([]string{previewURL, archiveURL})
-
-		var programEntry ProgramEntry
-		if len(eidList) > 0 {
-			if len(eidList) == 1 {
-				a.db.Model(&ProgramEntry{}).Where("technical_id LIKE ?", eidList[0]).Find(&programEntry)
-			} else {
-				// we have to ensure that the IN-operation of the SQL database is has a limited input length
-				// typically an eid has 15 chars, allow 15 x 15 chars = 225 chars in IN-query + 14 times ","
-				var blockSize = 14
-
-				for len(eidList) > 0 {
-					highestIndex := int(math.Min(float64(blockSize), float64(len(eidList)-1)))
-					list := eidList[:highestIndex]
-					a.db.Model(ProgramEntry{}).Where("technical_id IN (?)", list).Find(&programEntry)
-					if (len(eidList)-1) >= highestIndex && highestIndex > 0 {
-						eidList = eidList[highestIndex:]
-					} else {
-						break
-					}
-				}
-			}
-			programEntry.considerTagExists(&subTagName)
-		}
-	}
+type ArdApiChannel struct {
+	Id            string `json:"id"`
+	TrackingPiano struct {
+		WidgetType  string `json:"widget_type"`
+		WidgetTitle string `json:"widget_title"`
+		WidgetId    string `json:"widget_id"`
+	} `json:"trackingPiano"`
+	TimeSlots          [][]ArdApiChannelProgramItem `json:"timeSlots"`
+	PublicationService struct {
+		Name    string `json:"name"`
+		Partner string `json:"partner"`
+	} `json:"publicationService"`
+	Crid             string `json:"crid"`
+	LocalChannelList []struct {
+		Id           string `json:"id"`
+		Name         string `json:"name"`
+		Crid         string `json:"crid"`
+		LocalDefault bool   `json:"localDefault,omitempty"`
+	} `json:"localChannelList"`
 }
 
-// getEIDsOfUrls get eid of urls, these urls should be checked to be not malicious
-func (a *ARDParser) getEIDsOfUrls(urls []string) []string {
-	c := a.newArdCollector()
-	var eidList []string
-	var listMutex sync.Mutex
-
-	c.OnHTML(".event-list li[class^=eid]", func(element *colly.HTMLElement) {
-		eid := strings.Replace(ardEidMatcher.FindString(element.Attr("class")), "eid", "", 1)
-		listMutex.Lock()
-		eidList = append(eidList, eid)
-		listMutex.Unlock()
-	})
-
-	for _, url := range urls {
-		urlErr := c.Visit(url)
-		if urlErr != nil {
-			errMsg := fmt.Sprintf("Problem fetching URL '%s'. %v.", url, urlErr)
-			appLog(errMsg)
-		}
-	}
-	c.Wait()
-
-	return eidList
+type ArdApiChannelProgramItem struct {
+	Id    string `json:"id"`
+	Links struct {
+		Self struct {
+			Type  string `json:"type"`
+			Title string `json:"title"`
+			Href  string `json:"href"`
+		} `json:"self"`
+		Target struct {
+			Type    string `json:"type"`
+			Title   string `json:"title"`
+			UrlId   string `json:"urlId"`
+			Partner string `json:"partner"`
+		} `json:"target,omitempty"`
+	} `json:"links"`
+	Type     string `json:"type"`
+	Title    string `json:"title"`
+	Duration int    `json:"duration"`
+	Channel  struct {
+		Id            string `json:"id"`
+		Name          string `json:"name"`
+		MainChannelId string `json:"main_channel_id"`
+		LocalDefault  bool   `json:"localDefault,omitempty"`
+	} `json:"channel"`
+	TrackingPiano struct {
+		WidgetSection       string `json:"widget_section"`
+		TeaserTitle         string `json:"teaser_title"`
+		TeaserRecommended   bool   `json:"teaser_recommended"`
+		TeaserInstitutionId string `json:"teaser_institution_id"`
+		TeaserInstitution   string `json:"teaser_institution"`
+		TeaserId            string `json:"teaser_id"`
+		TeaserContentType   string `json:"teaser_content_type"`
+		TeaserRegion        string `json:"teaser_region,omitempty"`
+	} `json:"trackingPiano"`
+	CreationDate          time.Time `json:"creationDate"`
+	HeightUnits           int       `json:"heightUnits"`
+	BeginNet              time.Time `json:"beginNet"`
+	BinaryFeatures        []string  `json:"binaryFeatures,omitempty"`
+	MaturityContentRating string    `json:"maturityContentRating,omitempty"`
+	BroadcastEnd          time.Time `json:"broadcastEnd"`
+	BroadcastedOn         time.Time `json:"broadcastedOn"`
+	CoreSubline           string    `json:"coreSubline"`
+	CoreTitle             string    `json:"coreTitle"`
+	LastMod               time.Time `json:"lastMod"`
+	NumericId             string    `json:"numericId"`
+	Subline               string    `json:"subline,omitempty"`
+	Grouping              struct {
+		Title string `json:"title"`
+		URL   string `json:"url"`
+	} `json:"grouping,omitempty"`
+	Images struct {
+		Aspect16X9 struct {
+			Title        string `json:"title"`
+			Text         string `json:"text"`
+			Alt          string `json:"alt"`
+			Src          string `json:"src"`
+			ProducerName string `json:"producerName"`
+		} `json:"aspect16x9"`
+		Aspect1X1 struct {
+			Title        string `json:"title"`
+			Text         string `json:"text"`
+			Alt          string `json:"alt"`
+			Src          string `json:"src"`
+			ProducerName string `json:"producerName"`
+		} `json:"aspect1x1"`
+		Aspect16X7 struct {
+			Title        string `json:"title"`
+			Text         string `json:"text"`
+			Alt          string `json:"alt"`
+			Src          string `json:"src"`
+			ProducerName string `json:"producerName"`
+		} `json:"aspect16x7"`
+	} `json:"images,omitempty"`
+	Video struct {
+		AvailableFrom time.Time   `json:"availableFrom"`
+		AvailableTo   time.Time   `json:"availableTo"`
+		BroadcastedOn time.Time   `json:"broadcastedOn"`
+		CreatedAt     time.Time   `json:"createdAt"`
+		CreatedBy     interface{} `json:"createdBy"`
+		Duration      int         `json:"duration"`
+		EpisodeNumber *int        `json:"episodeNumber"`
+		ExternalMedia []struct {
+			MediaType string `json:"mediaType"`
+			Ratio     string `json:"ratio"`
+			Type      string `json:"type"`
+			Url       string `json:"url"`
+			Versions  []struct {
+				Ratio string `json:"ratio"`
+				Url   string `json:"url"`
+			} `json:"versions"`
+		} `json:"externalMedia"`
+		Extras []struct {
+			Index interface{} `json:"index"`
+			Text  string      `json:"text"`
+			Type  string      `json:"type"`
+		} `json:"extras"`
+		Fsk             string        `json:"fsk"`
+		GroupingId      string        `json:"groupingId,omitempty"`
+		GroupingTitle   *string       `json:"groupingTitle"`
+		GroupingWebUrl  string        `json:"groupingWebUrl,omitempty"`
+		Id              string        `json:"id"`
+		ImageCredit     *string       `json:"imageCredit"`
+		ImageUrl        string        `json:"imageUrl"`
+		IsTrailer       bool          `json:"isTrailer"`
+		SeasonNumber    interface{}   `json:"seasonNumber"`
+		SingleReport    bool          `json:"singleReport"`
+		Source          string        `json:"source"`
+		SourceId        string        `json:"sourceId"`
+		SourceUpdatedAt time.Time     `json:"sourceUpdatedAt"`
+		TagIds          []interface{} `json:"tagIds"`
+		Text            struct {
+			Short string `json:"short"`
+		} `json:"text"`
+		Title     string      `json:"title"`
+		UpdatedAt time.Time   `json:"updatedAt"`
+		UpdatedBy interface{} `json:"updatedBy"`
+		WebUrl    string      `json:"webUrl"`
+	} `json:"video,omitempty"`
+	Synopsis      string `json:"synopsis,omitempty"`
+	IsLocal       bool   `json:"isLocal,omitempty"`
+	Split         bool   `json:"split,omitempty"`
+	Live          bool   `json:"live,omitempty"`
+	BlockDuration int    `json:"blockDuration,omitempty"`
+	SplitPart     int    `json:"splitPart,omitempty"`
+	TrackingSplit int    `json:"trackingSplit,omitempty"`
 }
 
-// ICalContent object to wrap retrieved ical content
-type ICalContent struct {
-	startDate time.Time
-	endDate   time.Time
+type ArdApiTvShowResponse struct {
+	AZContent       bool   `json:"aZContent"`
+	CompilationType string `json:"compilationType"`
+	Id              string `json:"id"`
+	IsChildContent  bool   `json:"isChildContent"`
+	Pagination      struct {
+		PageNumber    int `json:"pageNumber"`
+		PageSize      int `json:"pageSize"`
+		TotalElements int `json:"totalElements"`
+	} `json:"pagination"`
+	Personalized bool `json:"personalized"`
+	Links        struct {
+		Self struct {
+			Id      string `json:"id"`
+			UrlId   string `json:"urlId"`
+			Title   string `json:"title"`
+			Href    string `json:"href"`
+			Type    string `json:"type"`
+			Partner string `json:"partner"`
+		} `json:"self"`
+	} `json:"links"`
+	Size          string               `json:"size"`
+	Swipeable     bool                 `json:"swipeable"`
+	Teasers       []ArdApiTvShowTeaser `json:"teasers"`
+	Title         string               `json:"title"`
+	TitleVisible  bool                 `json:"titleVisible"`
+	TrackingPiano struct {
+		TeaserRecommended bool   `json:"teaser_recommended"`
+		WidgetId          string `json:"widget_id"`
+		WidgetTitle       string `json:"widget_title"`
+		WidgetTyp         string `json:"widget_typ"`
+	} `json:"trackingPiano"`
+	Type           string `json:"type"`
+	UserVisibility string `json:"userVisibility"`
 }
 
-// parseStartAndEndDateTimeFromIcal method to parse a plain ical file data just for DTSTART and DTEND. Needed for ARD only atm.
-func (a *ARDParser) parseStartAndEndDateTimeFromIcal(targetURL string) (*ICalContent, error) {
-	requestHeaders := map[string]string{"Accept": "text/html", "Host": "programm.ard.de"}
-
-	icalContent, err := doGetRequest(targetURL, requestHeaders, 3)
-	if icalContent == nil || err != nil {
-		return nil, err
-	}
-
-	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-
-	scanner := bufio.NewScanner(strings.NewReader(*icalContent))
-	scanner.Split(bufio.ScanLines)
-
-	var hasStart = false
-	var hasEnd = false
-	var content = ICalContent{}
-	const iCalDateLayout = "20060102T150405"
-	_, zoneOffsetInSecs := time.Now().In(location).Zone()
-	timeZoneOffset := time.Duration(-zoneOffsetInSecs) * time.Second
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !hasStart && strings.HasPrefix(line, "DTSTART;") {
-			startDate := strings.Replace(line, "DTSTART;TZID=Europe/Berlin:", "", 1)
-			content.startDate, err = time.Parse(iCalDateLayout, startDate)
-			if err != nil {
-				appLog(fmt.Sprintf("Problem with date DTSTART in ical data of '%v': %v.", icalContent, err))
-			} else {
-				hasStart = true
-			}
-		}
-		if !hasEnd && strings.HasPrefix(line, "DTEND;") {
-			endDate := strings.Replace(line, "DTEND;TZID=Europe/Berlin:", "", 1)
-			content.endDate, err = time.Parse(iCalDateLayout, endDate)
-			if err != nil {
-				appLog(fmt.Sprintf("Problem with date DTEND in ical data of '%v': %v.", icalContent, err))
-			} else {
-				hasEnd = true
-			}
-		}
-		if hasStart && hasEnd {
-			// its important to subtract this offset and set the correct time zone here
-			content.startDate = content.startDate.Add(timeZoneOffset).In(location)
-			content.endDate = content.endDate.Add(timeZoneOffset).In(location)
-			break
-		}
-	}
-	if !hasStart || !hasEnd {
-		return nil, errors.New("Could not find start and/or end date in supplied ical content")
-	}
-	if content.startDate.IsZero() || content.endDate.IsZero() {
-		return nil, errors.New("Empty dates detected in ical content. Probably a parser error")
-	}
-	return &content, nil
-}
-
-// is1970Date: method to check if there is a 1970 (begin unix time) time object
-func (i *ICalContent) is1970Date() bool {
-	if i.startDate.IsZero() || i.endDate.IsZero() {
-		return false
-	}
-	if i.startDate.Year() == 1970 && i.startDate.Month() == 1 && i.startDate.Day() == 1 {
-		return true
-	}
-	if i.endDate.Year() == 1970 && i.endDate.Month() == 1 && i.endDate.Day() == 1 {
-		return true
-	}
-	return false
+type ArdApiTvShowTeaser struct {
+	AvailableSeasons []string `json:"availableSeasons,omitempty"`
+	BinaryFeatures   []string `json:"binaryFeatures,omitempty"`
+	CoreAssetType    string   `json:"coreAssetType,omitempty"`
+	Id               string   `json:"id"`
+	Images           struct {
+		Aspect16X9 struct {
+			Alt          string `json:"alt"`
+			ProducerName string `json:"producerName"`
+			Src          string `json:"src"`
+			Title        string `json:"title"`
+		} `json:"aspect16x9"`
+		Aspect16X7 struct {
+			Alt          string `json:"alt"`
+			ProducerName string `json:"producerName"`
+			Src          string `json:"src"`
+			Title        string `json:"title"`
+		} `json:"aspect16x7,omitempty"`
+		Aspect1X1 struct {
+			Alt          string `json:"alt"`
+			ProducerName string `json:"producerName"`
+			Src          string `json:"src"`
+			Title        string `json:"title"`
+		} `json:"aspect1x1,omitempty"`
+		Aspect3X4 struct {
+			Alt          string `json:"alt"`
+			ProducerName string `json:"producerName"`
+			Src          string `json:"src"`
+			Title        string `json:"title"`
+		} `json:"aspect3x4,omitempty"`
+	} `json:"images"`
+	IsChildContent     bool        `json:"isChildContent"`
+	IsFamilyFriendly   bool        `json:"isFamilyFriendly,omitempty"`
+	LongTitle          string      `json:"longTitle"`
+	MediumTitle        string      `json:"mediumTitle"`
+	Personalized       bool        `json:"personalized"`
+	Playtime           interface{} `json:"playtime"`
+	PublicationService struct {
+		Name string `json:"name"`
+		Logo struct {
+			Title        string `json:"title"`
+			Alt          string `json:"alt"`
+			ProducerName string `json:"producerName"`
+			Src          string `json:"src"`
+			AspectRatio  string `json:"aspectRatio"`
+		} `json:"logo"`
+		PublisherType string `json:"publisherType"`
+		Partner       string `json:"partner"`
+		Id            string `json:"id"`
+		CoreId        string `json:"coreId"`
+	} `json:"publicationService,omitempty"`
+	Links struct {
+		Self struct {
+			Id      string `json:"id"`
+			UrlId   string `json:"urlId"`
+			Title   string `json:"title"`
+			Href    string `json:"href"`
+			Type    string `json:"type"`
+			Partner string `json:"partner"`
+		} `json:"self"`
+		Target struct {
+			Id      string `json:"id"`
+			UrlId   string `json:"urlId"`
+			Title   string `json:"title"`
+			Href    string `json:"href"`
+			Type    string `json:"type"`
+			Partner string `json:"partner"`
+		} `json:"target"`
+	} `json:"links"`
+	ShortTitle    string `json:"shortTitle"`
+	TitleVisible  bool   `json:"titleVisible"`
+	TrackingPiano struct {
+		TeaserContentType   string `json:"teaser_content_type"`
+		TeaserId            string `json:"teaser_id"`
+		TeaserInstitution   string `json:"teaser_institution"`
+		TeaserInstitutionId string `json:"teaser_institution_id"`
+		TeaserTitle         string `json:"teaser_title"`
+	} `json:"trackingPiano"`
+	Type string `json:"type"`
 }

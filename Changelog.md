@@ -1,5 +1,10 @@
 # Changelog oerc
 
+## 0.17.0 - 2024/12/23
+- Golang 1.23, toolchain and dependency updates
+- Changed implementation of fetching ARD program information using new ARD program and tv show API 
+- Completely new ard channels (the former ones get deprecated during first startup)
+
 ## 0.16.0 - 2024/07/04
 - Golang 1.21
 - Dependency update
