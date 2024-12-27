@@ -1,5 +1,8 @@
 # Changelog oerc
 
+## 0.17.1 - 2024/12/27
+- Fix problem validating ard image urls
+
 ## 0.17.0 - 2024/12/26
 - Golang 1.23, toolchain and dependency updates
 - Changed fetching ARD program information using new ARD program and tv show API 

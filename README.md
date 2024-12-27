@@ -223,12 +223,12 @@ to be available too, so ensure to enable the postgres database service as well.
 
 ### Channel list
 
-**Channels:** ARD, ZDF, 3Sat, ARTE, ZDFInfo, ZDFNeo, Phoenix, KiKa, ARD One, Tagesschau24, ARD Alpha, SWR RP Fernsehen,WDR Fernsehen, SWR BW Fernsehen,SR Fernsehen, Radio Bremen TV, RBB Fernsehen, NDR Fernsehen, MDR Fernsehen, HR Fernsehen, BR Fernsehen, ORF eins, ORF 2, ORF III, ORF Sport +, SRF-1, SRF-zwei, SRF-info.
+**Channels:** ARD, ZDF, 3Sat, ARTE, ZDFInfo, ZDFNeo, Phoenix, KiKa, ARD One, Tagesschau24, ARD Alpha, SWR, WDR, SR, Radio Bremen TV, RBB, NDR, MDR, HR, BR, ORF eins, ORF 2, ORF III, ORF Sport +, SRF-1, SRF-zwei, SRF-info.
 ### Time range import limits
 
 | Channel family | Earliest date   | Latest date     |
-|----------------|-----------------| --------------- |
-| ARD            | ~ 2010/01       | Today + 6 weeks |
+|----------------|-----------------|-----------------|
+| ARD            | Today - 8 days  | Today + 8 days  |
 | ZDF            | 2015/03         | Today + 6 weeks |
 | ORF            | Today - 14 days | Today + 22 days |
 | SRF            | Today - 14 days | Today + 29 days |

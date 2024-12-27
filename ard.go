@@ -37,9 +37,39 @@ const (
 )
 
 var (
-	ardProgramURLMatcher   = regexp.MustCompile(`^https:\/\/www\.ardmediathek\.de\/video\/.+`)
-	ardProgramPageMatcher  = regexp.MustCompile(`^https:\/\/programm\-api\.ard\.de\/program\/api\/teaser\?teaserId=.+`)
-	ardImageLinkUrlMatcher = regexp.MustCompile(`^https:\/\/api\.ardmediathek\.de\/image-service\/image.+`)
+	ardProgramURLMatcher  = regexp.MustCompile(`^https:\/\/www\.ardmediathek\.de\/video\/.+`)
+	ardProgramPageMatcher = regexp.MustCompile(`^https:\/\/programm\-api\.ard\.de\/program\/api\/teaser\?teaserId=.+`)
+	ardImageLinkMatcher   = regexp.MustCompile(`^https:\/\/api\.ardmediathek\.de\/image-service\/image.+`)
+	ardImageLinkMatcher2  = regexp.MustCompile(`^https:\/\/programm-api.ard.de\/images\/.+`)
+	ardTvShowCategories   = []string{
+		"a",
+		"b",
+		"c",
+		"d",
+		"e",
+		"f",
+		"g",
+		"h",
+		"i",
+		"j",
+		"k",
+		"l",
+		"m",
+		"n",
+		"o",
+		"p",
+		"q",
+		"r",
+		"s",
+		"t",
+		"u",
+		"v",
+		"w",
+		"x",
+		"y",
+		"z",
+		"#",
+	}
 )
 
 // ARDParser struct of ard parser code
@@ -144,7 +174,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 
 		if len(programEntry.ImageLinks) > 0 {
 			for _, img := range programEntry.ImageLinks {
-				if !ardImageLinkUrlMatcher.MatchString(img.URL) {
+				if !ardImageLinkMatcher.MatchString(img.URL) && !ardImageLinkMatcher2.MatchString(img.URL) {
 					appLog(fmt.Sprintf("Found invalid image link '%s' for program entry with hash '%s'. Skipping.", img.URL, programEntry.Hash))
 					atomic.AddUint64(&status.TotalSkippedPE, 1)
 					continue
@@ -236,37 +266,8 @@ func (a *ARDParser) fetchTVShows() {
 	}
 
 	// build set of urls to fetch tv shows from
-	var tvShowCategories = []string{
-		"a",
-		"b",
-		"c",
-		"d",
-		"e",
-		"f",
-		"g",
-		"h",
-		"i",
-		"j",
-		"k",
-		"l",
-		"m",
-		"n",
-		"o",
-		"p",
-		"q",
-		"r",
-		"s",
-		"t",
-		"u",
-		"v",
-		"w",
-		"x",
-		"y",
-		"z",
-		"#",
-	}
 	var tvShowApiURLs = make([]string, 0)
-	for _, category := range tvShowCategories {
+	for _, category := range ardTvShowCategories {
 		categoryString := strings.TrimSuffix(base64.StdEncoding.EncodeToString([]byte("ARD."+category)), "=")
 		tvShowApiURLs = append(tvShowApiURLs, fmt.Sprintf("%s%s", ardMediaThekApiTvShowPath, categoryString))
 	}
