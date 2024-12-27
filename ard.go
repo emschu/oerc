@@ -37,9 +37,10 @@ const (
 )
 
 var (
-	ardProgramURLMatcher   = regexp.MustCompile(`^https:\/\/www\.ardmediathek\.de\/video\/.+`)
-	ardProgramPageMatcher  = regexp.MustCompile(`^https:\/\/programm\-api\.ard\.de\/program\/api\/teaser\?teaserId=.+`)
-	ardImageLinkUrlMatcher = regexp.MustCompile(`^https:\/\/api\.ardmediathek\.de\/image-service\/image.+`)
+	ardProgramURLMatcher    = regexp.MustCompile(`^https:\/\/www\.ardmediathek\.de\/video\/.+`)
+	ardProgramPageMatcher   = regexp.MustCompile(`^https:\/\/programm\-api\.ard\.de\/program\/api\/teaser\?teaserId=.+`)
+	ardImageLinkUrlMatcher  = regexp.MustCompile(`^https:\/\/api\.ardmediathek\.de\/image-service\/image.+`)
+	ardImageLinkUrlMatcher2 = regexp.MustCompile(`^https:\/\/programm-api.ard.de\/images\/.+`)
 )
 
 // ARDParser struct of ard parser code
@@ -144,7 +145,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 
 		if len(programEntry.ImageLinks) > 0 {
 			for _, img := range programEntry.ImageLinks {
-				if !ardImageLinkUrlMatcher.MatchString(img.URL) {
+				if !ardImageLinkUrlMatcher.MatchString(img.URL) && !ardImageLinkUrlMatcher2.MatchString(img.URL) {
 					appLog(fmt.Sprintf("Found invalid image link '%s' for program entry with hash '%s'. Skipping.", img.URL, programEntry.Hash))
 					atomic.AddUint64(&status.TotalSkippedPE, 1)
 					continue
