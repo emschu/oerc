@@ -143,7 +143,11 @@ func initRouter() *gin.Engine {
 		}
 	} else {
 		// trust no proxies - except the user specified one
-		r.SetTrustedProxies(nil)
+		err := r.SetTrustedProxies(nil)
+		if err != nil {
+			log.Fatal(fmt.Sprint("Problem to trust nil proxy url"))
+			return nil
+		}
 	}
 	r.Use(gin.Recovery())
 
