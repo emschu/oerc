@@ -104,13 +104,14 @@ spec: ## run openapi spec converter from yaml -> json
 # TODO add client compilation
 .PHONY: release
 release: clean ## build release packages for multiple platforms
-	mkdir -p bin/windows; mkdir -p bin/linux-arm; mkdir -p bin/linux-arm64; mkdir -p bin/linux-armv7; mkdir -p bin/linux-386; mkdir -p bin/linux-amd64
+	mkdir -p bin/windows; mkdir -p bin/linux-arm; mkdir -p bin/linux-arm64; mkdir -p bin/linux-armv7; mkdir -p bin/linux-386; mkdir -p bin/linux-amd64; mkdir -p bin/osx-arm64
 	GOOS=windows GOARCH=amd64 $(GO) build -o bin/windows/oerc.exe -ldflags "-s -w"
 	GOOS=linux GOARCH=arm $(GO) build -o bin/linux-arm/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=arm64 $(GO) build -o bin/linux-arm64/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=arm GOARM=7 $(GO) build -o bin/linux-armv7/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=386 $(GO) build -o bin/linux-386/oerc -ldflags "-s -w"
 	GOOS=linux GOARCH=amd64 $(GO) build -o bin/linux-amd64/oerc -ldflags "-s -w"
+	GOOS=darwin GOARCH=arm64 $(GO) build -o bin/osx-arm64/oerc -ldflags "-s -w"
 
 .PHONY: sonarscan
 sonarscan: ## run sonar scanner against local sonarqube
