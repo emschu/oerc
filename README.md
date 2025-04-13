@@ -91,7 +91,7 @@ USAGE:
    oerc [global options] command [command options] [arguments...]
 
 VERSION:
-   0.17.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.18.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -287,13 +287,13 @@ If not, see <https://www.gnu.org/licenses/>.
   apps in Go.
 - [Gorm](https://gorm.io/) – The fantastic ORM library for Golang
 - [Colly](http://go-colly.org/) – Fast and Elegant Scraping Framework for Gophers
-- [Gin](https://github.com/gin-gonic/gin) – Gin is a HTTP web framework
+- [Gin](https://github.com/gin-gonic/gin) – Gin is an HTTP web framework
 - [Bluemonday](https://github.com/microcosm-cc/bluemonday) – A fast golang HTML sanitizer
 
 ## Development
 
 This project is shipped with a `Makefile` to ease the development and testing process.
-At first you should run `make setup` and you need the usual Golang/Python/Node/Java toolchains.
+At first, you should run `make setup` and you need the usual Golang/Python/Node/Java toolchains.
 Be sure to run `make build` and `make spec` (if you updated something there) before filing a pull request.
 
 ### Database

@@ -17,6 +17,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -24,7 +25,6 @@ import (
 	"log"
 	"net/url"
 	"regexp"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -33,7 +33,6 @@ import (
 const (
 	zdfHost              = "https://www.zdf.de"
 	zdfAPIHost           = "https://api.zdf.de"
-	zdfAPIKeyPath        = "/live-tv"
 	zdfAPIProgramEntries = zdfAPIHost + "/cmdm/epg/broadcasts?limit=100&order=asc"
 )
 
@@ -53,44 +52,19 @@ type ZDFParser struct {
 func (z *ZDFParser) postProcess() {}
 
 func (z *ZDFParser) preProcess() bool {
-	var apiKeyErr error
-	zdfAPIKey, apiKeyErr := z.getZdfAPIKey()
-	if apiKeyErr != nil {
-		log.Printf("Error fetching zdf api key: %v\n", apiKeyErr)
-		return false
+	var err error
+	decodedBytes, err := base64.StdEncoding.DecodeString("YWhCYWVNZWVrYWl5NW9oc2FpNGJlZTRraTZPb3BvaTVxdWFpbGllYg==")
+	if err != nil {
+		appLog(fmt.Sprintf("Error decoding zdf api key: %v", err))
+		panic("Error decoding zdf api key")
 	}
+	z.zdfAPIKey = string(decodedBytes)
 	if verboseGlobal {
-		log.Printf("Using ZDF API key: %s\n", *zdfAPIKey)
+		log.Printf("Using ZDF API key: %s\n", z.zdfAPIKey)
 	}
-	z.zdfAPIKey = *zdfAPIKey
 
 	z.parallelWorkersCount = 3
 	return true
-}
-
-// getZdfAPIKey method to retrieve the api key we need to connect to the zdf api
-func (z *ZDFParser) getZdfAPIKey() (*string, error) {
-	apiURL := fmt.Sprintf("%s%s", zdfHost, zdfAPIKeyPath)
-
-	doc, err := getDocument(apiURL)
-	if doc == nil || err != nil {
-		return nil, fmt.Errorf("problem fetching zdf url '%s'", apiURL)
-	}
-	var apiToken string
-	doc.Find("script").Each(func(_ int, selection *goquery.Selection) {
-		html, _ := selection.Html()
-		if strings.Contains(html, "IMPORTANT CONFIGURATION!") {
-			extractionPattern := regexp.MustCompile(`apiToken: &#39;(.*)&#39;`)
-			findString := extractionPattern.FindAllStringSubmatch(html, 1)
-			if len(findString) > 0 && len(findString[0]) > 1 {
-				apiToken = trimAndSanitizeString(findString[0][1])
-			}
-		}
-	})
-	if len(apiToken) > 0 {
-		return &apiToken, nil
-	}
-	return nil, fmt.Errorf("can't fetch ZDF api key")
 }
 
 // method to process a single day of a single channel
@@ -113,7 +87,7 @@ func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 
 	zdfProgramRequest, apiErr := z.doZDFApiBroadcastRequest(apiURL)
 	if apiErr != nil {
-		log.Printf("%v\n", apiErr)
+		log.Printf("Error fetching broadcast: %v\n", apiErr)
 		return
 	}
 
@@ -205,29 +179,30 @@ func (p *ProgramEntry) handleProgramImageLinks(broadcast *zdfBroadcast) {
 		// nothing to do here
 		return
 	}
+
 	if len(broadcast.Images.Layouts.W2400) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W2400) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W2400})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W2400)
 	}
 	if len(broadcast.Images.Layouts.W1920) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W1920) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W1920})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W1920)
 	}
 	if len(broadcast.Images.Layouts.W1280) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W1280) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W1280})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W1280)
 	}
 	if len(broadcast.Images.Layouts.W768) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W768) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W768})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W768)
 	}
 	if len(broadcast.Images.Layouts.W640) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W640) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W640})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W640)
 	}
 	if len(broadcast.Images.Layouts.W384) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W384) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W384})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W384)
 	}
 	if len(broadcast.Images.Layouts.W276) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W276) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W276})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W276)
 	}
 	if len(broadcast.Images.Layouts.W240) > 0 && !p.doesImageLinkExist(broadcast.Images.Layouts.W240) {
-		p.ImageLinks = append(p.ImageLinks, ImageLink{URL: broadcast.Images.Layouts.W240})
+		p.considerImageLinkExists(broadcast.Images.Layouts.W240)
 	}
 }
 

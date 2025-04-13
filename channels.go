@@ -318,7 +318,7 @@ func getOrfChannels() *[]Channel {
 	}
 }
 
-// method to get a channel family record by it's id, e.g. "ARD", "ZDF" ...
+// method to get a channel family record by id, e.g. "ARD", "ZDF" ...
 func getChannelFamily(db *gorm.DB, channelFamilyID string) *ChannelFamily {
 	var channelFamily ChannelFamily
 	db.Where("title = ?", channelFamilyID).First(&channelFamily)
