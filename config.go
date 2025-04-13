@@ -19,7 +19,6 @@ package main
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
 	"math"
 	"net"
@@ -152,7 +151,7 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 }
 
 func loadYaml(path string) {
-	f, err := ioutil.ReadFile(path)
+	f, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}

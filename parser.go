@@ -135,7 +135,7 @@ func (p *Parser) Fetch(parserInterface ParserInterface) {
 
 	if GetAppConf().EnableProgramEntryCollection {
 		// import program entries for the configured date range
-		pool := pond.New(int(p.parallelWorkersCount), 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
+		pool := pond.New(p.parallelWorkersCount, 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
 			log.Printf("Problem with goroutine pool: %v\n", i)
 		}))
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {

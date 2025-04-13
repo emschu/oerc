@@ -81,8 +81,8 @@ type ARDParser struct {
 // method to process a single day of a single channel
 func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	db := a.db
-	flattenedProgramItems, done := a.fetchProgramItemsOfDay(channel, day)
-	if done {
+	flattenedProgramItems, err := a.fetchProgramItemsOfDay(channel, day)
+	if err != nil {
 		return
 	}
 
@@ -192,7 +192,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	}
 }
 
-func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ardApiChannelProgramItem, bool) {
+func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ardApiChannelProgramItem, error) {
 	formattedDate := day.Format("2006-01-02")
 	// the following line generated the URL we fetch the program entries of a single channel of a single day
 	url := fmt.Sprintf("%s/program/api/program?day=%s&channelIds=%s&mode=channel", ardHostWithPrefix, formattedDate, channel.Hash)
@@ -200,7 +200,7 @@ func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ar
 	response, err := getArdApiResponseForDailyProgramByChannel[ardDailyProgramOfChannelResponse](url)
 	if err != nil {
 		appLog(fmt.Sprintf("error in call to ard url '%s': %v", url, err))
-		return nil, true
+		return nil, err
 	}
 	var flattenedProgramItems []ardApiChannelProgramItem
 	for _, channel := range response.Channels {
@@ -213,7 +213,7 @@ func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ar
 	if verboseGlobal {
 		log.Printf("Received response from url '%s': %v", url, response)
 	}
-	return flattenedProgramItems, false
+	return flattenedProgramItems, nil
 }
 
 func getArdApiResponseForDailyProgramByChannel[T any](url string) (*T, error) {

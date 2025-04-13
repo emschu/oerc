@@ -67,13 +67,6 @@ func getChannelFamilies() *[]ChannelFamily {
 	return families
 }
 
-func getCount(model interface{}) uint64 {
-	db := getDb()
-	var count int64
-	db.Model(model).Count(&count)
-	return uint64(count)
-}
-
 func getProgramYesterdayHandler(c *gin.Context) {
 	y := time.Now().Add(-24 * time.Hour)
 	yStart := time.Date(y.Year(), y.Month(), y.Day(), 0, 0, 0, 0, y.Location())

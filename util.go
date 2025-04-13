@@ -29,7 +29,6 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"net"
@@ -239,7 +238,7 @@ func doGetRequest(target string, requestHeaders map[string]string, retries uint)
 			// no compression
 			reader = resp.Body
 		}
-		body, _ := ioutil.ReadAll(reader)
+		body, _ := io.ReadAll(reader)
 		text := string(body)
 		if len(text) > 0 {
 			resetErr()

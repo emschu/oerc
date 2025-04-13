@@ -21,7 +21,6 @@ import (
 	"fmt"
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/urfave/cli/v2"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -509,7 +508,7 @@ func initialStartup(c *cli.Context) {
 		if len(c.Path("config")) == 0 && configurationFile != nil {
 			confBox := rice.MustFindBox("config")
 			log.Printf("Trying to create default configuration at '%s'.\n", *configurationFile)
-			err := ioutil.WriteFile(*configurationFile, confBox.MustBytes(".oerc_default.dist.yaml"), 0600)
+			err := os.WriteFile(*configurationFile, confBox.MustBytes(".oerc_default.dist.yaml"), 0600)
 			if err != nil {
 				log.Fatalf("Error creating default configuration at '%s': %v.\n", *configurationFile, err)
 			}

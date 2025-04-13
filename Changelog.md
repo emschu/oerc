@@ -74,7 +74,7 @@
 
 ## 0.9.12 - 2021/11/12
 - New Feature: Auto-detection of overlapping program items is added to the `fetch` command and the web client.
-- New Command: `oerc full-overlap-check`. It will calculate the overlaps on ALL of the program entries 
+- New Command: `oerc full-overlap-check`. It will calculate the overlaps of ALL the program entries 
   in the database. It could take some while.
 - Improve recommendation sql search
 - Fixing date time offset problem with ARD records.

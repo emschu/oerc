@@ -131,7 +131,7 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 			return
 		}
 		if int(dayIdx) == dateDayDiff {
-			dayElement.ForEach("a", func(i int, linkElement *colly.HTMLElement) {
+			dayElement.ForEach("a", func(_ int, linkElement *colly.HTMLElement) {
 				s := linkElement.Attr("href")
 				if orfDailyProgramURLMatcher.MatchString(s) {
 					programDetailURLPerDay = s
@@ -254,7 +254,7 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 			}
 			programEntry.Homepage = url
 
-			doc.Find("div.broadcast-data a.broadcast-category").Each(func(i int, selection *goquery.Selection) {
+			doc.Find("div.broadcast-data a.broadcast-category").Each(func(_ int, selection *goquery.Selection) {
 				genre := trimAndSanitizeString(selection.Text())
 				if len(genre) > 0 && len(genre) < 48 {
 					programEntry.considerTagExists(&genre)
@@ -264,7 +264,7 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 
 		// handle item images
 		imageLinks := make([]ImageLink, 0)
-		element.ForEach("figure.broadcast-image img", func(i int, imageElement *colly.HTMLElement) {
+		element.ForEach("figure.broadcast-image img", func(_ int, imageElement *colly.HTMLElement) {
 			imgLink := imageElement.Attr("src")
 			imgLink = fmt.Sprintf("%s%s", orfProgramHostWithPrefix, imgLink)
 
@@ -311,7 +311,7 @@ func (o *ORFParser) isDateValidToFetch(day *time.Time) (bool, error) {
 
 // helper method to get a collector instance
 func (o *ORFParser) newOrfCollector() *colly.Collector {
-	collector := baseCollector([]string{orfHost, orfProgramHost})
+	collector := baseCollector([]string{orfHost, orfProgramHost, "on.orf.at"})
 	collector.Async = false
 	return collector
 }
