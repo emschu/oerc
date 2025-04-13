@@ -1,5 +1,9 @@
 # Changelog oerc
 
+## 0.18.0 - 2025/04/13
+- Fix recent problems with zdf api
+- update dependencies
+
 ## 0.17.1 - 2024/12/27
 - Fix problem validating ard image urls
 
