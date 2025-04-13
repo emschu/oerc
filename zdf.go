@@ -17,6 +17,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -51,7 +52,13 @@ type ZDFParser struct {
 func (z *ZDFParser) postProcess() {}
 
 func (z *ZDFParser) preProcess() bool {
-	z.zdfAPIKey = "ahBaeMeekaiy5ohsai4bee4ki6Oopoi5quailieb"
+	var err error
+	decodedBytes, err := base64.StdEncoding.DecodeString("YWhCYWVNZWVrYWl5NW9oc2FpNGJlZTRraTZPb3BvaTVxdWFpbGllYg==")
+	if err != nil {
+		appLog(fmt.Sprintf("Error decoding zdf api key: %v", err))
+		panic("Error decoding zdf api key")
+	}
+	z.zdfAPIKey = string(decodedBytes)
 	if verboseGlobal {
 		log.Printf("Using ZDF API key: %s\n", z.zdfAPIKey)
 	}
