@@ -6,13 +6,13 @@
       "name" : "emschu",
       "url" : "https://github.com/emschu/oerc"
     },
-    "description" : "This API provides access to the oerc database",
+    "description" : "This API provides access to the oerc database.\n\n## API Features\n\n- **CORS Support**: All API endpoints support Cross-Origin Resource Sharing (CORS). The Access-Control-Allow-Origin header is configurable via the AccessControlAllowOrigin setting in .oerc.yaml.\n\n- **GZIP Compression**: All API responses support GZIP compression to reduce bandwidth usage. Clients should be prepared to handle compressed responses.\n\n- **Caching**: Specific endpoints (/program/*, /channel/*, and /log/*) include Cache-Control headers with a default max-age of 36000 seconds (10 hours) to improve performance for browser clients.\n",
     "license" : {
       "name" : "AGPL",
       "url" : "http://www.gnu.org/licenses/agpl-3.0.de.html"
     },
     "title" : "oerc-api",
-    "version" : "v2.1"
+    "version" : "v2.2"
   },
   "servers" : [ {
     "description" : "Ipv4 localhost server",
@@ -90,6 +90,11 @@
             },
             "description" : "500 message"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -149,6 +154,11 @@
             },
             "description" : "500 message"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -174,6 +184,7 @@
           "name" : "from",
           "required" : false,
           "schema" : {
+            "format" : "date-time",
             "type" : "string"
           },
           "style" : "form"
@@ -185,6 +196,7 @@
           "name" : "to",
           "required" : false,
           "schema" : {
+            "format" : "date-time",
             "type" : "string"
           },
           "style" : "form"
@@ -229,6 +241,11 @@
               }
             },
             "description" : "500 message"
+          }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
           }
         }
       }
@@ -289,6 +306,11 @@
             },
             "description" : "500 message"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -315,6 +337,11 @@
               }
             },
             "description" : "500 message"
+          }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
           }
         }
       }
@@ -375,6 +402,11 @@
             },
             "description" : "500 message"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -401,6 +433,11 @@
               }
             },
             "description" : "500 message"
+          }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
           }
         }
       }
@@ -461,6 +498,11 @@
             },
             "description" : "500 message"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -487,6 +529,11 @@
               }
             },
             "description" : "500 message"
+          }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
           }
         }
       }
@@ -537,6 +584,11 @@
             },
             "description" : "500 message"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -553,6 +605,11 @@
               }
             },
             "description" : "Get log entries"
+          }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
           }
         }
       }
@@ -630,6 +687,11 @@
             },
             "description" : "log entry not found"
           }
+        },
+        "x-response-headers" : {
+          "Cache-Control" : {
+            "$ref" : "#/components/headers/CacheControlHeader"
+          }
         }
       }
     },
@@ -661,6 +723,7 @@
           "name" : "from",
           "required" : false,
           "schema" : {
+            "format" : "date-time",
             "type" : "string"
           },
           "style" : "form"
@@ -757,9 +820,81 @@
           }
         }
       }
+    },
+    "/xmltv" : {
+      "get" : {
+        "description" : "Endpoint for XMLTV data",
+        "operationId" : "xmltv",
+        "parameters" : [ {
+          "allowEmptyValue" : false,
+          "description" : "from timestamp",
+          "explode" : true,
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "style" : "form"
+        }, {
+          "allowEmptyValue" : false,
+          "description" : "from timestamp",
+          "explode" : true,
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "style" : "form"
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/xml" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Successful XMLTV response"
+          }
+        }
+      }
     }
   },
   "components" : {
+    "headers" : {
+      "CORSHeader" : {
+        "description" : "Access-Control-Allow-Origin header for CORS support",
+        "explode" : false,
+        "schema" : {
+          "example" : "*",
+          "type" : "string"
+        },
+        "style" : "simple"
+      },
+      "CompressionHeader" : {
+        "description" : "Content-Encoding header for GZIP compression",
+        "explode" : false,
+        "schema" : {
+          "example" : "gzip",
+          "type" : "string"
+        },
+        "style" : "simple"
+      },
+      "CacheControlHeader" : {
+        "description" : "Cache-Control header for browser caching (used for /program, /log, and /channel endpoints)",
+        "explode" : false,
+        "schema" : {
+          "example" : "public, max-age=36000",
+          "type" : "string"
+        },
+        "style" : "simple"
+      }
+    },
     "schemas" : {
       "StatusResponse" : {
         "properties" : {
@@ -1062,7 +1197,7 @@
             "format" : "int64",
             "type" : "integer"
           },
-          "data" : {
+          "elements" : {
             "items" : {
               "$ref" : "#/components/schemas/LogEntry"
             },
