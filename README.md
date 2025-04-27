@@ -53,11 +53,15 @@ regions in general.
 
 # Setup & Run
 
-## Download and start
-Download the `oerc` binary from [here](https://github.com/emschu/oerc/releases) for your platform,
-make it executable, and you are ready to start.
+```shell
+go install github.com/emschu/oerc@latest
+```
 
-## With docker/docker-compose
+## Download and start pre-build executable
+
+Download the latest `oerc` binary from [here](https://github.com/emschu/oerc/releases) for your platform, make it executable, and you are ready to start. Builds are available for all popular platforms.
+
+## docker/docker-compose
 
 Clone this repository, and build the binary file for the container:
 ```bash
@@ -71,11 +75,7 @@ $ docker-compose up
 
 ## Manual Installation
 
-1. To obtain this application use the following command
-
-```shell
-go install github.com/emschu/oerc@latest
-```
+1. Install the application with go and the following command `go install github.com/emschu/oerc@latest`
 
 2. Set up a PostgreSQL database (12+), configure a database with a user and start it.
     - The development section contains a simple docker command to run a local database for development and
