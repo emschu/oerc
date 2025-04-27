@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2024 emschu[aet]mailbox.org
+// Copyright (C) 2021-2025 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -209,6 +209,7 @@ func initRouter() *gin.Engine {
 	apiV2.GET("/recommendations", getRecommendationsHandler)
 	// search
 	apiV2.GET("/search", getSearchHandler)
+	apiV2.GET("/xmltv", getXmlTvHandler)
 
 	if GetAppConf().ClientEnabled {
 		clientBox := rice.MustFindBox("client/dist/client").HTTPBox()

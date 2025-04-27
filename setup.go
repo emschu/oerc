@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2024 emschu[aet]mailbox.org
+// Copyright (C) 2021-2025 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -67,7 +67,7 @@ func setupPersistence() {
 		log.Fatal(migrationErr)
 	}
 
-	// ensure adapter families exist
+	// ensure channels exist
 	handleChannelFamiliesSetup()
 	handleChannelsSetup()
 }
@@ -76,8 +76,7 @@ func setupPersistence() {
 func handleChannelFamiliesSetup() {
 	db := getDb()
 
-	var families = []string{"ARD", "ZDF", "SRF", "ORF"}
-	for _, f := range families {
+	for _, f := range channelFamilyKeys {
 		var channelFamily ChannelFamily
 		db.Where("title like ?", f).First(&channelFamily)
 		if channelFamily.ID <= 0 {

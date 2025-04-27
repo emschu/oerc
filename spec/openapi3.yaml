@@ -1,7 +1,16 @@
 openapi: 3.0.1
 info:
   title: oerc-api
-  description: 'This API provides access to the oerc database'
+  description: |
+    This API provides access to the oerc database.
+
+    ## API Features
+
+    - **CORS Support**: All API endpoints support Cross-Origin Resource Sharing (CORS). The Access-Control-Allow-Origin header is configurable via the AccessControlAllowOrigin setting in .oerc.yaml.
+
+    - **GZIP Compression**: All API responses support GZIP compression to reduce bandwidth usage. Clients should be prepared to handle compressed responses.
+
+    - **Caching**: Specific endpoints (/program/*, /channel/*, and /log/*) include Cache-Control headers with a default max-age of 36000 seconds (10 hours) to improve performance for browser clients.
   contact:
     name: emschu
     url: https://github.com/emschu/oerc
@@ -9,13 +18,25 @@ info:
   license:
     name: AGPL
     url: http://www.gnu.org/licenses/agpl-3.0.de.html
-  version: v2.1
+  version: v2.2
 servers:
   - url: http://127.0.0.1:8080/api/v2
     description: Ipv4 localhost server
   - url: http://[::]:8080/api/v2
     description: IPv6 localhost server
 paths:
+  # Global response headers that apply to all endpoints
+  x-global-response-headers:
+    Access-Control-Allow-Origin:
+      $ref: '#/components/headers/CORSHeader'
+    Content-Encoding:
+      $ref: '#/components/headers/CompressionHeader'
+
+  # Note: Cache-Control headers are applied to specific endpoints:
+  # - All /program/* endpoints
+  # - All /channel/* endpoints
+  # - All /log/* endpoints
+
   /ping:
     get:
       operationId: pingGET
@@ -47,6 +68,9 @@ paths:
   /channels:
     get:
       operationId: channelsGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       responses:
         200:
           description: get all channels
@@ -64,6 +88,9 @@ paths:
   /channel/{channel_id}:
     get:
       operationId: singleChannelGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - name: channel_id
           in: path
@@ -101,6 +128,9 @@ paths:
   /program:
     get:
       operationId: programGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - name: channel_id
           in: query
@@ -114,12 +144,14 @@ paths:
           allowEmptyValue: false
           schema:
             type: string
+            format: date-time
         - name: to
           in: query
           description: to, RFC3339 format
           allowEmptyValue: false
           schema:
             type: string
+            format: date-time
       responses:
         200:
           description: Program
@@ -149,6 +181,9 @@ paths:
   /program/daily/{channel_id}:
     get:
       operationId: programDailyByChannelGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - name: channel_id
           in: path
@@ -186,6 +221,9 @@ paths:
   /program/daily:
     get:
       operationId: programDailyGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       responses:
         200:
           description: get daily program
@@ -203,6 +241,9 @@ paths:
   /program/tomorrow/{channel_id}:
     get:
       operationId: programTomorrowByChannelGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - name: channel_id
           in: path
@@ -240,6 +281,9 @@ paths:
   /program/tomorrow:
     get:
       operationId: programTomorrowGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       responses:
         200:
           description: get daily program
@@ -257,6 +301,9 @@ paths:
   /program/yesterday/{channel_id}:
     get:
       operationId: programYesterdayByChannelGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - name: channel_id
           in: path
@@ -294,6 +341,9 @@ paths:
   /program/yesterday:
     get:
       operationId: programYesterdayGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       responses:
         200:
           description: get daily program
@@ -311,6 +361,9 @@ paths:
   /program/entry/{id}:
     get:
       operationId: ProgramEntryByIdGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - in: path
           name: id
@@ -342,6 +395,9 @@ paths:
   /log:
     get:
       operationId: logGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       responses:
         200:
           description: Get log entries
@@ -353,6 +409,9 @@ paths:
   /log/entry/{id}:
     get:
       operationId: singleLogGET
+      x-response-headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlHeader'
       parameters:
         - in: path
           name: id
@@ -413,12 +472,13 @@ paths:
     get:
       operationId: recommendationsGET
       parameters:
-          - name: from
-            in: query
-            description: from, RFC3339 format, default start of today, utc is expected serverside
-            allowEmptyValue: true
-            schema:
-              type: string
+        - name: from
+          in: query
+          description: from, RFC3339 format, default start of today, utc is expected serverside
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: date-time
       responses:
         200:
           description: get recommendations in given time range
@@ -475,7 +535,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /xmltv:
+    get:
+      operationId: xmltv
+      description: Endpoint for XMLTV data
+      parameters:
+        - name: from
+          in: query
+          description: from timestamp
+          allowEmptyValue: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: from timestamp
+          allowEmptyValue: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        200:
+          content:
+            'application/xml':
+              schema:
+                type: string
+          description: Successful XMLTV response
+
+
 components:
+  headers:
+    CORSHeader:
+      description: Access-Control-Allow-Origin header for CORS support
+      schema:
+        type: string
+        example: "*"
+    CompressionHeader:
+      description: Content-Encoding header for GZIP compression
+      schema:
+        type: string
+        example: "gzip"
+    CacheControlHeader:
+      description: Cache-Control header for browser caching (used for /program, /log, and /channel endpoints)
+      schema:
+        type: string
+        example: "public, max-age=36000"
   schemas:
     StatusResponse:
       title: StatusResponse
@@ -703,7 +807,7 @@ components:
         entry_count:
           type: integer
           format: int64
-        data:
+        elements:
           type: array
           items:
             $ref: '#/components/schemas/LogEntry'

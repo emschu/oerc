@@ -16,15 +16,27 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Component } from '@angular/core';
 
-@Component({
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
-})
-export class DashboardComponent {
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-  constructor() { }
+import { XmltvComponent } from './xmltv.component';
 
-}
+describe('XmltvComponent', () => {
+  let component: XmltvComponent;
+  let fixture: ComponentFixture<XmltvComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [XmltvComponent]
+    })
+    .compileComponents();
+    
+    fixture = TestBed.createComponent(XmltvComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

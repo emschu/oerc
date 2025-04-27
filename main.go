@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2024 emschu[aet]mailbox.org
+// Copyright (C) 2021-2025 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -17,6 +17,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	rice "github.com/GeertJohan/go.rice"
@@ -34,7 +35,7 @@ import (
 )
 
 var (
-	version       = "0.18.0"
+	version       = "0.19.0"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -363,6 +364,75 @@ func main() {
 					duration := time.Now().Sub(startTime)
 					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())
 
+					return nil
+				},
+			},
+			{
+				Name:  "xmltv",
+				Usage: "Export program entry database to xmltv format",
+				Flags: []cli.Flag{
+					&cli.TimestampFlag{
+						Name:        "from",
+						Usage:       "Data range start date, YYYY-MM-DD",
+						Layout:      "2006-01-02",
+						DefaultText: "today",
+					},
+					&cli.TimestampFlag{
+						Name:        "to",
+						Usage:       "Data range end date, YYYY-MM-DD",
+						Layout:      "2006-01-02",
+						DefaultText: "7 days from today",
+					},
+				},
+				Action: func(context *cli.Context) error {
+					startTime := time.Now()
+					Startup(context)
+					defer Shutdown()
+
+					// Get date range
+					var rangeStart, rangeEnd time.Time
+					if context.Timestamp("from") != nil {
+						rangeStart = *context.Timestamp("from")
+					} else {
+						rangeStart = time.Now().Truncate(24 * time.Hour)
+					}
+
+					if context.Timestamp("to") != nil {
+						rangeEnd = *context.Timestamp("to")
+					} else {
+						rangeEnd = rangeStart.Add(7 * 24 * time.Hour)
+					}
+
+					log.Printf("Exporting XMLTV data from %s to %s\n",
+						rangeStart.Format("2006-01-02"),
+						rangeEnd.Format("2006-01-02"))
+
+					doc, err := exportToXMLTV(rangeStart, rangeEnd)
+					if err != nil {
+						return err
+					}
+
+					if verboseGlobal {
+						duration := time.Now().Sub(startTime)
+						log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())
+					}
+
+					toString, err := writeXMLTVToString(doc)
+					if err != nil {
+						return err
+					}
+					// write xml output to stdout
+					output := bufio.NewWriter(os.Stdout)
+					defer func(output *bufio.Writer) {
+						err := output.Flush()
+						if err != nil {
+							log.Fatal(err)
+						}
+					}(output)
+					_, err = output.WriteString(toString)
+					if err != nil {
+						return err
+					}
 					return nil
 				},
 			},

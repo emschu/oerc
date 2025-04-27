@@ -1,4 +1,3 @@
-//
 // oerc, alias oer-collector
 // Copyright (C) 2021-2025 emschu[aet]mailbox.org
 //
@@ -15,9 +14,11 @@
 // You should have received a copy of the GNU Affero General Public
 // License along with this program.
 // If not, see <https://www.gnu.org/licenses/>.
-.credits {
-  font-size: 120%;
-  a {
-    font-weight: bold;
+
+.xmltv-action-buttons {
+  .card-body {
+    a {
+      margin-bottom: 1rem;
+    }
   }
 }
