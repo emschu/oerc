@@ -34,6 +34,7 @@ import {SearchService} from './search/search.service';
 import {UtilModule} from '../util/util.module';
 import {FormsModule} from '@angular/forms';
 import {StateService} from './state.service';
+import {XmltvComponent} from "./xmltv/xmltv.component";
 
 @NgModule({
   imports: [
@@ -48,6 +49,7 @@ import {StateService} from './state.service';
     TimelineComponent,
     RecommendationComponent,
     DashboardComponent,
+    XmltvComponent,
     CreditsComponent,
     SearchComponent,
     LogDashboardComponent,

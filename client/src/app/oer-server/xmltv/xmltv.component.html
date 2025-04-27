@@ -1,0 +1,34 @@
+<div class="columns head-section">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <h3>XmlTV</h3>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="columns flex-centered xmltv-action-buttons">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <p>
+          <strong>XmlTV</strong> is a standardized format for TV program data. It is used by many TV applications to display program information.<br/>
+          <strong>Oerc</strong> supports exporting the program data in the XmlTV format via HTTP api and CLI command <i>xmltv</i>:
+        </p>
+        <p>
+          <a href="{{ exampleXmlTvApiUrl }}" target="_blank">{{ exampleXmlTvApiUrl }}</a>
+        </p>
+        <p>
+          By clicking on the following buttons you can download the XmlTV file for the selected time period.<br />
+          <i>NOTE</i>: You can adjust the date range also directly in the URL.
+        </p>
+        <a class="btn btn-sm btn-primary" (click)="openXmlTv(XmlTvTimeExpression.TODAY)">XmlTv of Today</a><br/>
+        <a class="btn btn-sm btn-primary" (click)="openXmlTv(XmlTvTimeExpression.TOMORROW)">Tomorrow</a><br/>
+        <a class="btn btn-sm btn-primary" (click)="openXmlTv(XmlTvTimeExpression.YESTERDAY)">Yesterday</a><br/>
+        <a class="btn btn-sm btn-primary" (click)="openXmlTv(XmlTvTimeExpression.THIS_WEEK)">This week</a><br/>
+        <a class="btn btn-sm btn-primary" (click)="openXmlTv(XmlTvTimeExpression.TODAY_PLUS_7_DAYS)">Today + 7 days</a><br/>
+        <a class="btn btn-sm btn-primary" (click)="openXmlTv(XmlTvTimeExpression.TODAY_PLUS_14_DAYS)">Today + 14 days</a>
+      </div>
+    </div>
+  </div>
+</div>
