@@ -49,6 +49,20 @@ type ChannelFamily struct {
 	Title string `gorm:"size:32" json:"title"`
 }
 
+var channelFamilyKeys = []string{"ARD", "ZDF", "SRF", "ORF"}
+
+func (f ChannelFamily) getXmlTvChannelPrefix() string {
+	switch f.Title {
+	case "ARD", "ZDF":
+		return "DE"
+	case "SRF":
+		return "CH"
+	case "ORF":
+		return "AT"
+	}
+	return ""
+}
+
 // ManagedRecord base entity part, meta-struct used by several other db related structs
 type ManagedRecord struct {
 	Title           string        `gorm:"size:500" json:"title"`

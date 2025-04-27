@@ -15,6 +15,7 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 - Running an **HTTP server** to access program data in a simple Web-UI (`oerc server`)
 - By default, the server contains a small **client web application** for your browser to view the program data and
   your personal program recommendations
+- Support of XmlTV via CLI and HTTP Api 
 
 With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
@@ -88,10 +89,10 @@ NAME:
    oerc - Command line tool to manage the oerc application
 
 USAGE:
-   oerc [global options] command [command options] [arguments...]
+   oerc [global options] command [command options]
 
 VERSION:
-   0.18.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.19.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -106,13 +107,14 @@ COMMANDS:
    search, sc          Search program data and create recommendations
    server, sv          Start webserver with oerc API and an embedded browser client
    status, s           Show some of the app's status information
+   xmltv               Export the database to xmltv format
    help, h             Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --config value, -c value  Path to the yaml configuration file (default: ~/.oerc.yaml)
    --verbose                 Verbose log output (default: false)
-   --help, -h                show help (default: false)
-   --version, -v             print the version (default: false)                                                            
+   --help, -h                show help
+   --version, -v             print the version                                                           
 ```
 
 ### Configuration options

@@ -209,6 +209,7 @@ func initRouter() *gin.Engine {
 	apiV2.GET("/recommendations", getRecommendationsHandler)
 	// search
 	apiV2.GET("/search", getSearchHandler)
+	apiV2.GET("/xmltv", getXmlTvHandler)
 
 	if GetAppConf().ClientEnabled {
 		clientBox := rice.MustFindBox("client/dist/client").HTTPBox()

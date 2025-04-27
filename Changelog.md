@@ -1,5 +1,8 @@
 # Changelog oerc
 
+## 0.19.0 - 2025/04/27
+- Add new `xmltv` subcommand and create `xmltv` http api endpoint
+
 ## 0.18.0 - 2025/04/13
 - Fix recent problems with zdf api
 - update dependencies

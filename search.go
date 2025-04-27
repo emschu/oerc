@@ -62,13 +62,13 @@ func SearchProgram() {
 	var programEntryList = make([]ProgramEntry, 0)
 	programResponse := getProgramOf(&tStart, &tEnd, nil)
 
-	if programResponse == nil || len(*programResponse.ProgramEntryList) == 0 {
+	if programResponse == nil {
 		log.Fatalf("Could not retrieve program for date range '%s'-'%s'. Please fetch the program at first.\n", tStart, tEnd)
 		return
 	}
 
 	skipCounter := 0
-	for _, programEntry := range *programResponse.ProgramEntryList {
+	for _, programEntry := range programEntryList {
 		// exclude the channels found above
 		if isChannelExcluded(excludedChannelIDs, &programEntry) {
 			skipCounter++
@@ -118,7 +118,7 @@ func SearchProgram() {
 		}
 	}
 
-	log.Printf("Found %v search results in tv program of today + %d days. Searched in %d program entries.\n", len(programEntryList), GetAppConf().SearchDaysInFuture, len(*programResponse.ProgramEntryList)-skipCounter)
+	log.Printf("Found %v search results in tv program of today + %d days. Searched in %d program entries.\n", len(programEntryList), GetAppConf().SearchDaysInFuture, len(*programResponse)-skipCounter)
 }
 
 func getExcludedChannelsFromSearch(db *gorm.DB) *[]uint {

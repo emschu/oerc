@@ -596,7 +596,7 @@ func ClearLogs() {
 	db.Where("id > 0").Delete(&LogEntry{})
 }
 
-// ClearAll method to clear (almost) all the db data - except channels + channels families
+// ClearAll method to clear (almost) all the db data - except channels + channels channelFamilyKeys
 func ClearAll() {
 	ClearLogs()
 	ClearRecommendations()
@@ -670,4 +670,52 @@ func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
 	}
 	dateTime = dateTime.In(location)
 	return dateTime, false
+}
+
+// getProgramOf to work with program entries, without deprecated entries
+func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *[]ProgramEntry {
+	db := getDb()
+	var entries []ProgramEntry
+	// 14 day = max range
+	var endDateTime = *end
+	if end.Sub(*start).Hours()/24 > 14 {
+		endDateTime = time.Now().Add(14 * 24 * time.Hour)
+	}
+	entryQuery := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, endDateTime).
+		Preload("Channel").
+		Preload("Channel.ChannelFamily").
+		Preload("ImageLinks").
+		Preload("CollisionEntries").
+		Order("channel_id")
+	if channel != nil {
+		entryQuery.Where("channel_id", channel.ID)
+	}
+	entryQuery.Where("is_deprecated is false")
+
+	result := entryQuery.Find(&entries)
+	if result.Error != nil {
+		log.Fatalf("error fetching program items: %v", result.Error)
+		return nil
+	}
+	return &entries
+}
+
+// getAllProgramEntriesOf to work with program entries, without deprecated entries
+func getAllProgramEntriesOf(start, end time.Time) (*[]ProgramEntry, error) {
+	allEntries := make([]ProgramEntry, 0)
+
+	for _, channel := range *getChannels() {
+		channelPtr := channel
+		programResponse := getProgramOf(&start, &end, &channelPtr)
+		if programResponse == nil {
+			continue
+		}
+
+		programEntries := *programResponse
+		for i := range programEntries {
+			allEntries = append(allEntries, programEntries[i])
+		}
+	}
+
+	return &allEntries, nil
 }

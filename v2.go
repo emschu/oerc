@@ -27,8 +27,8 @@ import (
 	"time"
 )
 
-// getProgramOf generating a program entry list response for each channel (or if channel = nil for ALL channels) in given time range. returns ProgramResponse
-func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
+// use this method to get program entries for the web frontend, includes deprecated entries
+func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
 	db := getDb()
 	var entries []ProgramEntry
 	// 14 day = max range
@@ -43,7 +43,11 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramRe
 	if channel != nil {
 		order.Where("channel_id", channel.ID)
 	}
-	order.Find(&entries)
+	result := order.Find(&entries)
+	if result.Error != nil {
+		log.Fatalf("error fetching program items: %v", result.Error)
+		return nil
+	}
 	response := ProgramResponse{
 		From:             start,
 		To:               end,
@@ -56,14 +60,22 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *ProgramRe
 func getChannels() *[]Channel {
 	db := getDb()
 	var channels []Channel
-	db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Find(&channels)
+	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Find(&channels)
+	if result.Error != nil {
+		log.Fatalf("error fetching channels: %v", result.Error)
+		return nil
+	}
 	return &channels
 }
 
 func getChannelFamilies() *[]ChannelFamily {
 	db := getDb()
 	families := &[]ChannelFamily{}
-	db.Model(&ChannelFamily{}).Find(families)
+	result := db.Model(&ChannelFamily{}).Find(families)
+	if result.Error != nil {
+		log.Fatalf("error fetching channel channelFamilyKeys: %v", result.Error)
+		return nil
+	}
 	return families
 }
 
@@ -72,7 +84,7 @@ func getProgramYesterdayHandler(c *gin.Context) {
 	yStart := time.Date(y.Year(), y.Month(), y.Day(), 0, 0, 0, 0, y.Location())
 	yEnd := time.Date(y.Year(), y.Month(), y.Day(), 23, 59, 59, 0, y.Location())
 
-	c.JSON(http.StatusOK, getProgramOf(&yStart, &yEnd, nil))
+	c.JSON(http.StatusOK, getProgramOfWeb(&yStart, &yEnd, nil))
 }
 
 func getYesterdayProgramWithChannelHandler(c *gin.Context) {
@@ -86,7 +98,7 @@ func getYesterdayProgramWithChannelHandler(c *gin.Context) {
 	yStart := time.Date(y.Year(), y.Month(), y.Day(), 0, 0, 0, 0, y.Location())
 	yEnd := time.Date(y.Year(), y.Month(), y.Day(), 23, 59, 59, 0, y.Location())
 
-	c.JSON(http.StatusOK, getProgramOf(&yStart, &yEnd, channel))
+	c.JSON(http.StatusOK, getProgramOfWeb(&yStart, &yEnd, channel))
 }
 
 func getProgramTodayHandler(c *gin.Context) {
@@ -94,7 +106,7 @@ func getProgramTodayHandler(c *gin.Context) {
 	tStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	tEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
 
-	c.JSON(http.StatusOK, getProgramOf(&tStart, &tEnd, nil))
+	c.JSON(http.StatusOK, getProgramOfWeb(&tStart, &tEnd, nil))
 }
 
 func getProgramTomorrowHandler(c *gin.Context) {
@@ -102,7 +114,7 @@ func getProgramTomorrowHandler(c *gin.Context) {
 	toStart := time.Date(tom.Year(), tom.Month(), tom.Day(), 0, 0, 0, 0, tom.Location())
 	toEnd := time.Date(tom.Year(), tom.Month(), tom.Day(), 23, 59, 59, 0, tom.Location())
 
-	c.JSON(http.StatusOK, getProgramOf(&toStart, &toEnd, nil))
+	c.JSON(http.StatusOK, getProgramOfWeb(&toStart, &toEnd, nil))
 }
 
 func getTomorrowProgramWithChannelHandler(c *gin.Context) {
@@ -117,7 +129,7 @@ func getTomorrowProgramWithChannelHandler(c *gin.Context) {
 	toStart := time.Date(tom.Year(), tom.Month(), tom.Day(), 0, 0, 0, 0, tom.Location())
 	toEnd := time.Date(tom.Year(), tom.Month(), tom.Day(), 23, 59, 59, 0, tom.Location())
 
-	c.JSON(http.StatusOK, getProgramOf(&toStart, &toEnd, channel))
+	c.JSON(http.StatusOK, getProgramOfWeb(&toStart, &toEnd, channel))
 }
 
 func getSingleChannelHandler(c *gin.Context) {
@@ -140,7 +152,7 @@ func getDailyProgramWithChannelHandler(c *gin.Context) {
 	tStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	tEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
 
-	c.JSON(http.StatusOK, getProgramOf(&tStart, &tEnd, channel))
+	c.JSON(http.StatusOK, getProgramOfWeb(&tStart, &tEnd, channel))
 }
 
 func getProgramHandler(c *gin.Context) {
@@ -199,7 +211,7 @@ func getProgramHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, getProgramOf(&start, &end, channel))
+	c.JSON(http.StatusOK, getProgramOfWeb(&start, &end, channel))
 }
 
 func getSingleProgramEntryHandler(c *gin.Context) {
@@ -491,4 +503,59 @@ func getSearchHandler(context *gin.Context) {
 		return
 	}
 	context.JSON(http.StatusOK, &programEntryList)
+}
+
+func getXmlTvHandler(context *gin.Context) {
+	context.Writer.Header().Set("Content-Type", "application/xml; charset=utf-8")
+
+	from := context.Query("from")
+	to := context.Query("to")
+
+	if len(from) == 0 || len(to) == 0 {
+		context.XML(http.StatusBadRequest, Error{
+			Status:  "400",
+			Message: "invalid empty date range parameters: 'from' or 'to' is missing",
+		})
+		return
+	}
+
+	var err error
+	var start, end time.Time
+	start, err = time.Parse(time.RFC3339, from)
+	if err != nil || start.IsZero() {
+		context.XML(http.StatusBadRequest, Error{
+			Status:  "400",
+			Message: "invalid 'from' date time parameter",
+		})
+		return
+	}
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	start = start.In(location)
+
+	end, err = time.Parse(time.RFC3339, to)
+	if err != nil || end.IsZero() {
+		context.XML(http.StatusBadRequest, Error{
+			Status:  "400",
+			Message: "invalid 'to' date time parameter",
+		})
+		return
+	}
+
+	end.In(location)
+	if end.Before(start) || end.Equal(start) {
+		context.XML(http.StatusBadRequest, Error{
+			Status:  "400",
+			Message: "invalid date range, end is before or equal to start",
+		})
+		return
+	}
+
+	xmltv, err := exportToXMLTV(start, end)
+	if err != nil {
+		context.XML(http.StatusInternalServerError, Error{
+			Status:  "500",
+			Message: "Error while generating XMLTV file",
+		})
+	}
+	context.XML(http.StatusOK, &xmltv)
 }
