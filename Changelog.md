@@ -1,5 +1,11 @@
 # Changelog oerc
 
+## 0.20.0 - 2025/10/26
+- Golang 1.24
+- Dependency updates 
+- Update OpenApi spec and remove conversion logic from project
+- 
+
 ## 0.19.0 - 2025/04/27
 - Add new `xmltv` subcommand and create `xmltv` http api endpoint
 

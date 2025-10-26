@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         node-version: [ '20.x' ]
-        go-version: [ '1.22', '1.23' ]
+        go-version: [ '1.22', '1.23', '1.24' ]
 
     steps:
       - uses: actions/checkout@v3
@@ -34,7 +34,6 @@ jobs:
           path: |
             ~/.npm
             client/node_modules
-            openapi-generator-cli.jar
           key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-cache-oerc

@@ -20,8 +20,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	rice "github.com/GeertJohan/go.rice"
-	"github.com/urfave/cli/v2"
 	"log"
 	"net/http"
 	"os"
@@ -29,13 +27,16 @@ import (
 	"strconv"
 	"time"
 
+	rice "github.com/GeertJohan/go.rice"
+	"github.com/urfave/cli/v2"
+
 	_ "net/http/pprof"
 
 	"github.com/pkg/profile"
 )
 
 var (
-	version       = "0.19.0"
+	version       = "0.20.0"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -206,7 +207,7 @@ func main() {
 
 					SearchProgram()
 
-					setSetting(settingKeyLastSearch, fmt.Sprintf(time.Now().Format(time.RFC3339)))
+					setSetting(settingKeyLastSearch, fmt.Sprintf("%s", startTime.Format(time.RFC3339)))
 
 					duration := time.Now().Sub(startTime)
 					log.Printf("Duration: %.2f Seconds, %.2f Minutes\n", duration.Seconds(), duration.Minutes())

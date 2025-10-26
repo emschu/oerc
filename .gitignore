@@ -2,7 +2,6 @@ bin
 .idea
 vendor
 out
-openapi-generator-cli.jar
 docs/.hypothesis
 .hypothesis
 oerc

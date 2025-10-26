@@ -18,13 +18,14 @@ package main
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"log"
 	"math"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // FindOverlaps central method to find, store and process overlapping program entries with same range as "fetch" command
@@ -175,7 +176,7 @@ func isProgramEntryPossiblyDeprecated(programEntry *ProgramEntry) bool {
 }
 
 func storeOverlaps(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
-	var affectedIds = make([]uint, 0)
+	var affectedIDs = make([]uint, 0)
 
 	tx := db.Session(&gorm.Session{PrepareStmt: true})
 
@@ -199,9 +200,9 @@ func storeOverlaps(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 			programEntry.CollisionEntries = relatedItems
 			db.Save(&programEntry)
 		}
-		affectedIds = append(affectedIds, programEntry.ID)
+		affectedIDs = append(affectedIDs, programEntry.ID)
 	}
-	return affectedIds
+	return affectedIDs
 }
 
 // this method asks the database for overlapping items and store the results in a map

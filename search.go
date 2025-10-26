@@ -17,10 +17,11 @@
 package main
 
 import (
-	"gorm.io/gorm"
 	"log"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // uniqueStrSlice: function to make a slice of program entries unique
@@ -122,17 +123,17 @@ func SearchProgram() {
 }
 
 func getExcludedChannelsFromSearch(db *gorm.DB) *[]uint {
-	var excludedChannelIds = make([]uint, len(GetAppConf().SearchSkipChannels))
+	var excludedChannelIDs = make([]uint, len(GetAppConf().SearchSkipChannels))
 	for _, channel := range GetAppConf().SearchSkipChannels {
 		var channelEntry Channel
 		db.Model(&Channel{}).Where("is_deprecated is false AND title = ?", channel).First(&channelEntry)
 		if channelEntry.ID > 0 {
-			excludedChannelIds = append(excludedChannelIds, channelEntry.ID)
+			excludedChannelIDs = append(excludedChannelIDs, channelEntry.ID)
 		} else {
 			log.Printf("Problem with channel name '%s'. Could not find it in database. Skipping this entry.\n", channel)
 		}
 	}
-	return &excludedChannelIds
+	return &excludedChannelIDs
 }
 
 func isChannelFamilyExcluded(family *ChannelFamily) bool {
@@ -152,8 +153,8 @@ func isChannelFamilyExcluded(family *ChannelFamily) bool {
 }
 
 // method to check if a single program entry should be skipped because its channel id is contained in the first parameter
-func isChannelExcluded(excludedChannelIds *[]uint, programEntry *ProgramEntry) bool {
-	for _, skippedChannelID := range *excludedChannelIds {
+func isChannelExcluded(excludedChannelIDs *[]uint, programEntry *ProgramEntry) bool {
+	for _, skippedChannelID := range *excludedChannelIDs {
 		if programEntry.ChannelID == skippedChannelID {
 			return true
 		}
