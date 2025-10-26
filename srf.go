@@ -19,13 +19,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gocolly/colly/v2"
 	"log"
 	"math"
 	"regexp"
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"github.com/gocolly/colly/v2"
 )
 
 const (
@@ -109,15 +110,15 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 	if response == nil || err != nil {
 		errorMessage := fmt.Sprintf("Problem fetching SRF URL '%s' %v.\n", queryURL, err)
 		appLog(errorMessage)
-		log.Printf(errorMessage)
+		log.Printf("%s", errorMessage)
 		return
 	}
-	var apiObject srfApiResponse
+	var apiObject srfAPIResponse
 	jsonErr := json.Unmarshal([]byte(*response), &apiObject)
 	if jsonErr != nil {
 		errorMessage := fmt.Sprintf("Cannot decode SRF API response to JSON\n")
 		appLog(errorMessage)
-		log.Printf(errorMessage)
+		log.Printf("%s", errorMessage)
 		return
 	}
 
@@ -136,7 +137,7 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 			}
 			programEntry.Title = title
 			programEntry.URL = queryURL
-			programEntry.Description = trimAndSanitizeString(fmt.Sprintf(srfEntry.Description))
+			programEntry.Description = trimAndSanitizeString(fmt.Sprintf("%s", srfEntry.Description))
 
 			hash := buildHash([]string{
 				title,
@@ -200,8 +201,8 @@ func (s *SRFParser) newSrfCollector() *colly.Collector {
 	return baseCollector([]string{srfHost})
 }
 
-// srfApiResponse Definition of SRF api response object
-type srfApiResponse struct {
+// srfAPIResponse Definition of SRF api response object
+type srfAPIResponse struct {
 	Data []struct {
 		Channel struct {
 			Livestream struct {

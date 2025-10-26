@@ -19,12 +19,13 @@ package main
 // this file contains all HTTP JSON API methods for the gin server implementation of this project
 
 import (
-	"github.com/gin-gonic/gin"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // use this method to get program entries for the web frontend, includes deprecated entries
@@ -505,7 +506,7 @@ func getSearchHandler(context *gin.Context) {
 	context.JSON(http.StatusOK, &programEntryList)
 }
 
-func getXmlTvHandler(context *gin.Context) {
+func getXMLTvHandler(context *gin.Context) {
 	context.Writer.Header().Set("Content-Type", "application/xml; charset=utf-8")
 
 	from := context.Query("from")

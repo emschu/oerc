@@ -579,10 +579,10 @@ func baseCollector(allowedHosts []string) *colly.Collector {
 		}
 		atomic.AddUint64(&status.TotalRequests, 1)
 	})
-	c.OnResponse(func(response *colly.Response) {
+	c.OnResponse(func(_ *colly.Response) {
 		resetErr()
 	})
-	c.OnError(func(response *colly.Response, err error) {
+	c.OnError(func(_ *colly.Response, _ error) {
 		incrErr()
 		checkErr()
 	})

@@ -10,7 +10,7 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 
 ## Prerequisites
 
-- Go 1.23+
+- Go 1.24+
 - PostgreSQL 12+
 
 ### Commands
@@ -78,7 +78,7 @@ $ docker-compose up
 1. Install the application with go and the following command `go install github.com/emschu/oerc@latest`
 
 2. Set up a PostgreSQL database (12+), configure a database with a user and start it.
-    - The development section contains a simple docker command to run a local database for development and
+    - The [development section](./DEVELOPMENT.md) contains a simple docker command to run a local database for development or testing. 
 3. Run `oerc init`.   
    - This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
    You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`,
@@ -97,7 +97,7 @@ USAGE:
    oerc [global options] command [command options]
 
 VERSION:
-   0.19.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.20.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
@@ -260,7 +260,7 @@ to be available too, so ensure to enable the postgres database service as well.
 ### OpenApi 3 specification
 
 If you run the (backend) server (`oerc server`) an OpenApi 3 specification is shipped at
-`http://localhost:8080/spec/openapi3.json`, respectively `.yaml`. Or have a look at the
+`http://localhost:8080/spec/oerc-openapi3.json`. Or have a look at the
 API specification files in [this directory](./docs).
 
 ## License
@@ -297,93 +297,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 ## Development
 
-This project is shipped with a `Makefile` to ease the development and testing process.
-At first, you should run `make setup` and you need the usual Golang/Python/Node/Java toolchains.
-Be sure to run `make build` and `make spec` (if you updated something there) before filing a pull request.
-
-### Build/Configuration Instructions
-
-#### Prerequisites
-- Go 1.23+
-- PostgreSQL 12+
-- Node.js (for frontend development)
-
-#### Setup
-1. Clone the repository
-2. Run `make setup` to install required dependencies:
-   ```bash
-   make setup
-   ```
-   This will:
-   - Download Go dependencies
-   - Install required tools (go.rice, revive)
-   - Download the OpenAPI generator CLI
-   - Install schemathesis for API testing
-
-3. Configure the database:
-   - For development, you can use a PostgreSQL Docker container:
-     ```bash
-     docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:14-alpine
-     ```
-   - Create a configuration file at `~/.oerc.yaml` or use `-c <path>` to specify a custom location
-   - Ensure database connection details are correctly set in the configuration file
-
-#### Building
-- For development build:
-  ```bash
-  make build
-  ```
-  This creates a binary at `bin/oerc` with race detection enabled
-
-- For release builds:
-  ```bash
-  make release
-  ```
-  This creates binaries for multiple platforms in the `bin/` directory
-
-- For frontend development:
-  ```bash
-  make frontend
-  ```
-  This builds the frontend and generates the static rice box file
-
-### Testing Information
-
-#### Running Tests
-- Run all tests:
-  ```bash
-  make test
-  ```
-  This runs unit tests with race detection and tracing
-
-- Run tests with coverage:
-  ```bash
-  make cover
-  ```
-  This generates a coverage report at `cover.html`
-
-- Run integration tests:
-  ```bash
-  make integration-test-prepare
-  make integration-test
-  ```
-  This starts a local server and runs OpenAPI schema conformity tests against it
-
-### Project Structure
-- Main application code is in the root directory
-- Frontend client code is in the `client/` directory
-- API specifications are in the `spec/` directory
-- Configuration templates are in the `config/` directory
-
-### Database
-- The project uses GORM as an ORM
-- Models are defined in `models.go`
-- For testing, an in-memory SQLite database is used
-
-#### Development PostgreSQL Container
-```bash
-docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:14-alpine 
-```
+See [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ### Contributing
 

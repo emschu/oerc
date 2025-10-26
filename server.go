@@ -18,14 +18,15 @@ package main
 
 import (
 	"fmt"
-	rice "github.com/GeertJohan/go.rice"
-	"github.com/gin-contrib/gzip"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	rice "github.com/GeertJohan/go.rice"
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-gonic/gin"
 )
 
 // StartServer method to start the built-in gin web server to serve the JSON Api
@@ -157,6 +158,8 @@ func initRouter() *gin.Engine {
 	}
 	r.StaticFS("/spec", box.HTTPBox())
 
+	r.HandleMethodNotAllowed = true
+
 	// define group
 	apiPrefix := "/api/v2"
 	apiV2 := r.Group(apiPrefix)
@@ -209,7 +212,7 @@ func initRouter() *gin.Engine {
 	apiV2.GET("/recommendations", getRecommendationsHandler)
 	// search
 	apiV2.GET("/search", getSearchHandler)
-	apiV2.GET("/xmltv", getXmlTvHandler)
+	apiV2.GET("/xmltv", getXMLTvHandler)
 
 	if GetAppConf().ClientEnabled {
 		clientBox := rice.MustFindBox("client/dist/client").HTTPBox()

@@ -35,7 +35,7 @@ type ChannelItem struct {
 	ID          string              `xml:"id,attr"`
 	DisplayName []LocalizedTextNode `xml:"display-name"`
 	Icon        *Icon               `xml:"icon"`
-	Url         []UrlNode           `xml:"url"`
+	URL         []URLNode           `xml:"url"`
 }
 
 type ProgrammeItem struct {
@@ -67,7 +67,7 @@ type ProgrammeItem struct {
 	} `xml:"credits"`
 	Date       *int                `xml:"date"`
 	Desc       []LocalizedTextNode `xml:"desc"`
-	EpisodeNum *UrlNode            `xml:"episode-num"`
+	EpisodeNum *URLNode            `xml:"episode-num"`
 	Icon       *Icon               `xml:"icon"`
 	Image      []struct {
 		Orient   string `xml:"orient,attr"`
@@ -105,7 +105,7 @@ type ProgrammeItem struct {
 		Language LocalizedTextNode `xml:"language"`
 	} `xml:"subtitles"`
 	Title LocalizedTextNode `xml:"title"`
-	Url   []UrlNode         `xml:"url"`
+	URL   []URLNode         `xml:"url"`
 	Video *struct {
 		Aspect  string `xml:"aspect"`
 		Colour  string `xml:"colour"`
@@ -122,7 +122,7 @@ type ProgrammeItemActor struct {
 		Type     string `xml:"type,attr"`
 		CharData string `xml:",chardata"`
 	} `xml:"image"`
-	Url UrlNode `xml:"url"`
+	URL URLNode `xml:"url"`
 }
 
 type LocalizedTextNode struct {
@@ -136,7 +136,7 @@ type Icon struct {
 	Width  int    `xml:"width,attr,omitempty"`
 }
 
-type UrlNode struct {
+type URLNode struct {
 	System   string `xml:"system,attr,omitempty"`
 	CharData string `xml:",chardata"`
 }
@@ -149,8 +149,8 @@ type Rating struct {
 	Value string `xml:"value"`
 }
 
-// newXmlTvDocument exports program data to XMLTV format
-func newXmlTvDocument(channelList *[]Channel, programEntryList *[]ProgramEntry) (*Document, error) {
+// newXMLTvDocument exports program data to XMLTV format
+func newXMLTvDocument(channelList *[]Channel, programEntryList *[]ProgramEntry) (*Document, error) {
 	doc := Document{
 		// Pre-allocate slices to avoid reallocations
 		Channel:   make([]ChannelItem, 0, len(*channelList)),
@@ -185,7 +185,7 @@ func newXmlTvDocument(channelList *[]Channel, programEntryList *[]ProgramEntry) 
 func mapChannelToXMLTV(ch Channel) ChannelItem {
 	// Create the ChannelItem
 	channelItem := ChannelItem{
-		ID: buildChannelId(ch),
+		ID: buildChannelID(ch),
 		DisplayName: []LocalizedTextNode{
 			{
 				CharData: ch.Title,
@@ -194,15 +194,15 @@ func mapChannelToXMLTV(ch Channel) ChannelItem {
 	}
 
 	if ch.Homepage != "" {
-		channelItem.Url = append(channelItem.Url, UrlNode{
+		channelItem.URL = append(channelItem.URL, URLNode{
 			CharData: ch.Homepage,
 		})
 	}
 	return channelItem
 }
 
-func buildChannelId(ch Channel) string {
-	return fmt.Sprintf("%s: %s", ch.ChannelFamily.getXmlTvChannelPrefix(), ch.Title)
+func buildChannelID(ch Channel) string {
+	return fmt.Sprintf("%s: %s", ch.ChannelFamily.getXMLTvChannelPrefix(), ch.Title)
 }
 
 func mapProgramEntryToXMLTV(pe *ProgramEntry) ProgrammeItem {
@@ -219,7 +219,7 @@ func mapProgramEntryToXMLTV(pe *ProgramEntry) ProgrammeItem {
 	}
 
 	programmeItem := ProgrammeItem{
-		Channel: buildChannelId(pe.Channel),
+		Channel: buildChannelID(pe.Channel),
 		Start:   startTime,
 		Stop:    stopTime,
 		Title: LocalizedTextNode{
@@ -293,5 +293,5 @@ func exportToXMLTV(rangeStart, rangeEnd time.Time) (*Document, error) {
 		return nil, fmt.Errorf("error fetching program entries: %v", err)
 	}
 
-	return newXmlTvDocument(channels, programEntries)
+	return newXMLTvDocument(channels, programEntries)
 }

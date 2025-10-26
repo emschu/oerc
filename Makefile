@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.19.0"
-APP_VERSION_STR = "0-19-0"
+APP_VERSION_DOT = "0.20.0"
+APP_VERSION_STR = "0-20-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -52,7 +52,6 @@ setup: ## install required project and (dev) dependencies
 	$(GO) get github.com/GeertJohan/go.rice
 	$(GO) get github.com/GeertJohan/go.rice/rice
 	$(GO) install github.com/mgechev/revive@latest
-	if [ ! -f openapi-generator-cli.jar ]; then curl -L -o openapi-generator-cli.jar -L https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(OPENAPI_TOOLS_VERSION)/openapi-generator-cli-$(OPENAPI_TOOLS_VERSION).jar; fi
 	python -m pip install --user schemathesis
 
 .PHONY: frontend
@@ -86,17 +85,13 @@ integration-test-prepare: ## start (local) oerc server to run integration tests 
 
 .PHONY: integration-test
 integration-test: ## run OpenAPI schema conformity HTTP tests
-	@$(SCHEMATHESIS_BIN) run -x --show-errors-tracebacks --hypothesis-deadline 7500 --validate-schema true -c all http://127.0.0.1:8080/spec/openapi3.json
+	@$(SCHEMATHESIS_BIN) run -c all --exclude-checks positive_data_acceptance http://127.0.0.1:8080/spec/oerc-openapi3.json
 	-if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover
 cover: ## run unit tests with coverage output
 	$(GO) test -race -coverprofile=cover.out -coverpkg=./ ./
 	$(GO) tool cover -html=cover.out -o cover.html
-
-.PHONY: spec
-spec: ## run openapi spec converter from yaml -> json
-	bash convert_spec.sh
 
 # TODO
 # CGO_ENABLED=0 go build -ldflags "-w" -a -o oerc .

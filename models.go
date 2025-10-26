@@ -51,7 +51,7 @@ type ChannelFamily struct {
 
 var channelFamilyKeys = []string{"ARD", "ZDF", "SRF", "ORF"}
 
-func (f ChannelFamily) getXmlTvChannelPrefix() string {
+func (f ChannelFamily) getXMLTvChannelPrefix() string {
 	switch f.Title {
 	case "ARD", "ZDF":
 		return "DE"
