@@ -20,9 +20,10 @@ import { Component } from '@angular/core';
 import {environment} from '../../../environments/environment';
 
 @Component({
-  selector: 'app-credits',
-  templateUrl: './credits.component.html',
-  styleUrls: ['./credits.component.scss']
+    selector: 'app-credits',
+    templateUrl: './credits.component.html',
+    styleUrls: ['./credits.component.scss'],
+    standalone: false
 })
 export class CreditsComponent {
 

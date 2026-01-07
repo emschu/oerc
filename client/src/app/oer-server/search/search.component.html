@@ -1,26 +1,28 @@
 <!--
-  ~ oerc, alias oer-collector
-  ~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU Affero General Public License as
-  ~ published by the Free Software Foundation, either version 3 of the
-  ~ License, or (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  ~ GNU Affero General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Affero General Public
-  ~ License along with this program.
-  ~ If not, see <https://www.gnu.org/licenses/>.
+~ oerc, alias oer-collector
+~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
+~
+~ This program is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU Affero General Public License as
+~ published by the Free Software Foundation, either version 3 of the
+~ License, or (at your option) any later version.
+~
+~ This program is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+~ GNU Affero General Public License for more details.
+~
+~ You should have received a copy of the GNU Affero General Public
+~ License along with this program.
+~ If not, see <https://www.gnu.org/licenses/>.
 -->
 <div class="columns head-section">
   <div class="column col-12">
     <div class="card">
       <div class="card-body">
-        <h3>Search results for '{{ searchString }}' <span *ngIf="programEntryList.length > 0">({{ programEntryList.length }} results)</span></h3>
+        <h3>Search results for '{{ searchString }}' @if (programEntryList.length > 0) {
+          <span>({{ programEntryList.length }} results)</span>
+        }</h3>
       </div>
     </div>
   </div>
@@ -28,35 +30,48 @@
 
 <div class="columns">
   <div class="column col-12">
-    <div class="search_table" *ngIf="programEntryList && programEntryList.length > 0">
-      <table>
-        <thead>
-        <tr>
-          <th>Channel &amp; Time</th>
-          <th>Title</th>
-          <th>Description</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let item of programEntryList">
-          <td class="col_start_date"><span
-            class="channel_label">{{ apiService.getChannelById(item.channel_id)?.title}}</span><br/>
-            {{item.start_date_time | appDate:'full' }}<br/>
-            <img
-              *ngIf="item.image_links && item.image_links.length > 0"
-              class="img-responsive img-fit-contain" src="{{item.image_links[0].url}}"/>
-          </td>
-          <td class="col_title" [innerHTML]="item.title | search:searchString"></td>
-          <td class="col_description"
+    @if (programEntryList && programEntryList.length > 0) {
+      <div class="search_table">
+        <table>
+          <thead>
+            <tr>
+              <th>Channel &amp; Time</th>
+              <th>Title</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of programEntryList; track item) {
+              <tr>
+                <td class="col_start_date"><span
+                class="channel_label">{{ apiService.getChannelById(item.channel_id)?.title}}</span><br/>
+                {{item.start_date_time | appDate:'full' }}<br/>
+                @if (item.image_links && item.image_links.length > 0) {
+                  <img
+                    class="img-responsive img-fit-contain" src="{{item.image_links[0].url}}"/>
+                }
+              </td>
+              <td class="col_title" [innerHTML]="item.title | search:searchString"></td>
+              <td class="col_description"
               [innerHTML]="item.description | readMore | search:searchString"></td>
-        </tr>
+            </tr>
+          }
         </tbody>
       </table>
     </div>
-    <div *ngIf="!programEntryList || programEntryList.length === 0" class="text-center m-2">
-      <h3 *ngIf="isSearchInProgressIndicator && !isInErrors">Loading <app-spinner></app-spinner></h3>
-      <h3 *ngIf="!isSearchInProgressIndicator && !isInErrors">Nothing found</h3>
-      <h3 *ngIf="isInErrors">A request error occurred!</h3>
+  }
+  @if (!programEntryList || programEntryList.length === 0) {
+    <div class="text-center m-2">
+      @if (isSearchInProgressIndicator && !isInErrors) {
+        <h3>Loading <app-spinner></app-spinner></h3>
+      }
+      @if (!isSearchInProgressIndicator && !isInErrors) {
+        <h3>Nothing found</h3>
+      }
+      @if (isInErrors) {
+        <h3>A request error occurred!</h3>
+      }
     </div>
-  </div>
+  }
+</div>
 </div>

@@ -17,16 +17,28 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApiService } from '../api.service';
+import { BehaviorSubject } from 'rxjs';
 
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
+  let apiServiceMock: any;
 
   beforeEach(async () => {
+    apiServiceMock = {
+      updateStatus: jasmine.createSpy('updateStatus'),
+      statusSubject: new BehaviorSubject<any>(null),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     await TestBed.configureTestingModule({
-      declarations: [ DashboardComponent ]
+      declarations: [ DashboardComponent ],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ]
     })
     .compileComponents();
   });

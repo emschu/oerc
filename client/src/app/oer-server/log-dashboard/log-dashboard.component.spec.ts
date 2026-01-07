@@ -17,16 +17,29 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApiService } from '../api.service';
+import { of, BehaviorSubject } from 'rxjs';
 
 import { LogDashboardComponent } from './log-dashboard.component';
 
 describe('LogdashboardComponent', () => {
   let component: LogDashboardComponent;
   let fixture: ComponentFixture<LogDashboardComponent>;
+  let apiServiceMock: any;
 
   beforeEach(async () => {
+    apiServiceMock = {
+      updateStatus: jasmine.createSpy('updateStatus'),
+      logEntries: jasmine.createSpy('logEntries').and.returnValue(of([])),
+      statusSubject: new BehaviorSubject<any>(null),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     await TestBed.configureTestingModule({
-      declarations: [ LogDashboardComponent ]
+      declarations: [ LogDashboardComponent ],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ]
     })
     .compileComponents();
   });

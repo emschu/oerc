@@ -22,9 +22,10 @@ import {LogEntryResponse} from '../entities';
 import {Subscription} from 'rxjs';
 
 @Component({
-  selector: 'app-logdashboard',
-  templateUrl: './log-dashboard.component.html',
-  styleUrls: ['./log-dashboard.component.scss']
+    selector: 'app-logdashboard',
+    templateUrl: './log-dashboard.component.html',
+    styleUrls: ['./log-dashboard.component.scss'],
+    standalone: false
 })
 export class LogDashboardComponent implements OnInit, OnDestroy {
   logEntries: LogEntryResponse | null = null;

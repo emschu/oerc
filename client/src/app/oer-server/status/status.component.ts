@@ -22,9 +22,10 @@ import {StatusResponse} from '../entities';
 import {Subscription} from 'rxjs';
 
 @Component({
-  selector: 'app-oer-status-display',
-  templateUrl: './status.component.html',
-  styleUrls: ['./status.component.scss']
+    selector: 'app-oer-status-display',
+    templateUrl: './status.component.html',
+    styleUrls: ['./status.component.scss'],
+    standalone: false
 })
 export class StatusComponent implements OnInit, OnDestroy {
   public currentStatus: StatusResponse | null = null;

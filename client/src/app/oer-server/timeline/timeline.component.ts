@@ -41,9 +41,10 @@ import FlatPickrInstance = flatpickr.Instance;
 // }
 
 @Component({
-  selector: 'app-oer-timeline',
-  templateUrl: './timeline.component.html',
-  styleUrls: ['./timeline.component.scss']
+    selector: 'app-oer-timeline',
+    templateUrl: './timeline.component.html',
+    styleUrls: ['./timeline.component.scss'],
+    standalone: false
 })
 export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 

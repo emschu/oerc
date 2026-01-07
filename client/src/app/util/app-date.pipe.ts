@@ -21,7 +21,8 @@ import {environment} from '../../environments/environment';
 import dayjs, {Dayjs} from 'dayjs';
 
 @Pipe({
-  name: 'appDate'
+    name: 'appDate',
+    standalone: false
 })
 export class AppDatePipe implements PipeTransform {
 

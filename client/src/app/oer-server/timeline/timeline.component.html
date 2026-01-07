@@ -1,134 +1,142 @@
 <!--
-  ~ oerc, alias oer-collector
-  ~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU Affero General Public License as
-  ~ published by the Free Software Foundation, either version 3 of the
-  ~ License, or (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  ~ GNU Affero General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Affero General Public
-  ~ License along with this program.
-  ~ If not, see <https://www.gnu.org/licenses/>.
+~ oerc, alias oer-collector
+~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
+~
+~ This program is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU Affero General Public License as
+~ published by the Free Software Foundation, either version 3 of the
+~ License, or (at your option) any later version.
+~
+~ This program is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+~ GNU Affero General Public License for more details.
+~
+~ You should have received a copy of the GNU Affero General Public
+~ License along with this program.
+~ If not, see <https://www.gnu.org/licenses/>.
 -->
 <div id="program_timeline">
   <div class="btn-group btn-group-block menu">
-      <span class="date-range">
-            <div class="has-icon-right">
-              <label for="timeline_date_range_picker">
+    <span class="date-range">
+      <div class="has-icon-right">
+        <label for="timeline_date_range_picker">
           <input type="date" class="form-input date-range-picker" name="range_start_date"
-                 id="timeline_date_range_picker"/>
-                  <i class="form-icon icon icon-time"></i>
-                </label>
-            </div>
+            id="timeline_date_range_picker"/>
+          <i class="form-icon icon icon-time"></i>
+        </label>
+      </div>
     </span>
     <span class="divider-vert"></span>
     <div class="menu-button-bar">
       <button id="moveLeft" (click)="moveLeft()" class="btn btn-primary btn-sm"><i class="icon icon-arrow-left"></i>
-        Move
-        left
-      </button>
-      <button id="zoomIn" (click)="zoomIn()" class="btn btn-primary btn-sm"><i class="icon icon-plus"></i> Zoom In
-      </button>
-      <button id="nowTimeline" (click)="moveToNow()" class="btn btn-primary btn-sm"><i class="icon icon-caret"></i> Now
-      </button>
-      <button id="zoomOut" (click)="zoomOut()" class="btn btn-primary btn-sm"><i class="icon icon-minus"></i> Zoom out
-      </button>
-      <button id="moveRight" (click)="moveRight()" class="btn btn-primary btn-sm">Move right <i
-        class="icon icon-arrow-right"></i></button>
-    </div>
-    <span class="divider-vert"></span>
-    <div class="p-relative right">
-      <div class="col">
-        <label>
-          <label class="form-switch">
-            <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
-                   (ngModelChange)="showDeprecatedEntries.next($event)"/>
-            <i class="form-icon"></i> Show overlaps
-          </label>
-        </label>
-      </div>
-    </div>
+      Move
+      left
+    </button>
+    <button id="zoomIn" (click)="zoomIn()" class="btn btn-primary btn-sm"><i class="icon icon-plus"></i> Zoom In
+  </button>
+  <button id="nowTimeline" (click)="moveToNow()" class="btn btn-primary btn-sm"><i class="icon icon-caret"></i> Now
+</button>
+<button id="zoomOut" (click)="zoomOut()" class="btn btn-primary btn-sm"><i class="icon icon-minus"></i> Zoom out
+</button>
+<button id="moveRight" (click)="moveRight()" class="btn btn-primary btn-sm">Move right <i
+class="icon icon-arrow-right"></i></button>
+</div>
+<span class="divider-vert"></span>
+<div class="p-relative right">
+  <div class="col">
+    <label>
+      <label class="form-switch">
+        <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
+          (ngModelChange)="showDeprecatedEntries.next($event)"/>
+        <i class="form-icon"></i> Show overlaps
+      </label>
+    </label>
   </div>
 </div>
+</div>
+</div>
 
-<div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}" *ngIf="currentProgramEntry">
-  <a href="#close" class="modal-overlay" aria-label="Close" (click)="isModalOpen = false"></a>
-  <div class="modal-container scroll-cont">
-    <div class="modal-header">
-      <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isModalOpen = false"></a>
-      <div class="modal-title h5" [innerHTML]="'Details: ' + currentProgramEntry.title"></div>
-    </div>
-    <div class="modal-body">
-      <div class="content">
-        <span *ngIf="currentProgramEntry.is_deprecated" class="label label-warning">This program item seems to be out-of-date!</span>
-
-        <table class="table">
-          <tr>
-            <td>
-              <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | appDate:'full-medium' }}
-              - {{ currentProgramEntry.end_date_time | appDate:'time-medium' }}
-              ({{ currentProgramEntry.duration_in_minutes }} Minutes)
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Channel:</strong> {{ apiService.getChannelById(currentProgramEntry.channel_id)?.title }}</td>
-          </tr>
-          <tr *ngIf="currentProgramEntry.image_links && currentProgramEntry.image_links.length > 0">
-            <td><img class="img-responsive img-fit-contain"
-                     alt="program entry preview image" src="{{currentProgramEntry.image_links[0].url}}"/></td>
-          </tr>
-          <tr>
-            <td>
-              <strong>Description:</strong>
-              <p class="text-normal" [innerHTML]="currentProgramEntry.description">
-              </p>
-            </td>
-          </tr>
-          <tr *ngIf="currentProgramEntry.homepage">
-            <td><strong>Homepage:</strong>&nbsp;<a href="{{ currentProgramEntry.homepage }}"
-                                                   target="_blank">{{ currentProgramEntry.homepage }}</a></td>
-          </tr>
-          <tr *ngIf="currentProgramEntry.url">
-            <td><strong>URL:</strong>&nbsp;<a href="{{ currentProgramEntry.url }}"
-                                              target="_blank">{{ currentProgramEntry.url }}</a></td>
-          </tr>
-          <tr>
-            <td class="text-gray">
-              <strong>Technical details:</strong>
-              <table class="table table-striped item-technical-detail-table">
-                <tr>
-                  <td><strong>ID</strong></td>
-                  <td>{{ currentProgramEntry.id }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Created at</strong></td>
-                  <td>{{ currentProgramEntry.created_at  | appDate: 'full' }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Updated at</strong></td>
-                  <td>{{ currentProgramEntry.updated_at  | appDate:'full' }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Last checked at</strong></td>
-                  <td>{{ currentProgramEntry.last_check | appDate:'full' }}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
+@if (currentProgramEntry) {
+  <div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}">
+    <a href="#close" class="modal-overlay" aria-label="Close" (click)="isModalOpen = false"></a>
+    <div class="modal-container scroll-cont">
+      <div class="modal-header">
+        <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isModalOpen = false"></a>
+        <div class="modal-title h5" [innerHTML]="'Details: ' + currentProgramEntry.title"></div>
       </div>
-    </div>
-
-    <div class="modal-footer">
+      <div class="modal-body">
+        <div class="content">
+          @if (currentProgramEntry.is_deprecated) {
+            <span class="label label-warning">This program item seems to be out-of-date!</span>
+          }
+          <table class="table">
+            <tr>
+              <td>
+                <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | appDate:'full-medium' }}
+                - {{ currentProgramEntry.end_date_time | appDate:'time-medium' }}
+                ({{ currentProgramEntry.duration_in_minutes }} Minutes)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Channel:</strong> {{ apiService.getChannelById(currentProgramEntry.channel_id)?.title }}</td>
+            </tr>
+            @if (currentProgramEntry.image_links && currentProgramEntry.image_links.length > 0) {
+              <tr>
+                <td><img class="img-responsive img-fit-contain"
+                alt="program entry preview image" src="{{currentProgramEntry.image_links[0].url}}"/></td>
+              </tr>
+            }
+            <tr>
+              <td>
+                <strong>Description:</strong>
+                <p class="text-normal" [innerHTML]="currentProgramEntry.description">
+                </p>
+              </td>
+            </tr>
+            @if (currentProgramEntry.homepage) {
+              <tr>
+                <td><strong>Homepage:</strong>&nbsp;<a href="{{ currentProgramEntry.homepage }}"
+              target="_blank">{{ currentProgramEntry.homepage }}</a></td>
+            </tr>
+          }
+          @if (currentProgramEntry.url) {
+            <tr>
+              <td><strong>URL:</strong>&nbsp;<a href="{{ currentProgramEntry.url }}"
+            target="_blank">{{ currentProgramEntry.url }}</a></td>
+          </tr>
+        }
+        <tr>
+          <td class="text-gray">
+            <strong>Technical details:</strong>
+            <table class="table table-striped item-technical-detail-table">
+              <tr>
+                <td><strong>ID</strong></td>
+                <td>{{ currentProgramEntry.id }}</td>
+              </tr>
+              <tr>
+                <td><strong>Created at</strong></td>
+                <td>{{ currentProgramEntry.created_at  | appDate: 'full' }}</td>
+              </tr>
+              <tr>
+                <td><strong>Updated at</strong></td>
+                <td>{{ currentProgramEntry.updated_at  | appDate:'full' }}</td>
+              </tr>
+              <tr>
+                <td><strong>Last checked at</strong></td>
+                <td>{{ currentProgramEntry.last_check | appDate:'full' }}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </div>
   </div>
+  <div class="modal-footer">
+  </div>
 </div>
+</div>
+}
 
 <div class="modal modal-md missing_program_entries_modal" [ngClass]="{'active': isMissingDataModalOpen}">
   <a href="#close" class="modal-overlay" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>

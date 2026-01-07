@@ -25,9 +25,10 @@ import {first} from 'rxjs/operators';
 import dayjs from 'dayjs';
 
 @Component({
-  selector: 'app-recommendation',
-  templateUrl: './recommendation.component.html',
-  styleUrls: ['./recommendation.component.scss']
+    selector: 'app-recommendation',
+    templateUrl: './recommendation.component.html',
+    styleUrls: ['./recommendation.component.scss'],
+    standalone: false
 })
 export class RecommendationComponent extends AbstractReadMoreComponent implements OnInit, OnDestroy {
 

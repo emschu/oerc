@@ -22,7 +22,7 @@ import {StatusComponent} from './status/status.component';
 import {ApiService} from './api.service';
 import {TimelineComponent} from './timeline/timeline.component';
 import {BrowserModule} from '@angular/platform-browser';
-import {HttpClientModule} from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {RecommendationComponent} from './recommendation/recommendation.component';
 import {DashboardComponent} from './dashboard/dashboard.component';
 import {CreditsComponent} from './credits/credits.component';
@@ -36,41 +36,35 @@ import {FormsModule} from '@angular/forms';
 import {StateService} from './state.service';
 import {XmltvComponent} from "./xmltv/xmltv.component";
 
-@NgModule({
-  imports: [
-    CommonModule,
-    HttpClientModule,
-    BrowserModule,
-    UtilModule,
-    FormsModule,
-  ],
-  declarations: [
-    StatusComponent,
-    TimelineComponent,
-    RecommendationComponent,
-    DashboardComponent,
-    XmltvComponent,
-    CreditsComponent,
-    SearchComponent,
-    LogDashboardComponent,
-    ReadMorePipe,
-    SearchPipe,
-  ],
-  exports: [
-    StatusComponent,
-    TimelineComponent,
-    RecommendationComponent,
-    DashboardComponent,
-    LogDashboardComponent,
-    CreditsComponent,
-    SearchComponent,
-  ],
-  providers: [
-    ApiService,
-    SearchService,
-    StateService,
-  ]
-})
+@NgModule({ declarations: [
+        StatusComponent,
+        TimelineComponent,
+        RecommendationComponent,
+        DashboardComponent,
+        XmltvComponent,
+        CreditsComponent,
+        SearchComponent,
+        LogDashboardComponent,
+        ReadMorePipe,
+        SearchPipe,
+    ],
+    exports: [
+        StatusComponent,
+        TimelineComponent,
+        RecommendationComponent,
+        DashboardComponent,
+        LogDashboardComponent,
+        CreditsComponent,
+        SearchComponent,
+    ], imports: [CommonModule,
+        BrowserModule,
+        UtilModule,
+        FormsModule], providers: [
+        ApiService,
+        SearchService,
+        StateService,
+        provideHttpClient(withInterceptorsFromDi()),
+    ] })
 export class OercClientModule {
 }
 

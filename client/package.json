@@ -12,15 +12,15 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^17.3.12",
-    "@angular/common": "^17.3.12",
-    "@angular/compiler": "^17.3.12",
-    "@angular/core": "^17.3.12",
-    "@angular/forms": "^17.3.12",
-    "@angular/localize": "^17.3.12",
-    "@angular/platform-browser": "^17.3.12",
-    "@angular/platform-browser-dynamic": "^17.3.12",
-    "@angular/router": "^17.3.12",
+    "@angular/animations": "^21.0.6",
+    "@angular/common": "^21.0.6",
+    "@angular/compiler": "^21.0.6",
+    "@angular/core": "^21.0.6",
+    "@angular/forms": "^21.0.6",
+    "@angular/localize": "^21.0.6",
+    "@angular/platform-browser": "^21.0.6",
+    "@angular/platform-browser-dynamic": "^21.0.6",
+    "@angular/router": "^21.0.6",
     "@egjs/hammerjs": "^2.0.17",
     "dayjs": "^1.11.10",
     "flatpickr": "^4.6.13",
@@ -34,18 +34,12 @@
     "vis-timeline": "^7.5.1",
     "vis-util": "^5.0.3",
     "xss": "^1.0.9",
-    "zone.js": "~0.14.2"
+    "zone.js": "~0.15.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^17.3.17",
-    "@angular-eslint/builder": "17.2.1",
-    "@angular-eslint/eslint-plugin": "17.2.1",
-    "@angular-eslint/eslint-plugin-template": "17.2.1",
-    "@angular-eslint/schematics": "17.2.1",
-    "@angular-eslint/template-parser": "17.2.1",
-    "@angular/cli": "^17.3.17",
-    "@angular/compiler-cli": "^17.3.12",
-    "@nx/nx-linux-x64-gnu": "^17.2.7",
+    "@angular-devkit/build-angular": "^21.0.4",
+    "@angular/cli": "^21.0.4",
+    "@angular/compiler-cli": "^21.0.6",
     "@types/jasmine": "^4.3.5",
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
@@ -59,7 +53,7 @@
     "karma-jasmine-html-reporter": "^1.7.0",
     "postcss": "^8.4.13",
     "ts-node": "~10.9.1",
-    "typescript": "~5.2.2"
+    "typescript": "~5.9.3"
   },
   "optionalDependencies": {
     "fsevents": "^2.3.2"
