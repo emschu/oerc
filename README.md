@@ -10,29 +10,29 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 
 - **Collecting TV program data** of 27 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
-- Running an **HTTP server** to access program data in a simple Web-UI (`oerc server`)
+- Running an **HTTP server** to access program data in a simple web UI (`oerc server`)
 - Find overlaps in data or program changes (`oerc overlap-check`)
 - By default, the server contains a **client web application** for your browser to view the program data and
   your personal program recommendations
-- Support of XmlTV via CLI and HTTP Api
+- Support of XMLTV via CLI and HTTP API
 
-Using `oerc` you could build and use your own private TV program recommendation tool while ALL
+Using `oerc`, you can build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
 
 This project is written in Golang, and it is *AGPL v3* licensed. You are encouraged to participate and improve
 functionality.
 [Just create a GitHub issue!](https://github.com/emschu/oerc/issues)
 
-The focus of this project lies in providing program data for individuals - ready to be enriched, searched or analysed
+The focus of this project lies in providing program data for individuals - ready to be enriched, searched or analyzed
 as long as there is no (real) Open Data policy of the public-law sector.
 
 At the moment it's not intended to create links between program data and Media(thek) information.
 If you are looking for this, have a look at [similar projects](#similar-projects).
 
-*Note 1:* This server and client software is not ready to be used directly in the internet without further changes.
-It is recommended to use it locally only or in protected environments and don't expose it to the internet.
+*Note 1:* This server and client software is not ready to be used directly on the internet without further changes.
+It is recommended to use it locally only or in protected environments and not to expose it to the internet.
 
-*Note 2*: Unfortunately the public-law web pages this software needs to access are restricted to certain geographic IP
+*Note 2*: Unfortunately, the public-law web pages this software needs to access are restricted to certain geographic IP
 regions in general.
 
 **Current software quality: Beta**
@@ -51,7 +51,7 @@ regions in general.
 go install github.com/emschu/oerc@latest
 ```
 
-## Download and start pre-build executable
+## Download and start pre-built executable
 
 Download the latest `oerc` binary from [here](https://github.com/emschu/oerc/releases) for your platform, make it executable, and you are ready to start. Builds are available for all popular platforms.
 
@@ -65,17 +65,17 @@ $ docker-compose up
 
 ## Manual Installation
 
-1. Install the application with go and the following command `go install github.com/emschu/oerc@latest`
+1. Install the application with Go using the following command: `go install github.com/emschu/oerc@latest`
 
-2. Install a database.
-2.1 Option 1: Sqlite database (default) - this is the easiest way to get started, but could be limited in terms of performance.
-    - The SQLite database file is located at `~/.oerc.db`.
+2. Setup a database.
+2.1 Option 1: SQLite database (default) - this is the easiest way to get started.
+    - The SQLite database file is located at `~/.oerc.db` by default.
 2.2 Option 2: Set up a PostgreSQL database (12+), configure a database with a user and start it.
     - The [development section](./DEVELOPMENT.md) contains a simple docker command to run a local database for development or testing. 
 3. Run `oerc init`.   
-   - This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
-   You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`,
-   `<db_user>`, `<db_password>` in the configuration file to reach the database you've configured in the previous step.
+   - This will copy a sample configuration file to the path `~/.oerc.yaml` if the file does not exist already.
+   - If you use SQLite (default), you are ready to go.
+   - If you use PostgreSQL, you have to change the values for `<db_name>`, `<db_user>`, and `<db_password>` in the configuration file to reach the database you've configured.
 4. Run `oerc fetch` for the first time and wait until the first program data is collected.
 5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (the endpoint is configurable).
 6. Run `oerc search` to look for recommendations based on your self-defined keywords in the configuration.
@@ -118,23 +118,22 @@ GLOBAL OPTIONS:
 ### Configuration options
 
 The following preferences are important to understand your possibilities to control this software.
-You can find this file [here](./config/.oerc_default.dist.yaml) and if you run `oerc init` this file will be created at
-`~/.oerc.yaml`. You *must* provide valid postgres database connection details.
+You can find the default configuration file [here](./config/.oerc_default.dist.yaml). Running `oerc init` will create this file at `~/.oerc.yaml`.
 
-If you don't want to put your configuration at the user's home directory, you can also use the
+If you don't want to put your configuration in the user's home directory, you can also use the
 `-c <path-to-your-oerc>.yaml`
 argument for all `oerc` commands.
 
 ```yaml
 # oerc configuration file
-# you should at least change all configuration options containing "<" and ">"
-DbType: postgres
-DbHost: localhost
-DbPort: 5432
-DbName: <db_name>
+# db settings (sqlite is default)
+DbType: sqlite
+DbHost: ~/.oerc.db
+DbPort:
+DbName: oerc_db
 DbSchema: public
-DbUser: <db_user>
-DbPassword: <db_password>
+DbUser:
+DbPassword:
 DbSSLEnabled: false
 ForceUpdate: false
 TimeToRefreshInMinutes: 360
@@ -171,16 +170,16 @@ Additional configuration options that may be available:
 
 ## Usage
 
-After installing `oerc` and setting it up, you should run at least one time the `oerc fetch` command.
+After installing `oerc` and setting it up, you should run the `oerc fetch` command at least once.
 
-It is recommended to update the program data regularly, e.g. daily, by using a (unix) **cron job** which
+It is recommended to update the program data regularly, e.g. daily, by using a (Unix) **cron job** which
 runs `oerc fetch`
 and `oerc search`.
 
-While it is possible to run `oerc server` in a user session, you should consider to create a systemd
+While it is possible to run `oerc server` in a user session, you should consider creating a systemd
 service to run and control the web server (backend + frontend) in the background persistently.
 
-The following systemd service file is a simple example to integrate `oerc` with systemd in a Linux system:
+The following systemd service file is a simple example to integrate `oerc` with systemd on a Linux system:
 
 **oerc.service:**
 
@@ -216,8 +215,8 @@ To (not) start the service on boot, type
 
 `$ sudo systemctl [enable|disable] oerc`.
 
-If you enable both services by default, please keep in mind that the PostgreSQL database needs
-to be available too, so ensure to enable the postgres database service as well.
+If you enable the service by default, please keep in mind that the database needs
+to be available too. If you use PostgreSQL, ensure to enable the PostgreSQL database service as well.
 
 ### Channel list
 
@@ -237,8 +236,8 @@ to be available too, so ensure to enable the postgres database service as well.
 - Private/commercial sector TV or radio stations will *never* be part of this project.
 - This project shall be an instrument mainly to analyze the program and constructively
   improve public-law TV and radio stations. Or just use it privately.
-- This project would be superfluous, if there was a public API for public data, OpenData...
-- Minimise traffic and external load to the least needed.
+- This project would be superfluous if there was a public API for public data, OpenData...
+- Minimize traffic and external load to the least needed.
 - Avoid security problems on the client side and maintain privacy of the users.
 - All parts of the software should work on "low-resource" platforms, e.g. a Raspberry Pi 3b+
 
@@ -250,9 +249,9 @@ to be available too, so ensure to enable the postgres database service as well.
 - [MediathekView(Web)-Project](https://github.com/mediathekview)
 - [MediathekDirekt](https://mediathekdirekt.de/) + [Sources](https://gitlab.com/mediathekdirekt/mediathekdirekt)
 
-### OpenApi 3 specification
+### OpenAPI 3 specification
 
-If you run the (backend) server (`oerc server`) an OpenApi 3 specification is shipped at
+If you run the (backend) server (`oerc server`), an OpenAPI 3 specification is shipped at
 `http://localhost:8080/spec/oerc-openapi3.json`. Or have a look at the
 API specification files in [this directory](./docs).
 
@@ -262,7 +261,7 @@ This project is licensed under [GNU Affero General Public License 3](./LICENSE).
 
 ```text
 oerc, alias oer-collector
-Copyright (C) 2021-2025 emschu[aet]mailbox.org
+Copyright (C) 2021-2026 emschu[aet]mailbox.org
 
 This program is free software: you can redistribute it and/or modify 
 it under the terms of the GNU Affero General Public License as 

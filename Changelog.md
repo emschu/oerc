@@ -1,8 +1,10 @@
 # Changelog oerc
 
 ## 0.21.0 - 2026/XX
-- Improve accuracy and performance of overlap check
-- Add channels to web UI, allow reordering of channels
+- Support for SQlite database backend
+- Change default database to sqlite
+- Improve the accuracy and performance of overlap check
+- Add channels to the web UI, allow reordering of channels
 - Dependency and library updates
 
 ## 0.20.0 - 2025/10/26
