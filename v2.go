@@ -61,7 +61,7 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 func getChannels() *[]Channel {
 	db := getDb()
 	var channels []Channel
-	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Find(&channels)
+	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Order("priority asc").Find(&channels)
 	if result.Error != nil {
 		log.Fatalf("error fetching channels: %v", result.Error)
 		return nil
@@ -329,6 +329,22 @@ func getStatusObject() *StatusResponse {
 func getChannelsHandler(c *gin.Context) {
 	channels := getChannels()
 	c.JSON(http.StatusOK, ChannelResponse{channels, len(*channels)})
+}
+
+func putChannelsHandler(c *gin.Context) {
+	var channels []Channel
+	if err := c.ShouldBindJSON(&channels); err != nil {
+		c.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid channel data"})
+		return
+	}
+
+	db := getDb()
+	for i, channel := range channels {
+		db.Model(&Channel{}).Where("id = ?", channel.ID).Update("priority", i)
+	}
+
+	updatedChannels := getChannels()
+	c.JSON(http.StatusOK, ChannelResponse{updatedChannels, len(*updatedChannels)})
 }
 
 func getLogEntriesHandler(context *gin.Context) {

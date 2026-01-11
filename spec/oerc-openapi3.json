@@ -99,6 +99,54 @@
             "$ref": "#/components/headers/CacheControlHeader"
           }
         }
+      },
+      "put": {
+        "operationId": "channelsPUT",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/Channel"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelResponse"
+                }
+              }
+            },
+            "description": "channels updated"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "invalid channel data"
+          },
+          "500": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "500 message"
+          }
+        }
       }
     },
     "/channel/{channel_id}": {
@@ -1074,6 +1122,12 @@
           },
           "channel_family_id": {
             "format": "int64",
+            "type": "integer"
+          },
+          "is_deprecated": {
+            "type": "boolean"
+          },
+          "priority": {
             "type": "integer"
           }
         },

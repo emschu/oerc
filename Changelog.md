@@ -1,7 +1,9 @@
 # Changelog oerc
 
-## 0.21.0 - 2026/01/07
-- Maintenance release, dependency updates
+## 0.21.0 - 2026/XX
+- Improve accuracy and performance of overlap check
+- Add channels to web UI, allow reordering of channels
+- Dependency and library updates
 
 ## 0.20.0 - 2025/10/26
 - Golang 1.24

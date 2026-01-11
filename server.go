@@ -193,6 +193,8 @@ func initRouter() *gin.Engine {
 	apiV2.GET("/status", getStatusHandler)
 	// channel data
 	apiV2.GET("/channels", getChannelsHandler)
+	apiV2.PUT("/channels", putChannelsHandler)
+
 	apiV2.GET("/channel/:channel_id", getSingleChannelHandler)
 	// program data
 	apiV2.GET("/program/yesterday", getProgramYesterdayHandler)

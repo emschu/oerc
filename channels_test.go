@@ -84,3 +84,36 @@ func TestGetChannelsOfFamily(t *testing.T) {
 		t.Fatalf("invalid number of srf channels")
 	}
 }
+
+func TestChannelsOrdering(t *testing.T) {
+	setupInMemoryDbForTesting()
+	handleChannelsSetup()
+
+	channels := *getChannels()
+	if len(channels) < 2 {
+		t.Skip("Not enough channels to test ordering")
+	}
+
+	// Reverse the channels
+	reversedChannels := make([]Channel, len(channels))
+	for i, j := 0, len(channels)-1; i < len(channels); i, j = i+1, j-1 {
+		reversedChannels[i] = channels[j]
+	}
+
+	// Update priority based on reversed order
+	db := getDb()
+	for i, channel := range reversedChannels {
+		db.Model(&Channel{}).Where("id = ?", channel.ID).Update("priority", i)
+	}
+
+	// Fetch channels again and check order
+	orderedChannels := *getChannels()
+	for i, channel := range orderedChannels {
+		if channel.ID != reversedChannels[i].ID {
+			t.Errorf("Channel at index %d has wrong ID. Expected %d, got %d", i, reversedChannels[i].ID, channel.ID)
+		}
+		if channel.Priority != i {
+			t.Errorf("Channel at index %d has wrong priority. Expected %d, got %d", i, i, channel.Priority)
+		}
+	}
+}

@@ -80,6 +80,7 @@ type Channel struct {
 	ManagedRecord
 
 	IsDeprecated bool `gorm:"default:false;not null" json:"is_deprecated"`
+	Priority     int  `gorm:"default:1000;not null" json:"priority"`
 }
 
 // TvShow entity
