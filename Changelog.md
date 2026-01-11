@@ -1,10 +1,10 @@
 # Changelog oerc
 
-## 0.21.0 - 2026/XX
+## 0.21.0 - 2026/01/11
 - Support for SQlite database backend
-- Change default database to sqlite
-- Improve the accuracy and performance of overlap check
-- Add channels to the web UI, allow reordering of channels
+- Change default database to SQLite
+- Improve the accuracy and performance of `(full-)overlap-check`
+- Web UI: Add channels, allow reordering of channels
 - Dependency and library updates
 
 ## 0.20.0 - 2025/10/26

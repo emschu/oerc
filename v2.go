@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2025 emschu[aet]mailbox.org
+// Copyright (C) 2021-2026 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -52,8 +52,12 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 	response := ProgramResponse{
 		From:             start,
 		To:               end,
+		ChannelID:        0,
 		Size:             len(entries),
 		ProgramEntryList: &entries,
+	}
+	if channel != nil {
+		response.ChannelID = int64(channel.ID)
 	}
 	return &response
 }
@@ -197,7 +201,7 @@ func getProgramHandler(c *gin.Context) {
 		return
 	}
 
-	end.In(location)
+	end = end.In(location)
 	if end.Before(start) || end.Equal(start) {
 		c.JSON(http.StatusBadRequest, Error{
 			Status:  "400",
@@ -280,6 +284,10 @@ func isChannelValid(c *gin.Context, cid string, acceptZero bool) (*Channel, bool
 	if acceptZero {
 		return nil, true
 	}
+	c.JSON(http.StatusBadRequest, Error{
+		Status:  "400",
+		Message: "missing or invalid channel id",
+	})
 	return nil, false
 }
 
@@ -333,7 +341,7 @@ func getChannelsHandler(c *gin.Context) {
 
 func putChannelsHandler(c *gin.Context) {
 	var channels []Channel
-	if err := c.ShouldBindJSON(&channels); err != nil {
+	if err := c.ShouldBindJSON(&channels); err != nil || channels == nil {
 		c.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid channel data"})
 		return
 	}
