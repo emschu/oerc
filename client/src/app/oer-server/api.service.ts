@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -113,7 +113,14 @@ export class ApiService {
   }
 
   public updateChannelsOrder(channels: Channel[]): Observable<ChannelResponse> {
-    return this.put<ChannelResponse>(this.apiEndpoint + '/channels', channels);
+    return this.put<ChannelResponse>(this.apiEndpoint + '/channels', channels).pipe(
+      tap((value: ChannelResponse) => {
+        if (value) {
+          this._channelSubjectVar.next(value);
+          this.channelStore = value.data;
+        }
+      })
+    );
   }
 
   public dailyProgram(): Observable<ProgramResponse> {

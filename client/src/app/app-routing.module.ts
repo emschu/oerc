@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -25,11 +25,10 @@ import {CreditsComponent} from './oer-server/credits/credits.component';
 import {SearchComponent} from './oer-server/search/search.component';
 import {LogDashboardComponent} from './oer-server/log-dashboard/log-dashboard.component';
 import {XmltvComponent} from "./oer-server/xmltv/xmltv.component";
-import {ChannelsComponent} from "./oer-server/channels/channels.component";
 
 const routes: Routes = [
   {path: '', component: DashboardComponent},
-  {path: 'channels', component: ChannelsComponent},
+  {path: 'channels', loadComponent: () => import('./oer-server/channels/channels.component').then(m => m.ChannelsComponent)},
   {path: 'recommendations', component: RecommendationComponent},
   {path: 'xmltv', component: XmltvComponent},
   {path: 'log', component: LogDashboardComponent},

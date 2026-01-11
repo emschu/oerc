@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -82,10 +82,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     this.initTimeLine();
-    this.apiService.channels().pipe(first()).subscribe((it) => {
-        const channels = it.data;
-      }
-    );
 
     this.apiService.statusSubject.pipe(first()).subscribe(statusResponse => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
@@ -160,10 +156,12 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // create groups
     const groups: DataSet<TimelineGroup> = new DataSet({fieldId: 'id'});
-    this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
+    this.channelSubscription = this.apiService.channelSubjectVar.subscribe((value: ChannelResponse | null) => {
       if (!value) {
         return;
       }
+      groups.clear();
+      this.channels = value.data;
       value.data.forEach(
         (singleChannel: Channel) => {
           groups.add({
