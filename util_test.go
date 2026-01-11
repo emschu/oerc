@@ -17,6 +17,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -325,4 +327,59 @@ func TestParseDate(t *testing.T) {
 			t.Fatalf("invalid date parsing result")
 		}
 	}
+}
+
+func TestResolvePath(t *testing.T) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("Failed to get user home dir: %v", err)
+	}
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"~/test.db", filepath.Join(home, "test.db")},
+		{"/tmp/test.db", "/tmp/test.db"},
+		{"test.db", "test.db"},
+		{"~", home},
+	}
+
+	for _, tc := range tests {
+		actual := resolvePath(tc.input)
+		if actual != tc.expected {
+			t.Errorf("resolvePath(%q) = %q; want %q", tc.input, actual, tc.expected)
+		}
+	}
+}
+
+func TestGetDbWithHomeDir(t *testing.T) {
+	// Backup original config
+	origConf := appConf
+	defer func() { appConf = origConf }()
+
+	// Set up config with ~ path
+	appConf = *defaultAppConfig()
+	appConf.DbType = "sqlite"
+	appConf.DbHost = "~/oerc_test_home.sqlite"
+
+	// Reset dBReference to force new connection
+	dBReference = nil
+
+	db := getDb()
+	if db == nil {
+		t.Fatal("Failed to get DB with ~ path")
+	}
+
+	// Check if file was created in home dir
+	home, _ := os.UserHomeDir()
+	expectedPath := filepath.Join(home, "oerc_test_home.sqlite")
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Errorf("Expected database file to be created at %s, but it doesn't exist", expectedPath)
+	}
+
+	// Cleanup
+	sqlDB, _ := db.DB()
+	sqlDB.Close()
+	os.Remove(expectedPath)
 }

@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"log"
 	"math"
 	"net"
@@ -26,6 +25,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 )
 
 // GetAppConf method to get the app's configuration
@@ -79,7 +80,7 @@ func (a *AppConfig) verifyConfiguration() bool {
 		log.Printf("Invalid empty DbType given in configuration!\n")
 		return false
 	}
-	if strings.ToLower(dbType) != "postgres" && strings.ToLower(dbType) != "postgresql" {
+	if strings.ToLower(dbType) != "postgres" && strings.ToLower(dbType) != "sqlite" {
 		log.Printf("Invalid DbType '%s' given!\n", a.DbType)
 		return false
 	}
@@ -94,7 +95,7 @@ func (a *AppConfig) verifyConfiguration() bool {
 		log.Printf("Invalid port number for server provided in configuration!\n")
 		return false
 	}
-	if strings.TrimSpace(a.DbSchema) == "" {
+	if strings.ToLower(a.DbType) != "sqlite" && strings.TrimSpace(a.DbSchema) == "" {
 		log.Printf("Invalid empty database schema provided in configuration!\n")
 		return false
 	}

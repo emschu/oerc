@@ -3,26 +3,20 @@
 ... is a software project to locally store, view and search the program data of
 public-law ("öffentlich-rechtliche") TV stations in Germany, Austria and Switzerland.
 
-`oerc` needs a single PostgreSQL database and some configuration options to get ready.
-
-While `oerc` is a command-line tool only, a built-in web application is provided for you
+While `oerc` is a command-line tool only, a built-in web application is provided 
 at `127.0.0.1:8080` (*default*) if you run `oerc server`.
-
-## Prerequisites
-
-- Go 1.24+
-- PostgreSQL 12+
 
 ### Commands
 
-- **Collecting TV program data** of 28 TV channels (`oerc fetch`)
+- **Collecting TV program data** of 27 TV channels (`oerc fetch`)
 - **Search for interesting program** items by looking for your own keywords (`oerc search`)
 - Running an **HTTP server** to access program data in a simple Web-UI (`oerc server`)
-- By default, the server contains a small **client web application** for your browser to view the program data and
+- Find overlaps in data or program changes (`oerc overlap-check`)
+- By default, the server contains a **client web application** for your browser to view the program data and
   your personal program recommendations
-- Support of XmlTV via CLI and HTTP Api 
+- Support of XmlTV via CLI and HTTP Api
 
-With the help of `oerc` you can build and use your own private TV program recommendation tool while ALL
+Using `oerc` you could build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
 
 This project is written in Golang, and it is *AGPL v3* licensed. You are encouraged to participate and improve
@@ -33,7 +27,7 @@ The focus of this project lies in providing program data for individuals - ready
 as long as there is no (real) Open Data policy of the public-law sector.
 
 At the moment it's not intended to create links between program data and Media(thek) information.
-If you are looking for this have a look at [similar projects](#similar-projects).
+If you are looking for this, have a look at [similar projects](#similar-projects).
 
 *Note 1:* This server and client software is not ready to be used directly in the internet without further changes.
 It is recommended to use it locally only or in protected environments and don't expose it to the internet.
@@ -62,12 +56,8 @@ go install github.com/emschu/oerc@latest
 Download the latest `oerc` binary from [here](https://github.com/emschu/oerc/releases) for your platform, make it executable, and you are ready to start. Builds are available for all popular platforms.
 
 ## docker/docker-compose
+Clone this repository, then:
 
-Clone this repository, and build the binary file for the container:
-```bash
-$ CGO_ENABLED=0 ; GOOS=linux ; GO111MODULE=on go build -o bin/oerc-release -ldflags "-s -w"
-```
-Then:
 ```bash
 $ docker-compose build
 $ docker-compose up
@@ -77,13 +67,16 @@ $ docker-compose up
 
 1. Install the application with go and the following command `go install github.com/emschu/oerc@latest`
 
-2. Set up a PostgreSQL database (12+), configure a database with a user and start it.
+2. Install a database.
+2.1 Option 1: Sqlite database (default) - this is the easiest way to get started, but could be limited in terms of performance.
+    - The SQLite database file is located at `~/.oerc.db`.
+2.2 Option 2: Set up a PostgreSQL database (12+), configure a database with a user and start it.
     - The [development section](./DEVELOPMENT.md) contains a simple docker command to run a local database for development or testing. 
 3. Run `oerc init`.   
    - This will copy a sample configuration file to the path `~/.oerc.yaml` - if the file does not exist already.
    You have to change some of the values in order to get `oerc` to work, at least you have to replace `<db_name>`,
    `<db_user>`, `<db_password>` in the configuration file to reach the database you've configured in the previous step.
-4. Run `oerc fetch` for the first time and wait until the first program data is collected for you.
+4. Run `oerc fetch` for the first time and wait until the first program data is collected.
 5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (the endpoint is configurable).
 6. Run `oerc search` to look for recommendations based on your self-defined keywords in the configuration.
 
@@ -126,7 +119,7 @@ GLOBAL OPTIONS:
 
 The following preferences are important to understand your possibilities to control this software.
 You can find this file [here](./config/.oerc_default.dist.yaml) and if you run `oerc init` this file will be created at
-`~/.oerc.yaml` for you. You *must* provide valid postgres database connection details.
+`~/.oerc.yaml`. You *must* provide valid postgres database connection details.
 
 If you don't want to put your configuration at the user's home directory, you can also use the
 `-c <path-to-your-oerc>.yaml`

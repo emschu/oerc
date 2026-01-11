@@ -168,7 +168,9 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntr
 
 	// execute raw SQL query to find overlaps with duration calculation
 	var overlaps []overlapResult
-	sqlQuery := `
+	var sqlQuery string
+	if GetAppConf().DbType == "postgres" {
+		sqlQuery = `
 		SELECT
 			a.channel_id,
 			a.id as program1_id,
@@ -182,6 +184,24 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntr
 		  AND date_trunc('minute',a.end_date_time) > date_trunc('minute',b.start_date_time)
 		ORDER BY a.channel_id, a.start_date_time
 	`
+	}
+	if GetAppConf().DbType == "sqlite" {
+		sqlQuery = `
+		SELECT
+		  a.channel_id,
+		  a.id AS program1_id,
+		  b.id AS program2_id
+		FROM program_entries AS a
+		JOIN program_entries AS b
+		  ON a.channel_id = b.channel_id
+		WHERE a.id < b.id
+		  AND a.channel_id = ?
+		  AND strftime('%Y-%m-%d %H:%M:00', a.start_date_time) BETWEEN ? AND ?
+		  AND strftime('%Y-%m-%d %H:%M:00', a.start_date_time) < strftime('%Y-%m-%d %H:%M:00', b.end_date_time)
+		  AND strftime('%Y-%m-%d %H:%M:00', a.end_date_time)   > strftime('%Y-%m-%d %H:%M:00', b.start_date_time)
+		ORDER BY a.channel_id, a.start_date_time;
+`
+	}
 
 	result := db.Raw(sqlQuery, channel.ID, startOfDay, endOfDay).Scan(&overlaps)
 	if result.Error != nil {
