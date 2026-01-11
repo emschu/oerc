@@ -40,6 +40,10 @@ import FlatPickrInstance = flatpickr.Instance;
 //   order: number;
 // }
 
+interface TimelineGroup extends DataGroup {
+  priority: number;
+}
+
 @Component({
     selector: 'app-oer-timeline',
     templateUrl: './timeline.component.html',
@@ -55,36 +59,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private static i = 0;
-  static channelPreferencesMap = [
-    'ARD – Das Erste',
-    'ZDF',
-    '3Sat',
-    'ARTE',
-    'Phoenix',
-    'ZDFinfo',
-    'ZDFneo',
-    'SWR RP Fernsehen',
-    'NDR Fernsehen',
-    'RBB Fernsehen',
-    'Tagesschau24',
-    'WDR Fernsehen',
-    'ARD ALPHA',
-    'ARD One',
-    'MDR Fernsehen',
-    'SWR BW Fernsehen',
-    'BR Fernsehen',
-    'HR Fernsehen',
-    'SR Fernsehen',
-    'KIKA',
-    'Radio Bremen TV',
-    'ORF eins',
-    'ORF 2',
-    'ORF III',
-    'ORF Sport +',
-    'SRF 1',
-    'SRF info',
-    'SRF zwei'
-  ];
   public channels: Channel[];
   public items: DataInterface<DataItem, 'id'>;
   public timeLine?: Timeline;
@@ -105,17 +79,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
 
-  /**
-   * TODO: make configuration option
-   * @param singleChannelTitle an id
-   * @private
-   */
-  private static getGroupOrder(singleChannelTitle: string | undefined): number {
-    if (singleChannelTitle && TimelineComponent.channelPreferencesMap.indexOf(singleChannelTitle) > -1) {
-      return TimelineComponent.channelPreferencesMap.indexOf(singleChannelTitle);
-    }
-    return 100;
-  }
 
   ngOnInit(): void {
     this.initTimeLine();
@@ -196,7 +159,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadProgramItems();
 
     // create groups
-    const groups: DataSet<DataGroup> = new DataSet({fieldId: 'id'});
+    const groups: DataSet<TimelineGroup> = new DataSet({fieldId: 'id'});
     this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (!value) {
         return;
@@ -208,6 +171,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
             content: singleChannel.title,
             subgroupStack: true,
             subgroupOrder: () => 0,
+            priority: singleChannel.priority
           });
         });
     });
@@ -239,11 +203,11 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       rtl: false,
       selectable: true,
       editable: false,
-      groupOrder(a: DataGroup, b: DataGroup): number {
+      groupOrder(a: TimelineGroup, b: TimelineGroup): number {
         if (a.id === b.id) {
           return 0;
         }
-        return TimelineComponent.getGroupOrder(a.content?.toString()) > TimelineComponent.getGroupOrder(b.content?.toString()) ? 1 : -1;
+        return a.priority - b.priority;
       },
       margin: {
         item: 5,

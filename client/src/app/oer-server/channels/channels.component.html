@@ -1,0 +1,46 @@
+<!--
+  ~ oerc, alias oer-collector
+  ~ Copyright (C) 2021-2026 emschu[aet]mailbox.org
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Affero General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU Affero General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public
+  ~ License along with this program.
+  ~ If not, see <https://www.gnu.org/licenses/>.
+-->
+
+<div class="columns head-section">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <h3>Channels</h3>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="columns flex-centered xmltv-action-buttons">
+  <div class="column col-12">
+    <div class="card">
+      <div class="card-body">
+        <ol cdkDropList (cdkDropListDropped)="drop($event)">
+        @for (channel of channels(); track channel.id) {
+          <li class="channel-item" cdkDrag>
+            <strong>{{ channel.title }}</strong>
+            @if (channel.technical_id) {
+              <span> ({{ channel.technical_id }})</span>
+            }
+          </li>
+        }
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>

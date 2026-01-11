@@ -112,6 +112,10 @@ export class ApiService {
     return this.get<ChannelResponse>(this.apiEndpoint + '/channels');
   }
 
+  public updateChannelsOrder(channels: Channel[]): Observable<ChannelResponse> {
+    return this.put<ChannelResponse>(this.apiEndpoint + '/channels', channels);
+  }
+
   public dailyProgram(): Observable<ProgramResponse> {
     return this.get<ProgramResponse>(this.apiEndpoint + '/program/daily');
   }
@@ -246,6 +250,42 @@ export class ApiService {
           this._isLiveSubject.next(false);
         }
         console.error('http GET call err', url, err);
+        return new Observable<T>();
+      })
+    );
+  }
+
+  /**
+   * centralized http put with small error handling
+   *
+   * @param url
+   * @param body
+   * @param options
+   * @private
+   */
+  private put<T>(url: string, body: any, options = {}): Observable<T> {
+    if (this.isInErrorsSubject.getValue() || this.isLiveSubject.getValue() === false) {
+      console.log(`api in errors or not live. Skipping request to url ${url}.`);
+      return new Observable<T>();
+    }
+    const inErrAlready = this._isInErrorsSubject.getValue();
+    return this.http.put<T>(url, body, options).pipe(
+      timeout(environment.apiRequestTimeoutInSecs * 1000),
+      tap(
+        _ => {
+          if (inErrAlready) {
+            this._isInErrorsSubject.next(false);
+          }
+        }
+      ),
+      catchError(err => {
+        if (err.name === 'TimeoutError') {
+          console.log('request timeout reached!', err);
+        }
+        if (!inErrAlready) {
+          this._isInErrorsSubject.next(true);
+        }
+        console.error('http PUT call err', url, err);
         return new Observable<T>();
       })
     );

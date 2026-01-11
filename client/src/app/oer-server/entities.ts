@@ -77,6 +77,7 @@ export interface Channel {
   technical_id: string;
   homepage: string;
   channel_family_id: number;
+  priority: number;
 }
 
 export interface Pong {
