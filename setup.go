@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // setupPersistence: setup persistence during app's startup process. initializing global db object
@@ -30,14 +31,16 @@ func setupPersistence() {
 	}
 	// timezone handling
 	if GetAppConf().TimeZone != "" {
-		db.Exec(fmt.Sprintf("SET TIME ZONE '%s'", GetAppConf().TimeZone))
-		if GetAppConf().DbName != "" {
-			db.Exec(fmt.Sprintf("ALTER DATABASE %s SET timezone TO '%s'", GetAppConf().DbName, GetAppConf().TimeZone))
-		} else {
-			log.Printf("Warning: No DbName is configured!\n")
+		if strings.ToLower(GetAppConf().DbType) == "postgres" {
+			db.Exec(fmt.Sprintf("SET TIME ZONE '%s'", GetAppConf().TimeZone))
+			if GetAppConf().DbName != "" {
+				db.Exec(fmt.Sprintf("ALTER DATABASE %s SET timezone TO '%s'", GetAppConf().DbName, GetAppConf().TimeZone))
+			} else {
+				log.Printf("Warning: No DbName is configured!\n")
+			}
+			// set search path to the selected schema
+			db.Exec(fmt.Sprintf("SET search_path TO %s;", GetAppConf().DbSchema))
 		}
-		// set search path to the selected schema
-		db.Exec(fmt.Sprintf("SET search_path TO %s;", GetAppConf().DbSchema))
 	} else {
 		log.Printf("Warning: No TimeZone is configured!\n")
 	}

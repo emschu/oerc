@@ -124,5 +124,12 @@ func TestSqliteReconnect(t *testing.T) {
 		t.Errorf("Expected Title 'PersistentFamily', got '%s'", foundFamily.Title)
 	}
 
+	// 3. Test View creation
+	setupMaterializedView()
+	var statusInfo StatusInfoModel
+	if err := db.Table(statusInfo.TableName()).First(&statusInfo).Error; err != nil {
+		t.Fatalf("Failed to query status_info view: %v", err)
+	}
+
 	dBReference = nil
 }

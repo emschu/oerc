@@ -37,7 +37,7 @@ func StartServer() {
 		gin.SetMode("release")
 	}
 
-	go setupMaterializedView()
+	setupMaterializedView()
 
 	r := initRouter()
 	log.Printf("Starting API server...\n")
@@ -57,10 +57,16 @@ func StartServer() {
 
 func setupMaterializedView() {
 	db := getDb()
-	db.Exec(`drop materialized view status_info`)
-	db.Exec(fmt.Sprintf(`create materialized view status_info as %s`, materializedStatusView))
+	query := getMaterializedStatusViewQuery()
+	if strings.ToLower(GetAppConf().DbType) == "postgres" {
+		db.Exec(`drop materialized view if exists status_info`)
+		db.Exec(fmt.Sprintf(`create materialized view status_info as %s`, query))
+	} else {
+		db.Exec(`drop view if exists status_info`)
+		db.Exec(fmt.Sprintf(`create view status_info as %s`, query))
+	}
 	if isDebug() {
-		log.Printf("Materialized status view")
+		log.Printf("Materialized status view (or regular view for sqlite)")
 	}
 }
 
@@ -79,6 +85,9 @@ type StatusInfoModel struct {
 
 // TableName of the materialized view prefixed by db schema
 func (s *StatusInfoModel) TableName() string {
+	if strings.ToLower(appConf.DbType) == "sqlite" {
+		return "status_info"
+	}
 	return fmt.Sprintf("%s.status_info", appConf.DbSchema)
 }
 

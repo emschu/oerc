@@ -226,7 +226,7 @@ func TestClearOldRecommendations(t *testing.T) {
 	oldRec := time.Now().Add(-1 * time.Minute)
 	newRec := time.Now().Add(20 * time.Minute)
 	db.Create(&Recommendation{ProgramEntryID: 123, ChannelID: 4, StartDateTime: &oldRec})
-	db.Create(&Recommendation{ProgramEntryID: 123, ChannelID: 4, StartDateTime: &newRec})
+	db.Create(&Recommendation{ProgramEntryID: 456, ChannelID: 4, StartDateTime: &newRec})
 
 	var counter int64
 	db.Model(&Recommendation{}).Count(&counter)

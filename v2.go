@@ -67,7 +67,7 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 func getChannels() *[]Channel {
 	db := getDb()
 	var channels []Channel
-	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated = ?", false).Order("priority asc").Find(&channels)
+	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Order("priority asc").Find(&channels)
 	if result.Error != nil {
 		log.Fatalf("error fetching channels: %v", result.Error)
 		return nil
