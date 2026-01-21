@@ -672,44 +672,6 @@
       }
     },
     "/log/entry/{id}": {
-      "delete": {
-        "operationId": "singleLogDELETE",
-        "parameters": [
-          {
-            "description": "delete a single log entry",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            },
-            "style": "simple"
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "log entry cleared"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            },
-            "description": "log entry not found"
-          }
-        }
-      },
       "get": {
         "operationId": "singleLogGET",
         "parameters": [
@@ -942,21 +904,21 @@
       "CORSHeader": {
         "description": "Access-Control-Allow-Origin header for CORS support",
         "schema": {
-          "example": "*",
+          "examples": ["*"],
           "type": "string"
         }
       },
       "CompressionHeader": {
         "description": "Content-Encoding header for GZIP compression",
         "schema": {
-          "example": "gzip",
+          "examples": ["gzip"],
           "type": "string"
         }
       },
       "CacheControlHeader": {
         "description": "Cache-Control header for browser caching (used for /program, /log, and /channel endpoints)",
         "schema": {
-          "example": "public, max-age=36000",
+          "examples": ["public, max-age=36000"],
           "type": "string"
         }
       }
@@ -1017,6 +979,21 @@
             "type": "array"
           }
         },
+        "required": [
+          "channel_count",
+          "channel_family_count",
+          "data_end_time",
+          "data_start_time",
+          "image_links_count",
+          "log_count",
+          "program_entry_count",
+          "recommendation_count",
+          "server_date_time",
+          "tv_channel_families",
+          "tv_channels",
+          "tv_show_count",
+          "version"
+        ],
         "title": "StatusResponse",
         "type": "object"
       },
@@ -1060,6 +1037,7 @@
           }
         },
         "required": [
+          "channel_id",
           "from",
           "program_list",
           "size",
@@ -1090,6 +1068,10 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "title"
+        ],
         "title": "ChannelFamily",
         "type": "object"
       },
@@ -1128,18 +1110,35 @@
             "type": "boolean"
           },
           "priority": {
+            "format": "int64",
             "type": "integer"
           }
         },
+        "required": [
+          "channel_family_id",
+          "hash",
+          "id",
+          "is_deprecated",
+          "priority",
+          "title",
+          "url"
+        ],
         "title": "Channel",
         "type": "object"
       },
       "ImageLink": {
         "properties": {
-          "createdAt": {
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
             "type": "string"
           },
           "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "program_entry_id": {
             "format": "int64",
             "type": "integer"
           },
@@ -1147,6 +1146,10 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "url"
+        ],
         "title": "ImageLink",
         "type": "object"
       },
@@ -1196,7 +1199,10 @@
             "items": {
               "$ref": "#/components/schemas/ImageLink"
             },
-            "type": ["array", "null"]
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "tags": {
             "type": "string"
@@ -1217,9 +1223,24 @@
             "items": {
               "$ref": "#/components/schemas/ProgramEntry"
             },
-            "type": ["array", "null"]
+            "type": [
+              "array",
+              "null"
+            ]
           }
         },
+        "required": [
+          "channel_family_id",
+          "channel_id",
+          "description",
+          "end_date_time",
+          "hash",
+          "id",
+          "is_deprecated",
+          "start_date_time",
+          "title",
+          "url"
+        ],
         "title": "ProgramEntry",
         "type": "object"
       },
@@ -1251,6 +1272,10 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "message"
+        ],
         "title": "LogEntry",
         "type": "object"
       },
@@ -1279,6 +1304,13 @@
             "type": "array"
           }
         },
+        "required": [
+          "elements",
+          "entry_count",
+          "page",
+          "page_count",
+          "size"
+        ],
         "title": "LogEntryResponse",
         "type": "object"
       },
@@ -1298,6 +1330,11 @@
             "$ref": "#/components/schemas/ProgramEntry"
           }
         },
+        "required": [
+          "id",
+          "program_entry",
+          "start_date_time"
+        ],
         "title": "Recommendation",
         "type": "object"
       }

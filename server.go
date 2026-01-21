@@ -208,7 +208,6 @@ func initRouter() *gin.Engine {
 	// log data
 	apiV2.GET("/log", getLogEntriesHandler)
 	apiV2.GET("/log/entry/:id", getSingleLogEntriesHandler)
-	apiV2.DELETE("/log/entry/:id", deleteSingleLogEntriesHandler)
 	apiV2.DELETE("/log/clear", clearAllLogEntriesHandler)
 	// recommendations
 	apiV2.GET("/recommendations", getRecommendationsHandler)

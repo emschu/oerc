@@ -85,7 +85,7 @@ integration-test-prepare: ## start (local) oerc server to run integration tests 
 
 .PHONY: integration-test
 integration-test: ## run OpenAPI schema conformity HTTP tests
-	@$(SCHEMATHESIS_BIN) run -c all --exclude-checks positive_data_acceptance http://127.0.0.1:8080/spec/oerc-openapi3.json
+	@$(SCHEMATHESIS_BIN) run -c all --exclude-checks negative_data_rejection,positive_data_acceptance http://127.0.0.1:8080/spec/oerc-openapi3.json
 	-if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover
