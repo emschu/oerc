@@ -1,26 +1,28 @@
 <!--
-  ~ oerc, alias oer-collector
-  ~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU Affero General Public License as
-  ~ published by the Free Software Foundation, either version 3 of the
-  ~ License, or (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  ~ GNU Affero General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Affero General Public
-  ~ License along with this program.
-  ~ If not, see <https://www.gnu.org/licenses/>.
+~ oerc, alias oer-collector
+~ Copyright (C) 2021-2026 emschu[aet]mailbox.org
+~
+~ This program is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU Affero General Public License as
+~ published by the Free Software Foundation, either version 3 of the
+~ License, or (at your option) any later version.
+~
+~ This program is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+~ GNU Affero General Public License for more details.
+~
+~ You should have received a copy of the GNU Affero General Public
+~ License along with this program.
+~ If not, see <https://www.gnu.org/licenses/>.
 -->
 <div class="columns head-section">
   <div class="column col-12">
     <div class="card">
       <div class="card-body">
-        <h3>Log entries <span *ngIf="logEntries && logEntries.size > 0">(last {{ logEntries.size }} entries)</span></h3>
+        <h3>Log entries @if (logEntries && logEntries.size > 0) {
+          <span>(last {{ logEntries.size }} entries)</span>
+        }</h3>
       </div>
     </div>
   </div>
@@ -28,25 +30,33 @@
 <div class="columns flex-centered">
   <div class="column col-10">
 
-    <div *ngIf="!logEntries || logEntries.size === 0" class="text-center m-2">
-      <h3>No log entries available</h3>
-    </div>
+    @if (!logEntries || logEntries.size === 0) {
+      <div class="text-center m-2">
+        <h3>No log entries available</h3>
+      </div>
+    }
 
-    <div class="log_table" *ngIf="logEntries && logEntries.size > 0">
-      <table>
-        <thead>
-        <tr>
-          <th>Time</th>
-          <th>Message</th>
-        </tr>
-        </thead>
-        <tbody *ngIf="logEntries !== null">
-        <tr *ngFor="let item of logEntries.elements">
-          <td class="col_date">{{ item.created_at | appDate:'full' }}</td>
-          <td class="col_message" [innerHTML]="item.message"></td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+    @if (logEntries && logEntries.size > 0) {
+      <div class="log_table">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          @if (logEntries !== null) {
+            <tbody>
+              @for (item of logEntries.elements; track item) {
+                <tr>
+                  <td class="col_date">{{ item.created_at | appDate:'full' }}</td>
+                  <td class="col_message" [innerHTML]="item.message"></td>
+                </tr>
+              }
+            </tbody>
+          }
+        </table>
+      </div>
+    }
   </div>
 </div>

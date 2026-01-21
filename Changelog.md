@@ -1,10 +1,16 @@
 # Changelog oerc
 
+## 0.21.0 - 2026/01/21
+- Support for SQlite database backend added
+- Change default database to SQLite
+- Improve the accuracy and performance of `(full-)overlap-check`
+- Web UI: Add channels, allow reordering of channels
+- Dependency and library updates
+
 ## 0.20.0 - 2025/10/26
 - Golang 1.24
 - Dependency updates 
 - Update OpenApi spec and remove conversion logic from project
-- 
 
 ## 0.19.0 - 2025/04/27
 - Add new `xmltv` subcommand and create `xmltv` http api endpoint

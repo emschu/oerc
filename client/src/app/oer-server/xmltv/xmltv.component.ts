@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,9 +22,10 @@ import dayjs from "dayjs";
 import {environment} from "../../../environments/environment";
 
 @Component({
-  selector: 'app-xmltv',
-  templateUrl: './xmltv.component.html',
-  styleUrl: './xmltv.component.scss'
+    selector: 'app-xmltv',
+    templateUrl: './xmltv.component.html',
+    styleUrl: './xmltv.component.scss',
+    standalone: false
 })
 export class XmltvComponent {
   exampleXmlTvApiUrl: string = "";
@@ -47,7 +48,7 @@ export class XmltvComponent {
       case XmlTvTimeExpression.TODAY:
         break;
       case XmlTvTimeExpression.TOMORROW:
-        from = from.add(1, 'day')
+        to = from.add(1, 'day')
         break;
       case XmlTvTimeExpression.YESTERDAY:
         from = from.subtract(1, 'day')

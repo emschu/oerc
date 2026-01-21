@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,19 +18,31 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApiService } from '../api.service';
+import { BehaviorSubject } from 'rxjs';
 
 import { XmltvComponent } from './xmltv.component';
 
 describe('XmltvComponent', () => {
   let component: XmltvComponent;
   let fixture: ComponentFixture<XmltvComponent>;
+  let apiServiceMock: any;
 
   beforeEach(async () => {
+    apiServiceMock = {
+      updateStatus: jasmine.createSpy('updateStatus'),
+      statusSubject: new BehaviorSubject<any>(null),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     await TestBed.configureTestingModule({
-      imports: [XmltvComponent]
+      declarations: [XmltvComponent],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(XmltvComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

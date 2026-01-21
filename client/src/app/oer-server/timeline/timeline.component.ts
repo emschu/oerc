@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -40,10 +40,15 @@ import FlatPickrInstance = flatpickr.Instance;
 //   order: number;
 // }
 
+interface TimelineGroup extends DataGroup {
+  priority: number;
+}
+
 @Component({
-  selector: 'app-oer-timeline',
-  templateUrl: './timeline.component.html',
-  styleUrls: ['./timeline.component.scss']
+    selector: 'app-oer-timeline',
+    templateUrl: './timeline.component.html',
+    styleUrls: ['./timeline.component.scss'],
+    standalone: false
 })
 export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -54,36 +59,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private static i = 0;
-  static channelPreferencesMap = [
-    'ARD – Das Erste',
-    'ZDF',
-    '3Sat',
-    'ARTE',
-    'Phoenix',
-    'ZDFinfo',
-    'ZDFneo',
-    'SWR RP Fernsehen',
-    'NDR Fernsehen',
-    'RBB Fernsehen',
-    'Tagesschau24',
-    'WDR Fernsehen',
-    'ARD ALPHA',
-    'ARD One',
-    'MDR Fernsehen',
-    'SWR BW Fernsehen',
-    'BR Fernsehen',
-    'HR Fernsehen',
-    'SR Fernsehen',
-    'KIKA',
-    'Radio Bremen TV',
-    'ORF eins',
-    'ORF 2',
-    'ORF III',
-    'ORF Sport +',
-    'SRF 1',
-    'SRF info',
-    'SRF zwei'
-  ];
   public channels: Channel[];
   public items: DataInterface<DataItem, 'id'>;
   public timeLine?: Timeline;
@@ -104,24 +79,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
 
-  /**
-   * TODO: make configuration option
-   * @param singleChannelTitle an id
-   * @private
-   */
-  private static getGroupOrder(singleChannelTitle: string | undefined): number {
-    if (singleChannelTitle && TimelineComponent.channelPreferencesMap.indexOf(singleChannelTitle) > -1) {
-      return TimelineComponent.channelPreferencesMap.indexOf(singleChannelTitle);
-    }
-    return 100;
-  }
 
   ngOnInit(): void {
     this.initTimeLine();
-    this.apiService.channels().pipe(first()).subscribe((it) => {
-        const channels = it.data;
-      }
-    );
 
     this.apiService.statusSubject.pipe(first()).subscribe(statusResponse => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
@@ -195,11 +155,13 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadProgramItems();
 
     // create groups
-    const groups: DataSet<DataGroup> = new DataSet({fieldId: 'id'});
-    this.channelSubscription = this.apiService.channels().pipe(first()).subscribe((value: ChannelResponse) => {
+    const groups: DataSet<TimelineGroup> = new DataSet({fieldId: 'id'});
+    this.channelSubscription = this.apiService.channelSubjectVar.subscribe((value: ChannelResponse | null) => {
       if (!value) {
         return;
       }
+      groups.clear();
+      this.channels = value.data;
       value.data.forEach(
         (singleChannel: Channel) => {
           groups.add({
@@ -207,6 +169,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
             content: singleChannel.title,
             subgroupStack: true,
             subgroupOrder: () => 0,
+            priority: singleChannel.priority
           });
         });
     });
@@ -238,11 +201,11 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       rtl: false,
       selectable: true,
       editable: false,
-      groupOrder(a: DataGroup, b: DataGroup): number {
+      groupOrder(a: TimelineGroup, b: TimelineGroup): number {
         if (a.id === b.id) {
           return 0;
         }
-        return TimelineComponent.getGroupOrder(a.content?.toString()) > TimelineComponent.getGroupOrder(b.content?.toString()) ? 1 : -1;
+        return a.priority - b.priority;
       },
       margin: {
         item: 5,

@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2025 emschu[aet]mailbox.org
+// Copyright (C) 2021-2026 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -19,12 +19,18 @@ package main
 // database struct(ure) models
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
 )
 
-const materializedStatusView = `SELECT min(program_entries.start_date_time) AS data_start_time,
+func getMaterializedStatusViewQuery() string {
+	nowFunc := "now()"
+	if strings.ToLower(GetAppConf().DbType) == "sqlite" {
+		nowFunc = "datetime('now')"
+	}
+	return fmt.Sprintf(`SELECT min(program_entries.start_date_time) AS data_start_time,
 	max(program_entries.end_date_time)   AS data_end_time,
 	count(*) as program_entry_count,
 	(SELECT count(*) from channel_families) as channel_family_count,
@@ -33,8 +39,9 @@ const materializedStatusView = `SELECT min(program_entries.start_date_time) AS d
 	(SELECT count(*) from tv_shows) as tv_show_count,
 	(SELECT count(*) from log_entries) as log_count,
 	(SELECT count(*) from recommendations) as recommendation_count,
-	now() as created_at
-	FROM program_entries`
+	%s as created_at
+	FROM program_entries`, nowFunc)
+}
 
 // BaseModel base model for all entities
 type BaseModel struct {
@@ -67,7 +74,7 @@ func (f ChannelFamily) getXMLTvChannelPrefix() string {
 type ManagedRecord struct {
 	Title           string        `gorm:"size:500" json:"title"`
 	URL             string        `gorm:"size:1500" json:"url"`
-	Hash            string        `gorm:"type:varchar(32);unique_index;not null" json:"hash"`
+	Hash            string        `gorm:"type:varchar(32);uniqueIndex;not null" json:"hash"`
 	TechnicalID     string        `gorm:"index;type:varchar(64);null" json:"technical_id"`
 	Homepage        string        `gorm:"size:1500" json:"homepage"`
 	ChannelFamily   ChannelFamily `json:"-"`
@@ -80,6 +87,7 @@ type Channel struct {
 	ManagedRecord
 
 	IsDeprecated bool `gorm:"default:false;not null" json:"is_deprecated"`
+	Priority     int  `gorm:"default:1000;not null" json:"priority"`
 }
 
 // TvShow entity
@@ -136,7 +144,7 @@ type Recommendation struct {
 	ID             uint         `gorm:"primary_key" json:"id"`
 	CreatedAt      *time.Time   `json:"created_at"`
 	ProgramEntry   ProgramEntry `json:"program_entry"`
-	ProgramEntryID uint         `gorm:"unique_index;not null" json:"program_entry_id"`
+	ProgramEntryID uint         `gorm:"uniqueIndex;not null" json:"program_entry_id"`
 	ChannelID      uint         `gorm:"index;not null" json:"channel_id"`
 	StartDateTime  *time.Time   `gorm:"index;not null" json:"start_date_time"`
 	Keywords       string       `gorm:"size:1024" json:"keywords"`

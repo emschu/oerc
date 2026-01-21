@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {BehaviorSubject, Observable, Subscription} from 'rxjs';
 import {Channel, ChannelResponse, LogEntryResponse, Pong, ProgramEntry, ProgramResponse, Recommendation, StatusResponse} from './entities';
 import {IdType} from 'vis-timeline';
@@ -110,6 +110,17 @@ export class ApiService {
 
   public channels(): Observable<ChannelResponse> {
     return this.get<ChannelResponse>(this.apiEndpoint + '/channels');
+  }
+
+  public updateChannelsOrder(channels: Channel[]): Observable<ChannelResponse> {
+    return this.put<ChannelResponse>(this.apiEndpoint + '/channels', channels).pipe(
+      tap((value: ChannelResponse) => {
+        if (value) {
+          this._channelSubjectVar.next(value);
+          this.channelStore = value.data;
+        }
+      })
+    );
   }
 
   public dailyProgram(): Observable<ProgramResponse> {
@@ -246,6 +257,42 @@ export class ApiService {
           this._isLiveSubject.next(false);
         }
         console.error('http GET call err', url, err);
+        return new Observable<T>();
+      })
+    );
+  }
+
+  /**
+   * centralized http put with small error handling
+   *
+   * @param url
+   * @param body
+   * @param options
+   * @private
+   */
+  private put<T>(url: string, body: any, options = {}): Observable<T> {
+    if (this.isInErrorsSubject.getValue() || this.isLiveSubject.getValue() === false) {
+      console.log(`api in errors or not live. Skipping request to url ${url}.`);
+      return new Observable<T>();
+    }
+    const inErrAlready = this._isInErrorsSubject.getValue();
+    return this.http.put<T>(url, body, options).pipe(
+      timeout(environment.apiRequestTimeoutInSecs * 1000),
+      tap(
+        _ => {
+          if (inErrAlready) {
+            this._isInErrorsSubject.next(false);
+          }
+        }
+      ),
+      catchError(err => {
+        if (err.name === 'TimeoutError') {
+          console.log('request timeout reached!', err);
+        }
+        if (!inErrAlready) {
+          this._isInErrorsSubject.next(true);
+        }
+        console.error('http PUT call err', url, err);
         return new Observable<T>();
       })
     );

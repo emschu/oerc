@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,17 +16,32 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApiService } from '../api.service';
+import { of, BehaviorSubject } from 'rxjs';
 
 import { StatusComponent } from './status.component';
 
 describe('StatusComponent', () => {
   let component: StatusComponent;
   let fixture: ComponentFixture<StatusComponent>;
+  let apiServiceMock: any;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
+    apiServiceMock = {
+      ping: jasmine.createSpy('ping').and.returnValue(of({})),
+      updateStatus: jasmine.createSpy('updateStatus'),
+      isLiveSubject: new BehaviorSubject<boolean | null>(null),
+      isInErrorsSubject: new BehaviorSubject<boolean>(false),
+      statusSubject: new BehaviorSubject<any>(null),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     TestBed.configureTestingModule({
-      declarations: [ StatusComponent ]
+      declarations: [ StatusComponent ],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ]
     })
     .compileComponents();
   }));

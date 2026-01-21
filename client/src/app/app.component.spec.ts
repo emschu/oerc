@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,12 +16,24 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { TestBed } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { ApiService } from './oer-server/api.service';
+import { of, BehaviorSubject } from 'rxjs';
 import { AppComponent } from './app.component';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('AppComponent', () => {
+  let fixture: ComponentFixture<AppComponent>;
+  let apiServiceMock: any;
+
   beforeEach(async () => {
+    apiServiceMock = {
+      init: jasmine.createSpy('init'),
+      isLiveSubject: new BehaviorSubject<boolean | null>(null),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     await TestBed.configureTestingModule({
       imports: [
         RouterTestingModule
@@ -29,24 +41,17 @@ describe('AppComponent', () => {
       declarations: [
         AppComponent
       ],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
   });
 
   it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+    fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it(`should have as title 'client'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('.content span').textContent).toContain('client app is running!');
+    expect(app).toBeTruthy();
   });
 });

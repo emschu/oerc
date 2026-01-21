@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2025 emschu[aet]mailbox.org
+// Copyright (C) 2021-2026 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -25,6 +25,7 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/microcosm-cc/bluemonday"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
@@ -35,6 +36,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -83,7 +85,7 @@ func getDb() *gorm.DB {
 			},
 		)
 
-		if strings.ToLower(conf.DbType) == "postgres" || strings.ToLower(conf.DbType) == "postgresql" {
+		if strings.ToLower(conf.DbType) == "postgres" {
 			var sslModeStr string
 			if !conf.DbSSLEnabled {
 				sslModeStr = "disable"
@@ -117,11 +119,47 @@ func getDb() *gorm.DB {
 			s.SetMaxOpenConns(50)
 
 			dBReference = db
+		} else if strings.ToLower(conf.DbType) == "sqlite" {
+			db, err := gorm.Open(sqlite.Open(resolvePath(conf.DbHost)), &gorm.Config{
+				SkipDefaultTransaction: true,
+				DisableAutomaticPing:   false,
+				Logger:                 gormLogger,
+				PrepareStmt:            true,
+				FullSaveAssociations:   true,
+				NamingStrategy: schema.NamingStrategy{
+					SingularTable: false,
+				},
+			})
+			if err != nil {
+				log.Printf("Error connecting to the sqlite database. Is it running and configured correctly?\n")
+				log.Fatal(err)
+				return nil
+			}
+			s, err := db.DB()
+			if err != nil {
+				log.Printf("Error connecting to the sqlite database. Is it running and configured correctly?\n")
+				log.Fatal(err)
+				return nil
+			}
+			s.SetMaxOpenConns(50)
+
+			dBReference = db
 		} else {
 			log.Fatalf("DbType '%s' is not implemented.", appConf.DbType)
 		}
 	}
 	return dBReference
+}
+
+// resolvePath: helper method to resolve unix paths like "~"
+func resolvePath(path string) string {
+	if strings.HasPrefix(path, "~") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			return filepath.Join(home, path[1:])
+		}
+	}
+	return path
 }
 
 // getHTTPProxy: method to get the http proxy of the app or nil of none configured

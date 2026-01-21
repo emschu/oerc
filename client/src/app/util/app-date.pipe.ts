@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,8 @@ import {environment} from '../../environments/environment';
 import dayjs, {Dayjs} from 'dayjs';
 
 @Pipe({
-  name: 'appDate'
+    name: 'appDate',
+    standalone: false
 })
 export class AppDatePipe implements PipeTransform {
 

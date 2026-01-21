@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2025 emschu[aet]mailbox.org
+// Copyright (C) 2021-2026 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -35,7 +36,8 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 	// 14 day = max range
 	var endDateTime = *end
 	if end.Sub(*start).Hours()/24 > 14 {
-		endDateTime = time.Now().Add(14 * 24 * time.Hour)
+		endLimit := start.Add(14 * 24 * time.Hour)
+		endDateTime = endLimit
 	}
 	order := db.Model(&ProgramEntry{}).Where("start_date_time between ? and ?", start, endDateTime).
 		Preload("ImageLinks").
@@ -52,8 +54,12 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 	response := ProgramResponse{
 		From:             start,
 		To:               end,
+		ChannelID:        0,
 		Size:             len(entries),
 		ProgramEntryList: &entries,
+	}
+	if channel != nil {
+		response.ChannelID = int64(channel.ID)
 	}
 	return &response
 }
@@ -61,7 +67,7 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 func getChannels() *[]Channel {
 	db := getDb()
 	var channels []Channel
-	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Find(&channels)
+	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Order("priority asc").Find(&channels)
 	if result.Error != nil {
 		log.Fatalf("error fetching channels: %v", result.Error)
 		return nil
@@ -197,7 +203,7 @@ func getProgramHandler(c *gin.Context) {
 		return
 	}
 
-	end.In(location)
+	end = end.In(location)
 	if end.Before(start) || end.Equal(start) {
 		c.JSON(http.StatusBadRequest, Error{
 			Status:  "400",
@@ -235,7 +241,6 @@ func getSingleProgramEntryHandler(c *gin.Context) {
 
 // isChannelValid: helper method to check if a given channel id is valid and exists, if existent a pointer to a Channel object is returned
 func isChannelValid(c *gin.Context, cid string, acceptZero bool) (*Channel, bool) {
-	var channel Channel
 	// parse channel id
 	if len(cid) > 0 {
 		cid, err := strconv.ParseInt(cid, 10, 64)
@@ -258,17 +263,10 @@ func isChannelValid(c *gin.Context, cid string, acceptZero bool) (*Channel, bool
 			return nil, false
 		}
 
-		// check if channel exists
-		channelExists := false
-		channels := getChannels()
-		for _, c := range *channels {
-			if c.ID == uint(cid) {
-				channelExists = true
-				channel = c
-				break
-			}
-		}
-		if !channelExists {
+		db := getDb()
+		var channel Channel
+		result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false AND id = ?", uint(cid)).First(&channel)
+		if result.Error != nil {
 			c.JSON(http.StatusNotFound, Error{
 				Status:  "404",
 				Message: "invalid channel id",
@@ -280,6 +278,10 @@ func isChannelValid(c *gin.Context, cid string, acceptZero bool) (*Channel, bool
 	if acceptZero {
 		return nil, true
 	}
+	c.JSON(http.StatusBadRequest, Error{
+		Status:  "400",
+		Message: "missing or invalid channel id",
+	})
 	return nil, false
 }
 
@@ -331,6 +333,22 @@ func getChannelsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, ChannelResponse{channels, len(*channels)})
 }
 
+func putChannelsHandler(c *gin.Context) {
+	var channels []Channel
+	if err := c.ShouldBindJSON(&channels); err != nil || channels == nil {
+		c.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid channel data"})
+		return
+	}
+
+	db := getDb()
+	for i, channel := range channels {
+		db.Model(&Channel{}).Where("id = ?", channel.ID).Update("priority", i)
+	}
+
+	updatedChannels := getChannels()
+	c.JSON(http.StatusOK, ChannelResponse{updatedChannels, len(*updatedChannels)})
+}
+
 func getLogEntriesHandler(context *gin.Context) {
 	db := getDb()
 	var logEntryList []LogEntry
@@ -357,25 +375,6 @@ func getSingleLogEntriesHandler(context *gin.Context) {
 		return
 	}
 	context.JSON(http.StatusOK, &singleLogEntry)
-}
-
-func deleteSingleLogEntriesHandler(context *gin.Context) {
-	logID := context.Param("id")
-	logEntryID, err := strconv.ParseInt(logID, 10, 64)
-	if err != nil {
-		context.JSON(http.StatusNotFound, Error{Status: "404", Message: "Invalid log entry id"})
-		return
-	}
-
-	db := getDb()
-	var singleLogEntry LogEntry
-	db.Model(&LogEntry{}).Where("id", logEntryID).Find(&singleLogEntry)
-	if singleLogEntry.ID == 0 {
-		context.JSON(http.StatusNotFound, Error{Status: "404", Message: "Invalid log entry id"})
-		return
-	}
-	db.Delete(&singleLogEntry)
-	context.JSON(http.StatusOK, "OK")
 }
 
 func clearAllLogEntriesHandler(context *gin.Context) {
@@ -492,18 +491,27 @@ func getSearchHandler(context *gin.Context) {
 
 	db := getDb()
 	var programEntryList []ProgramEntry
-	db.Model(&ProgramEntry{}).Where("start_date_time >= (NOW() - interval '1 day') AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
-		Offset(int(offset)).Limit(int(limit)).
-		Order("start_date_time ASC").
-		Preload("ImageLinks").
-		Preload("CollisionEntries").
-		Find(&programEntryList)
+	if db.Dialector.Name() == "sqlite" {
+		db.Model(&ProgramEntry{}).Where("start_date_time >= datetime('now', '-1 day') AND (UPPER(title) LIKE ? OR UPPER(description) LIKE ?)", strings.ToUpper(queryStr), strings.ToUpper(queryStr)).
+			Offset(int(offset)).Limit(int(limit)).
+			Order("start_date_time ASC").
+			Preload("ImageLinks").
+			Preload("CollisionEntries").
+			Find(&programEntryList)
+	} else {
+		db.Model(&ProgramEntry{}).Where("start_date_time >= (NOW() - interval '1 day') AND (title ILIKE ? OR description ILIKE ?)", queryStr, queryStr).
+			Offset(int(offset)).Limit(int(limit)).
+			Order("start_date_time ASC").
+			Preload("ImageLinks").
+			Preload("CollisionEntries").
+			Find(&programEntryList)
+	}
 
 	if len(programEntryList) == 0 {
-		context.JSON(http.StatusOK, [0]ProgramEntry{})
+		context.JSON(http.StatusOK, []ProgramEntry{})
 		return
 	}
-	context.JSON(http.StatusOK, &programEntryList)
+	context.JSON(http.StatusOK, programEntryList)
 }
 
 func getXMLTvHandler(context *gin.Context) {
@@ -542,7 +550,7 @@ func getXMLTvHandler(context *gin.Context) {
 		return
 	}
 
-	end.In(location)
+	end = end.In(location)
 	if end.Before(start) || end.Equal(start) {
 		context.XML(http.StatusBadRequest, Error{
 			Status:  "400",
@@ -557,6 +565,7 @@ func getXMLTvHandler(context *gin.Context) {
 			Status:  "500",
 			Message: "Error while generating XMLTV file",
 		})
+		return
 	}
 	context.XML(http.StatusOK, &xmltv)
 }

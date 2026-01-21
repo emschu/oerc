@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2025 emschu[aet]mailbox.org
+// Copyright (C) 2021-2026 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -37,7 +37,7 @@ func StartServer() {
 		gin.SetMode("release")
 	}
 
-	go setupMaterializedView()
+	setupMaterializedView()
 
 	r := initRouter()
 	log.Printf("Starting API server...\n")
@@ -57,10 +57,16 @@ func StartServer() {
 
 func setupMaterializedView() {
 	db := getDb()
-	db.Exec(`drop materialized view status_info`)
-	db.Exec(fmt.Sprintf(`create materialized view status_info as %s`, materializedStatusView))
+	query := getMaterializedStatusViewQuery()
+	if strings.ToLower(GetAppConf().DbType) == "postgres" {
+		db.Exec(`drop materialized view if exists status_info`)
+		db.Exec(fmt.Sprintf(`create materialized view status_info as %s`, query))
+	} else {
+		db.Exec(`drop view if exists status_info`)
+		db.Exec(fmt.Sprintf(`create view status_info as %s`, query))
+	}
 	if isDebug() {
-		log.Printf("Materialized status view")
+		log.Printf("Materialized status view (or regular view for sqlite)")
 	}
 }
 
@@ -79,6 +85,9 @@ type StatusInfoModel struct {
 
 // TableName of the materialized view prefixed by db schema
 func (s *StatusInfoModel) TableName() string {
+	if strings.ToLower(appConf.DbType) == "sqlite" {
+		return "status_info"
+	}
 	return fmt.Sprintf("%s.status_info", appConf.DbSchema)
 }
 
@@ -193,6 +202,8 @@ func initRouter() *gin.Engine {
 	apiV2.GET("/status", getStatusHandler)
 	// channel data
 	apiV2.GET("/channels", getChannelsHandler)
+	apiV2.PUT("/channels", putChannelsHandler)
+
 	apiV2.GET("/channel/:channel_id", getSingleChannelHandler)
 	// program data
 	apiV2.GET("/program/yesterday", getProgramYesterdayHandler)
@@ -206,7 +217,6 @@ func initRouter() *gin.Engine {
 	// log data
 	apiV2.GET("/log", getLogEntriesHandler)
 	apiV2.GET("/log/entry/:id", getSingleLogEntriesHandler)
-	apiV2.DELETE("/log/entry/:id", deleteSingleLogEntriesHandler)
 	apiV2.DELETE("/log/clear", clearAllLogEntriesHandler)
 	// recommendations
 	apiV2.GET("/recommendations", getRecommendationsHandler)

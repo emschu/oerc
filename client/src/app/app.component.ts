@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,9 +21,10 @@ import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent implements OnInit, OnDestroy {
   isLive = false;
@@ -34,7 +35,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:visibilitychange', ['$event'])
-  onPageVisible(): void {
+  onPageVisible(event: Event): void {
     if (document.hidden) {
       this.apiService.isWindowOpenedSubject.next(false);
     } else {

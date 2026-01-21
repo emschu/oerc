@@ -1,27 +1,29 @@
 <!--
-  ~ oerc, alias oer-collector
-  ~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU Affero General Public License as
-  ~ published by the Free Software Foundation, either version 3 of the
-  ~ License, or (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  ~ GNU Affero General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Affero General Public
-  ~ License along with this program.
-  ~ If not, see <https://www.gnu.org/licenses/>.
+~ oerc, alias oer-collector
+~ Copyright (C) 2021-2026 emschu[aet]mailbox.org
+~
+~ This program is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU Affero General Public License as
+~ published by the Free Software Foundation, either version 3 of the
+~ License, or (at your option) any later version.
+~
+~ This program is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+~ GNU Affero General Public License for more details.
+~
+~ You should have received a copy of the GNU Affero General Public
+~ License along with this program.
+~ If not, see <https://www.gnu.org/licenses/>.
 -->
 <div class="columns head-section">
   <div class="column col-12">
     <div class="card">
       <div class="card-body">
-        <h3>Recommendations <span *ngIf="recommendations && recommendations.length > 0">({{ recommendations.length }}
-          results)</span></h3>
+        <h3>Recommendations @if (recommendations && recommendations.length > 0) {
+          <span>({{ recommendations.length }}
+          results)</span>
+        }</h3>
       </div>
     </div>
   </div>
@@ -44,43 +46,52 @@
 </div>
 <div class="columns">
   <div class="column col-12">
-    <div class="rec_table" *ngIf="recommendations && recommendations.length > 0">
-      <table>
-        <thead>
-        <tr>
-          <th>Channel &amp; Time</th>
-          <th>Title</th>
-          <th>Description</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let item of recommendations">
-          <td class="col_start_date"><span
-            class="channel_label">{{ apiService.getChannelById(item.channel_id)?.title}}</span><br/>
-            <span *ngIf="item.program_entry.is_deprecated" class="label label-warning">Could be out-of-date!</span>
-            {{item.program_entry.start_date_time | appDate:'full-medium' }}-{{item.program_entry.end_date_time | appDate:'time-medium' }}<br/>
-            <img
-              *ngIf="item.program_entry.image_links && item.program_entry.image_links.length > 0"
-              alt="program entry preview image"
-              class="img-responsive img-fit-contain"
-              src="{{item.program_entry.image_links[0].url}}"
-              loading="lazy"/><br/>
-              <em>Keywords: {{ item.keywords }}</em>
-          </td>
-          <td class="col_title" [innerHTML]="item?.program_entry?.title | search:item.keywords">
-          </td>
-          <td class="col_description"
-              [innerHTML]="item?.program_entry?.description | readMore | search:item.keywords"></td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <div *ngIf="!recommendations || recommendations.length === 0" class="text-center m-2">
-      <h3>There are no recommended program items available. You should run:
-        <pre>oerc search</pre>
-        and define some
-        search words in the configuration file first.
-      </h3>
-    </div>
+    @if (recommendations && recommendations.length > 0) {
+      <div class="rec_table">
+        <table>
+          <thead>
+            <tr>
+              <th>Channel &amp; Time</th>
+              <th>Title</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of recommendations; track item) {
+              <tr>
+                <td class="col_start_date"><span
+                class="channel_label">{{ apiService.getChannelById(item.channel_id)?.title}}</span><br/>
+                @if (item.program_entry.is_deprecated) {
+                  <span class="label label-warning">Could be out-of-date!</span>
+                }
+                {{item.program_entry.start_date_time | appDate:'full-medium' }}-{{item.program_entry.end_date_time | appDate:'time-medium' }}<br/>
+                @if (item.program_entry.image_links && item.program_entry.image_links.length > 0) {
+                  <img
+                    alt="program entry preview image"
+                    class="img-responsive img-fit-contain"
+                    src="{{item.program_entry.image_links[0].url}}"
+                    loading="lazy"/>
+                  }<br/>
+                  <em>Keywords: {{ item.keywords }}</em>
+                </td>
+                <td class="col_title" [innerHTML]="item?.program_entry?.title | search:item.keywords">
+                </td>
+                <td class="col_description"
+                [innerHTML]="item?.program_entry?.description | readMore | search:item.keywords"></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (!recommendations || recommendations.length === 0) {
+      <div class="text-center m-2">
+        <h3>There are no recommended program items available. You should run:
+          <pre>oerc search</pre>
+          and define some
+          search words in the configuration file first.
+        </h3>
+      </div>
+    }
   </div>
 </div>

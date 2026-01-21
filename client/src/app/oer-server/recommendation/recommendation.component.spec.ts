@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -17,16 +17,29 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApiService } from '../api.service';
+import { of, BehaviorSubject } from 'rxjs';
 
 import { RecommendationComponent } from './recommendation.component';
 
 describe('RecommendationComponent', () => {
   let component: RecommendationComponent;
   let fixture: ComponentFixture<RecommendationComponent>;
+  let apiServiceMock: any;
 
   beforeEach(async () => {
+    apiServiceMock = {
+      updateStatus: jasmine.createSpy('updateStatus'),
+      recommendations: jasmine.createSpy('recommendations').and.returnValue(of([])),
+      statusSubject: new BehaviorSubject<any>(null),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     await TestBed.configureTestingModule({
-      declarations: [ RecommendationComponent ]
+      declarations: [ RecommendationComponent ],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ]
     })
     .compileComponents();
   });

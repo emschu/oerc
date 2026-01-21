@@ -1,35 +1,37 @@
 <!--
-  ~ oerc, alias oer-collector
-  ~ Copyright (C) 2021-2025 emschu[aet]mailbox.org
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU Affero General Public License as
-  ~ published by the Free Software Foundation, either version 3 of the
-  ~ License, or (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  ~ GNU Affero General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Affero General Public
-  ~ License along with this program.
-  ~ If not, see <https://www.gnu.org/licenses/>.
+~ oerc, alias oer-collector
+~ Copyright (C) 2021-2026 emschu[aet]mailbox.org
+~
+~ This program is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU Affero General Public License as
+~ published by the Free Software Foundation, either version 3 of the
+~ License, or (at your option) any later version.
+~
+~ This program is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+~ GNU Affero General Public License for more details.
+~
+~ You should have received a copy of the GNU Affero General Public
+~ License along with this program.
+~ If not, see <https://www.gnu.org/licenses/>.
 -->
-<table *ngIf="currentStatus" class="table">
-  <tbody>
-  <tr>
-    <td><strong>Program entries</strong></td>
-    <td>{{ currentStatus.program_entry_count | number }}</td>
-
-    <td><strong>Image links</strong></td>
-    <td>{{ currentStatus.image_links_count | number }}</td>
-
-    <td><strong>TV shows</strong></td>
-    <td>{{ currentStatus.tv_show_count | number }}</td>
-    <td><strong>Data time range</strong></td>
-    <td *ngIf="currentStatus !== null">{{ currentStatus.data_start_time | appDate: 'date-medium' }}
-      - {{ currentStatus.data_end_time | appDate : 'full-medium' }}</td><td *ngElse></td>
-  </tr>
-  </tbody>
-</table>
+@if (currentStatus) {
+  <table class="table">
+    <tbody>
+      <tr>
+        <td><strong>Program entries</strong></td>
+        <td>{{ currentStatus.program_entry_count | number }}</td>
+        <td><strong>Image links</strong></td>
+        <td>{{ currentStatus.image_links_count | number }}</td>
+        <td><strong>TV shows</strong></td>
+        <td>{{ currentStatus.tv_show_count | number }}</td>
+        <td><strong>Data time range</strong></td>
+        @if (currentStatus !== null) {
+          <td>{{ currentStatus.data_start_time | appDate: 'date-medium' }}
+          - {{ currentStatus.data_end_time | appDate : 'full-medium' }}</td>
+          }<td *ngElse></td>
+        </tr>
+      </tbody>
+    </table>
+  }

@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -16,17 +16,37 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { ApiService } from '../api.service';
+import { of, BehaviorSubject } from 'rxjs';
 
 import { TimelineComponent } from './timeline.component';
 
 describe('TimelineComponent', () => {
   let component: TimelineComponent;
   let fixture: ComponentFixture<TimelineComponent>;
+  let apiServiceMock: any;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
+    apiServiceMock = {
+      updateStatus: jasmine.createSpy('updateStatus'),
+      fetchChannels: jasmine.createSpy('fetchChannels').and.returnValue(of([])),
+      fetchProgramForDay: jasmine.createSpy('fetchProgramForDay'),
+      statusSubject: new BehaviorSubject<any>(null),
+      channelSubjectVar: new BehaviorSubject<any[]>([]),
+      programSubject: new BehaviorSubject<any[]>([]),
+      isLoadingSubject: new BehaviorSubject<boolean>(false),
+      isInErrorsSubject: new BehaviorSubject<boolean>(false),
+      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
+    };
+
     TestBed.configureTestingModule({
-      declarations: [ TimelineComponent ]
+      declarations: [ TimelineComponent ],
+      imports: [ FormsModule ],
+      providers: [
+        { provide: ApiService, useValue: apiServiceMock }
+      ]
     })
     .compileComponents();
   }));

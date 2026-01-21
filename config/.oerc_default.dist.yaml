@@ -1,13 +1,12 @@
 # oerc configuration file
-# db settings
-# you should at least change all configuration options containing "<" and ">"
-DbType: postgres
-DbHost: localhost
-DbPort: 5432
-DbName: <db_name>
+# db settings (sqlite)
+DbType: sqlite
+DbHost: ~/.oerc.db
+DbPort:
+DbName: oerc_db
 DbSchema: public
-DbUser: <db_user>
-DbPassword: <db_password>
+DbUser:
+DbPassword:
 DbSSLEnabled: false
 ForceUpdate: false
 TimeToRefreshInMinutes: 360

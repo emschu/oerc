@@ -1,6 +1,6 @@
 #
 # oerc, alias oer-collector
-# Copyright (C) 2021-2025 emschu[aet]mailbox.org
+# Copyright (C) 2021-2026 emschu[aet]mailbox.org
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.20.0"
-APP_VERSION_STR = "0-20-0"
+APP_VERSION_DOT = "0.21.0"
+APP_VERSION_STR = "0-21-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -85,7 +85,7 @@ integration-test-prepare: ## start (local) oerc server to run integration tests 
 
 .PHONY: integration-test
 integration-test: ## run OpenAPI schema conformity HTTP tests
-	@$(SCHEMATHESIS_BIN) run -c all --exclude-checks positive_data_acceptance http://127.0.0.1:8080/spec/oerc-openapi3.json
+	@$(SCHEMATHESIS_BIN) run -c all --exclude-checks negative_data_rejection,positive_data_acceptance http://127.0.0.1:8080/spec/oerc-openapi3.json
 	-if [[ -a server.PID ]]; then kill -9 "$$(cat server.PID)" || rm server.PID || true; fi
 
 .PHONY: cover

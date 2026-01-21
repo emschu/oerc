@@ -1,6 +1,6 @@
 /*
  * oerc, alias oer-collector
- * Copyright (C) 2021-2025 emschu[aet]mailbox.org
+ * Copyright (C) 2021-2026 emschu[aet]mailbox.org
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -20,9 +20,10 @@ import { Component } from '@angular/core';
 import {environment} from '../../../environments/environment';
 
 @Component({
-  selector: 'app-credits',
-  templateUrl: './credits.component.html',
-  styleUrls: ['./credits.component.scss']
+    selector: 'app-credits',
+    templateUrl: './credits.component.html',
+    styleUrls: ['./credits.component.scss'],
+    standalone: false
 })
 export class CreditsComponent {
 

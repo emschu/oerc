@@ -16,37 +16,24 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ApiService } from '../api.service';
-import { BehaviorSubject } from 'rxjs';
 
-import { DashboardComponent } from './dashboard.component';
+import { ChannelsComponent } from './channels.component';
 
-describe('DashboardComponent', () => {
-  let component: DashboardComponent;
-  let fixture: ComponentFixture<DashboardComponent>;
-  let apiServiceMock: any;
+describe('Channels', () => {
+  let component: ChannelsComponent;
+  let fixture: ComponentFixture<ChannelsComponent>;
 
   beforeEach(async () => {
-    apiServiceMock = {
-      updateStatus: jasmine.createSpy('updateStatus'),
-      statusSubject: new BehaviorSubject<any>(null),
-      isWindowOpenedSubject: new BehaviorSubject<boolean>(true)
-    };
-
     await TestBed.configureTestingModule({
-      declarations: [ DashboardComponent ],
-      providers: [
-        { provide: ApiService, useValue: apiServiceMock }
-      ]
+      imports: [ChannelsComponent]
     })
     .compileComponents();
-  });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(DashboardComponent);
+    fixture = TestBed.createComponent(ChannelsComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    await fixture.whenStable();
   });
 
   it('should create', () => {

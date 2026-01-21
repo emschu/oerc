@@ -1,5 +1,5 @@
 // oerc, alias oer-collector
-// Copyright (C) 2021-2025 emschu[aet]mailbox.org
+// Copyright (C) 2021-2026 emschu[aet]mailbox.org
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -17,11 +17,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"math"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +27,7 @@ import (
 // FindOverlaps central method to find, store and process overlapping program entries with same range as "fetch" command
 func FindOverlaps(handler dateRangeHandler) {
 	log.Println("Start processing overlaps")
+
 	var wg sync.WaitGroup
 	for _, channel := range *getChannels() {
 		if isChannelFamilyExcluded(&channel.ChannelFamily) {
@@ -48,15 +45,20 @@ func FindOverlaps(handler dateRangeHandler) {
 
 // FindOverlapsGlobal recalculate all overlaps in database, could take veeeeery long
 func FindOverlapsGlobal() {
+	setupMaterializedView()
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-	if len(getStatusObject().DataStartTime) == 0 || len(getStatusObject().DataEndTime) == 0 {
+	currentStatusData := getStatusObject()
+	if currentStatusData == nil {
+		log.Fatalln("Error fetching application status data from database")
+	}
+	if len(currentStatusData.DataStartTime) == 0 || len(currentStatusData.DataEndTime) == 0 {
 		return
 	}
-	dataStartTime, err := parseDate(getStatusObject().DataStartTime, location)
+	dataStartTime, err := parseDate(currentStatusData.DataStartTime, location)
 	if err != false {
 		return
 	}
-	dataEndTime, err := parseDate(getStatusObject().DataEndTime, location)
+	dataEndTime, err := parseDate(currentStatusData.DataEndTime, location)
 	if err != false {
 		return
 	}
@@ -88,15 +90,16 @@ func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
 		return
 	}
 
-	overlapIDs := storeOverlaps(db, collisionMap)
+	overlapIDs := storeCollisions(db, collisionMap)
 
 	if isDebug() {
 		log.Printf("Processing %d program entry collisions of channel '%s' on day '%s'.\n", len(overlapIDs), channel.Title, day.Format("2006-01-02"))
 	}
 
-	for _, programEntryID := range overlapIDs {
+	for programEntryID, _ := range *collisionMap {
 		processOverlaps(db, &programEntryID)
 	}
+
 }
 
 func processOverlaps(db *gorm.DB, programEntryID *uint) {
@@ -111,71 +114,25 @@ func processOverlaps(db *gorm.DB, programEntryID *uint) {
 	}
 	// ensure the correct items only are marked as deprecated here
 
-	// assume the current entry is the most recent one, until we know it better from collision entries
-	isEntryDeprecated := isProgramEntryPossiblyDeprecated(&programEntry)
 	// update entry - if needed
-	if isEntryDeprecated != programEntry.IsDeprecated {
-		programEntry.IsDeprecated = isEntryDeprecated
-		if verboseGlobal {
-			if isEntryDeprecated {
-				log.Printf("Set program entry #%d as deprecated.\n", programEntry.ID)
-			} else {
-				log.Printf("Set program entry #%d as NOT deprecated.\n", programEntry.ID)
-			}
-		}
-		now := time.Now()
-		programEntry.LastCollisionCheck = &now
-		db.Save(&programEntry)
+	programEntry.IsDeprecated = true
+	if verboseGlobal {
+		log.Printf("Set program entry #%d as deprecated.\n", programEntry.ID)
 	}
+	now := time.Now()
+	programEntry.LastCollisionCheck = &now
+	db.Save(&programEntry)
 }
 
-func isProgramEntryPossiblyDeprecated(programEntry *ProgramEntry) bool {
-	if programEntry.IsDeprecated {
-		// TODO what to do?
-		return true
-	}
-
-	const changeTimeTolerance = 3600 // one hour
-	isEntryDeprecated := false
-	for _, collisionEntry := range programEntry.CollisionEntries {
-		if collisionEntry.IsDeprecated {
-			// skip overlapping entries which are already deprecated
-			continue
-		}
-		createdAtDiffSecs := int64(programEntry.CreatedAt.Sub(collisionEntry.CreatedAt) / time.Second)
-		var lastCheckAtDiffSecs int64
-		if programEntry.LastCheck == nil || programEntry.LastCheck.IsZero() {
-			lastCheckAtDiffSecs = 0
-		} else {
-			lastCheckAtDiffSecs = int64(programEntry.LastCheck.Sub(*collisionEntry.LastCheck) / time.Second)
-		}
-		if math.Abs(float64(createdAtDiffSecs)) < changeTimeTolerance && math.Abs(float64(lastCheckAtDiffSecs)) < changeTimeTolerance {
-			// we cannot decide something here
-			continue
-		}
-		if math.Abs(float64(lastCheckAtDiffSecs)) < changeTimeTolerance {
-			// decide by created at diff only
-			if programEntry.CreatedAt.Before(collisionEntry.CreatedAt) {
-				isEntryDeprecated = true
-				break
-			}
-		}
-		if math.Abs(float64(createdAtDiffSecs)) < changeTimeTolerance {
-			// decide by last checked at diff only
-			if programEntry.LastCheck.Before(*collisionEntry.LastCheck) {
-				isEntryDeprecated = true
-				break
-			}
-		}
-		if programEntry.LastCheck.Before(*collisionEntry.LastCheck) {
-			isEntryDeprecated = true
-			break
-		}
-	}
-	return isEntryDeprecated
+// overlapResult struct to map SQL query results for overlapping program entries
+type overlapResult struct {
+	ChannelID  uint `gorm:"column:channel_id"`
+	Program1ID uint `gorm:"column:program1_id"`
+	Program2ID uint `gorm:"column:program2_id"`
 }
 
-func storeOverlaps(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
+// This function stores overlap information (= collision entries) in the ProgramEntry table
+func storeCollisions(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 	var affectedIDs = make([]uint, 0)
 
 	tx := db.Session(&gorm.Session{PrepareStmt: true})
@@ -210,62 +167,55 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntr
 	startOfDay := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location())
 	endOfDay := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, day.Location())
 
-	// fetch affected program entries
-	db.Model(ProgramEntry{}).
-		Where("channel_id = ? AND start_date_time between ? AND ?", channel.ID, startOfDay, endOfDay).
-		Order("start_date_time ASC").
-		Find(&dailyProgramEntries)
-
-	var counter = 0
-	var queries []string
-	for _, peToCheck := range *dailyProgramEntries {
-		for _, pe := range *dailyProgramEntries {
-			if peToCheck.ID == pe.ID {
-				// avoid checking overlap with itself
-				continue
-			}
-			if peToCheck.EndDateTime.Before(*pe.StartDateTime) || peToCheck.StartDateTime.After(*pe.EndDateTime) {
-				// exclude trivial cases from db queries and save a lot of time and memory
-				continue
-			}
-			queries = append(queries, fmt.Sprintf("CASE WHEN (SELECT (timestamptz '%s', timestamptz '%s') "+
-				"OVERLAPS (timestamptz '%s', timestamptz '%s'))=TRUE THEN '%d;%d' ELSE '' END as a%d",
-				peToCheck.StartDateTime.Format(time.RFC3339), peToCheck.EndDateTime.Format(time.RFC3339),
-				pe.StartDateTime.Format(time.RFC3339), pe.EndDateTime.Format(time.RFC3339), peToCheck.ID, pe.ID, counter))
-			counter++
-		}
+	// execute raw SQL query to find overlaps with duration calculation
+	var overlaps []overlapResult
+	var sqlQuery string
+	if GetAppConf().DbType == "postgres" {
+		sqlQuery = `
+		SELECT
+			a.channel_id,
+			a.id as program1_id,
+			b.id as program2_id
+		FROM program_entries a
+		JOIN program_entries b ON a.channel_id = b.channel_id
+		WHERE a.id < b.id -- avoid duplicates
+		  AND a.channel_id = ?
+		  AND date_trunc('minute', a.start_date_time) BETWEEN ? AND ?
+		  AND date_trunc('minute',a.start_date_time) < date_trunc('minute',b.end_date_time)
+		  AND date_trunc('minute',a.end_date_time) > date_trunc('minute',b.start_date_time)
+		ORDER BY a.channel_id, a.start_date_time
+	`
+	}
+	if GetAppConf().DbType == "sqlite" {
+		sqlQuery = `
+		SELECT
+		  a.channel_id,
+		  a.id AS program1_id,
+		  b.id AS program2_id
+		FROM program_entries AS a
+		JOIN program_entries AS b
+		  ON a.channel_id = b.channel_id
+		WHERE a.id < b.id
+		  AND a.channel_id = ?
+		  AND strftime('%Y-%m-%d %H:%M:00', a.start_date_time) BETWEEN ? AND ?
+		  AND strftime('%Y-%m-%d %H:%M:00', a.start_date_time) < strftime('%Y-%m-%d %H:%M:00', b.end_date_time)
+		  AND strftime('%Y-%m-%d %H:%M:00', a.end_date_time)   > strftime('%Y-%m-%d %H:%M:00', b.start_date_time)
+		ORDER BY a.channel_id, a.start_date_time;
+`
 	}
 
-	tx := db.Session(&gorm.Session{PrepareStmt: true})
+	result := db.Raw(sqlQuery, channel.ID, startOfDay, endOfDay).Scan(&overlaps)
+	if result.Error != nil {
+		log.Printf("Error executing overlap query for channel %d on day %s: %v\n", channel.ID, day.Format("2006-01-02"), result.Error)
+		collisionMap := make(map[uint][]uint)
+		return &collisionMap
+	}
+
+	// build collision map from query results
 	var collisionMap = make(map[uint][]uint)
-	chunks := chunkStringSlice(queries, 50)
-	for _, singleChunk := range chunks {
-		var result []map[string]interface{}
-		tx.Raw(fmt.Sprintf("SELECT %s", strings.Join(singleChunk, ","))).Scan(&result)
-
-		if len(result) == 0 || len(result[0]) == 0 {
-			continue
-		}
-		for _, mapEntry := range result[0] {
-			collision := mapEntry.(string)
-			if len(collision) > 0 {
-				entries := strings.Split(collision, ";")
-				if len(entries) != 2 {
-					log.Fatalf("Problem with formatting of collision check response\n")
-				}
-				collisionID, err := strconv.ParseUint(entries[1], 10, 64)
-				if err != nil {
-					log.Printf("Error parsing collision sql response")
-					continue
-				}
-				programEntryID, err := strconv.ParseUint(entries[0], 10, 64)
-				if err != nil {
-					log.Printf("Error parsing collision sql response")
-					continue
-				}
-				collisionMap[uint(programEntryID)] = append(collisionMap[uint(programEntryID)], uint(collisionID))
-			}
-		}
+	for _, overlap := range overlaps {
+		collisionMap[overlap.Program1ID] = append(collisionMap[overlap.Program1ID], overlap.Program2ID)
 	}
+
 	return &collisionMap
 }
