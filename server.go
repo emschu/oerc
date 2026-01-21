@@ -225,7 +225,7 @@ func initRouter() *gin.Engine {
 	apiV2.GET("/xmltv", getXMLTvHandler)
 
 	if GetAppConf().ClientEnabled {
-		clientBox := rice.MustFindBox("client/dist/client").HTTPBox()
+		clientBox := rice.MustFindBox("client/dist/client/browser").HTTPBox()
 		r.StaticFS("/client", clientBox)
 	}
 

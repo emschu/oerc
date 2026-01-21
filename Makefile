@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.21.0"
-APP_VERSION_STR = "0-21-0"
+APP_VERSION_DOT = "0.21.1"
+APP_VERSION_STR = "0-21-1"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -28,9 +28,6 @@ GO_RICE = $(GO_PATH)/bin/rice
 SCHEMATHESIS_BIN = ~/.local/bin/schemathesis
 
 OPENAPI_TOOLS_VERSION = 5.1.1
-
-# TODO: add spec conversion script
-# TODO add clean target
 
 .PHONY: all
 all: help
