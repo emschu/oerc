@@ -67,10 +67,12 @@ $ docker-compose up
 
 1. Install the application with Go using the following command: `go install github.com/emschu/oerc@latest`
 
-2. Setup a database.
-2.1 Option 1: SQLite database (default) - this is the easiest way to get started.
+2. Setup a database:  
+
+**Option 1**: SQLite database (default) - this is the easiest way to get started.
     - The SQLite database file is located at `~/.oerc.db` by default.
-2.2 Option 2: Set up a PostgreSQL database (12+), configure a database with a user and start it.
+
+**Option 2**: Set up a PostgreSQL database (12+), configure a database with a user and start it.
     - The [development section](./DEVELOPMENT.md) contains a simple docker command to run a local database for development or testing. 
 3. Run `oerc init`.   
    - This will copy a sample configuration file to the path `~/.oerc.yaml` if the file does not exist already.
@@ -164,7 +166,7 @@ SearchSkipChannels:
 AccessControlAllowOrigin: "http://127.0.0.1:8080"
 ```
 
-Additional configuration options that may be available:
+Additional configuration options that are available:
 - `Debug: true/false` - Enable debug logging
 - `ProfilingEnabled: true/false` - Enable performance profiling
 
