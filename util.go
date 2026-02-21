@@ -120,7 +120,7 @@ func getDb() *gorm.DB {
 
 			dBReference = db
 		} else if strings.ToLower(conf.DbType) == "sqlite" {
-			db, err := gorm.Open(sqlite.Open(resolvePath(conf.DbHost)), &gorm.Config{
+			db, err := gorm.Open(sqlite.Open(resolvePath(fmt.Sprintf("%s?_journal_mode=WAL&_busy_timeout=5000&cache=shared", conf.DbHost))), &gorm.Config{
 				SkipDefaultTransaction: true,
 				DisableAutomaticPing:   false,
 				Logger:                 gormLogger,
@@ -141,7 +141,8 @@ func getDb() *gorm.DB {
 				log.Fatal(err)
 				return nil
 			}
-			s.SetMaxOpenConns(50)
+			s.SetMaxOpenConns(1)
+			s.SetMaxIdleConns(1)
 
 			dBReference = db
 		} else {
