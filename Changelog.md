@@ -1,5 +1,10 @@
 # Changelog oerc
 
+## 0.22.0 - 2026/02/21
+- Dependency updates
+- Fix `oerc search`
+- More information about single program entries in web client
+
 ## 0.21.0 - 2026/01/21
 - Support for SQlite database backend added
 - Change default database to SQLite

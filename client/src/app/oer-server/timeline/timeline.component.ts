@@ -18,7 +18,7 @@
  */
 import {AfterViewInit, Component, HostListener, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
-import {DataGroup, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline/esnext/esm';
+import {DataGroup, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
 import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import {environment} from '../../../environments/environment';
@@ -26,19 +26,15 @@ import {first, skip} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import * as flatPickrLang from 'flatpickr/dist/l10n/de';
-import * as visDataTypes from 'vis-data/declarations/data-interface';
-import {UpdateItem} from 'vis-data/declarations/data-interface';
-import {DataSet} from 'vis-data/esnext/esm';
-import dayjs from 'dayjs';
+import {DataSet} from 'vis-data';
 import {DataItem} from 'vis-timeline';
 import {DataInterface} from 'vis-data';
+type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
+  [key in keyof T]?: DeepPartial<T[key]>;
+} : T;
+type UpdateItem<Item, IdProp extends string> = DeepPartial<Item & Record<IdProp, string | number>> & Record<IdProp, string | number>;
+import dayjs from 'dayjs';
 import FlatPickrInstance = flatpickr.Instance;
-
-// interface GroupOrder {
-//   groupId: number | string;
-//   title: string;
-//   order: number;
-// }
 
 interface TimelineGroup extends DataGroup {
   priority: number;
@@ -60,7 +56,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private static i = 0;
   public channels: Channel[];
-  public items: DataInterface<DataItem, 'id'>;
+  public items: DataSet<DataItem, 'id'>;
   public timeLine?: Timeline;
   currentProgramEntry?: ProgramEntry;
   isModalOpen = false;
@@ -226,7 +222,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
       this.stateService.setShowDeprecatedEntries(value);
       if (!value) {
-        this.items = new DataSet();
+        this.items.clear();
       }
       this.loadProgramItems();
     });
@@ -257,7 +253,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
           };
         });
 
-        const programList: visDataTypes.DeepPartial<DataItem[]> = [];
+        const programList: DeepPartial<DataItem[]> = [];
 
         function getAdditionalTitleInfo(singleProgramEntry: ProgramEntryEssential): string {
           // todo i18n
@@ -284,7 +280,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         this.items.getDataSet().update(programList);
 
         if (showDeprecatedEntries) {
-          const deprecatedEntries: visDataTypes.DeepPartial<UpdateItem<DataItem, 'id'>[]> = [];
+          const deprecatedEntries: DeepPartial<UpdateItem<DataItem, 'id'>[]> = [];
           programEntries.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
             // this is a very expensive loop
             const overlaps = this.items.get({

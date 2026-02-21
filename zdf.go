@@ -20,14 +20,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/alitto/pond"
 	"log"
 	"net/url"
 	"regexp"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/alitto/pond"
 )
 
 const (
@@ -206,13 +207,18 @@ func (p *ProgramEntry) handleProgramImageLinks(broadcast *zdfBroadcast) {
 	}
 }
 
-func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*zdfBroadcastResponse, error) {
-	headers := map[string]string{
+// zdfHeaders returns the standard headers required for ZDF API requests
+func (z *ZDFParser) zdfHeaders() map[string]string {
+	return map[string]string{
 		"Host":     "api.zdf.de",
 		"Accept":   "application/vnd.de.zdf.v1.0+json",
 		"Origin":   zdfHost,
 		"Api-Auth": "Bearer " + z.zdfAPIKey,
 	}
+}
+
+func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*zdfBroadcastResponse, error) {
+	headers := z.zdfHeaders()
 	resp, err := doGetRequest(apiURL, headers, 3)
 	if resp == nil || err != nil {
 		errMsg := fmt.Sprintf("Problem fetching URL '%s' with error '%v'", apiURL, err)
@@ -232,12 +238,7 @@ func (z *ZDFParser) doZDFApiBroadcastRequest(apiURL string) (*zdfBroadcastRespon
 }
 
 func (z *ZDFParser) doZDFApiProgramItemRequest(apiURL string) (*zdfProgramItemResponse, error) {
-	headers := map[string]string{
-		"Host":     "api.zdf.de",
-		"Accept":   "application/vnd.de.zdf.v1.0+json",
-		"Origin":   zdfHost,
-		"Api-Auth": "Bearer " + z.zdfAPIKey,
-	}
+	headers := z.zdfHeaders()
 	resp, err := doGetRequest(apiURL, headers, 3)
 	if resp == nil || err != nil {
 		errMsg := fmt.Sprintf("Problem fetching URL '%s' with error '%v'", apiURL, err)

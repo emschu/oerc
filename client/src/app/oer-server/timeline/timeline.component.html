@@ -126,6 +126,14 @@ class="icon icon-arrow-right"></i></button>
                 <td><strong>Last checked at</strong></td>
                 <td>{{ currentProgramEntry.last_check | appDate:'full' }}</td>
               </tr>
+              <tr>
+                <td><strong>Start Time</strong></td>
+                <td>{{ currentProgramEntry.start_date_time | appDate:'full' }}</td>
+              </tr>
+              <tr>
+                <td><strong>End Time</strong></td>
+                <td>{{ currentProgramEntry.end_date_time | appDate:'full' }}</td>
+              </tr>
             </table>
           </td>
         </tr>

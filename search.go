@@ -69,7 +69,7 @@ func SearchProgram() {
 	}
 
 	skipCounter := 0
-	for _, programEntry := range programEntryList {
+	for _, programEntry := range *programResponse {
 		// exclude the channels found above
 		if isChannelExcluded(excludedChannelIDs, &programEntry) {
 			skipCounter++
