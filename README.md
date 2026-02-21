@@ -3,7 +3,7 @@
 ... is a software project to locally store, view and search the program data of
 public-law ("öffentlich-rechtliche") TV stations in Germany, Austria and Switzerland.
 
-While `oerc` is a command-line tool only, a built-in web application is provided 
+While `oerc` is mainly a command-line tool, a built-in web application is provided 
 at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 
 ### Commands
@@ -14,7 +14,7 @@ at `127.0.0.1:8080` (*default*) if you run `oerc server`.
 - Find overlaps in data or program changes (`oerc overlap-check`)
 - By default, the server contains a **client web application** for your browser to view the program data and
   your personal program recommendations
-- Support of XMLTV via CLI and HTTP API
+- Support of XMLTV via CLI and HTTP API (`oerc xmltv`)
 
 Using `oerc`, you can build and use your own private TV program recommendation tool while ALL
 information is processed and kept locally.
@@ -74,7 +74,7 @@ $ docker-compose up
     - The [development section](./DEVELOPMENT.md) contains a simple docker command to run a local database for development or testing. 
 3. Run `oerc init`.   
    - This will copy a sample configuration file to the path `~/.oerc.yaml` if the file does not exist already.
-   - If you use SQLite (default), you are ready to go.
+   - If you use SQLite (default), you are ready to proceed.
    - If you use PostgreSQL, you have to change the values for `<db_name>`, `<db_user>`, and `<db_password>` in the configuration file to reach the database you've configured.
 4. Run `oerc fetch` for the first time and wait until the first program data is collected.
 5. Run `oerc server` to have a browser application at `http://localhost:8080/client` (the endpoint is configurable).
@@ -90,7 +90,7 @@ USAGE:
    oerc [global options] command [command options]
 
 VERSION:
-   0.22.1, License: AGPLv3, https://github.com/emschu/oerc
+   0.22.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria
