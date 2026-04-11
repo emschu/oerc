@@ -71,7 +71,7 @@ lint-fix: ## lint-fix the code
 .PHONY: test
 test: ## run unit, integration and api tests
 	$(GO) test -v -race ./...
-	$(GO) test -v -trace=/dev/null ./...
+	$(GO) test -v -trace=/dev/null .
 
 .PHONY: integration-test-prepare
 integration-test-prepare: ## start (local) oerc server to run integration tests against

@@ -376,9 +376,8 @@ func putChannelsHandler(c *gin.Context) {
 func getLogEntriesHandler(context *gin.Context) {
 	pageQueryString := context.Query("page")
 	page, err := strconv.ParseInt(pageQueryString, 10, 64)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid page parameter given"})
-		return
+	if err != nil || page < 0 {
+		page = 0
 	}
 
 	db := getDb()
