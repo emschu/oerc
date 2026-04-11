@@ -46,8 +46,10 @@ export interface ProgramResponse {
 export interface LogEntryResponse {
   elements: LogEntry[];
   size: number;
-  offset: number;
-  limit: number;
+  page: number;
+  page_count: number;
+  page_size: number;
+  entry_count: number;
 }
 
 export interface LogEntry {
@@ -133,6 +135,11 @@ export interface ImageLink {
 }
 
 export interface ChannelFamily {
+  id: number;
+  title: string;
+}
+
+export interface TvShow {
   id: number;
   title: string;
 }

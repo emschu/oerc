@@ -47,7 +47,7 @@ func FindOverlaps(handler dateRangeHandler) {
 func FindOverlapsGlobal() {
 	setupMaterializedView()
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-	currentStatusData := getStatusObject()
+	currentStatusData := getStatusResponse()
 	if currentStatusData == nil {
 		log.Fatalln("Error fetching application status data from database")
 	}

@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	version       = "0.22.0"
+	version       = "0.23.0"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -79,6 +79,8 @@ func main() {
 					Startup(c)
 					defer Shutdown()
 
+					infoLog(fmt.Sprintf("Starting fetch process at %s", time.Now().Format(time.RFC3339)))
+
 					isNetworkAvailable, err := connectivityCheck()
 					if !isNetworkAvailable {
 						return err
@@ -90,6 +92,8 @@ func main() {
 
 					// update counters if something has happened
 					showFetchResults(startTime, nil, nil)
+
+					infoLog(fmt.Sprintf("Finish of fetch process at %s", time.Now().Format(time.RFC3339)))
 
 					return nil
 				},
@@ -118,6 +122,8 @@ func main() {
 					Startup(c)
 					defer Shutdown()
 
+					infoLog(fmt.Sprintf("Starting fetch-range process at %s", time.Now().Format(time.RFC3339)))
+
 					isNetworkAvailable, err := connectivityCheck()
 					if !isNetworkAvailable {
 						return err
@@ -137,6 +143,8 @@ func main() {
 					// update counters if something has happened
 					showFetchResults(startTime, rangeStart, rangeEnd)
 
+					infoLog(fmt.Sprintf("Finish of fetch-range process at %s", time.Now().Format(time.RFC3339)))
+
 					return nil
 				},
 			},
@@ -150,7 +158,7 @@ func main() {
 
 					setupMaterializedView()
 
-					object := getStatusObject()
+					object := getStatusResponse()
 					object.TvChannels = nil
 					object.TvChannelFamilies = nil
 

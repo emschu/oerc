@@ -75,6 +75,17 @@ func getChannels() *[]Channel {
 	return &channels
 }
 
+func getTvShows() *[]TvShow {
+	db := getDb()
+	var tvShows []TvShow
+	result := db.Model(&TvShow{}).Preload("ChannelFamily").Find(&tvShows)
+	if result.Error != nil {
+		log.Printf("error fetching tv shows: %v", result.Error)
+		return nil
+	}
+	return &tvShows
+}
+
 func getChannelFamilies() *[]ChannelFamily {
 	db := getDb()
 	families := &[]ChannelFamily{}
@@ -286,14 +297,23 @@ func isChannelValid(c *gin.Context, cid string, acceptZero bool) (*Channel, bool
 }
 
 func getStatusHandler(c *gin.Context) {
-	response := getStatusObject()
+	response := getStatusResponse()
 	if response == nil {
 		return
 	}
 	c.JSON(http.StatusOK, response)
 }
 
-func getStatusObject() *StatusResponse {
+func getTvShowsHandler(c *gin.Context) {
+	response := getTvShowResponse(c)
+	if response == nil {
+		c.JSON(http.StatusInternalServerError, Error{Status: "500", Message: "Internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func getStatusResponse() *StatusResponse {
 	channels := getChannels()
 	channelFamilies := getChannelFamilies()
 
@@ -328,6 +348,10 @@ func getStatusObject() *StatusResponse {
 	return &response
 }
 
+func getTvShowResponse(_ *gin.Context) *[]TvShow {
+	return getTvShows()
+}
+
 func getChannelsHandler(c *gin.Context) {
 	channels := getChannels()
 	c.JSON(http.StatusOK, ChannelResponse{channels, len(*channels)})
@@ -350,13 +374,29 @@ func putChannelsHandler(c *gin.Context) {
 }
 
 func getLogEntriesHandler(context *gin.Context) {
+	pageQueryString := context.Query("page")
+	page, err := strconv.ParseInt(pageQueryString, 10, 64)
+	if err != nil || page < 0 {
+		page = 0
+	}
+
 	db := getDb()
 	var logEntryList []LogEntry
-	var entryCount, pageCount int64
+	var entryCount, pageCount, pageSize int64
 	db.Model(&LogEntry{}).Count(&entryCount)
-	pageCount = int64(math.Ceil(float64(entryCount)))
-	db.Model(&LogEntry{}).Limit(500).Order("id desc").Find(&logEntryList)
-	context.JSON(http.StatusOK, LogEntriesResponse{&logEntryList, int64(len(logEntryList)), 0, pageCount, entryCount})
+	pageSize = 250
+	pageCount = int64(math.Ceil(float64(entryCount / pageSize)))
+	db.Model(&LogEntry{}).Offset(int(page * pageSize)).Limit(int(pageSize)).Order("id desc").Find(&logEntryList)
+	context.JSON(
+		http.StatusOK,
+		LogEntriesResponse{
+			Elements:  &logEntryList,
+			Size:      int64(len(logEntryList)),
+			Page:      page,
+			PageCount: pageCount,
+			PageSize:  entryCount,
+		},
+	)
 }
 
 func getSingleLogEntriesHandler(context *gin.Context) {

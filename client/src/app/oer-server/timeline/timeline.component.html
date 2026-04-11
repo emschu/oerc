@@ -49,7 +49,7 @@ class="icon icon-arrow-right"></i></button>
       <label class="form-switch">
         <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
           (ngModelChange)="showDeprecatedEntries.next($event)"/>
-        <i class="form-icon"></i> Show overlaps
+        <i class="form-icon"></i> Show overlaps <span title="Overlaps are time range conflicts of program entries. The newest entry is taken in doubt.">&#9432;</span>
       </label>
     </label>
   </div>
@@ -57,89 +57,95 @@ class="icon icon-arrow-right"></i></button>
 </div>
 </div>
 
-@if (currentProgramEntry) {
-  <div class="modal modal-md program_entry_modal" [ngClass]="{'active': isModalOpen}">
-    <a href="#close" class="modal-overlay" aria-label="Close" (click)="isModalOpen = false"></a>
+@if (isModalOpen) {
+  <div class="modal modal-md program_entry_modal active">
+    <a href="javascript:void(0)" class="modal-overlay" aria-label="Close" (click)="closeModal()"></a>
     <div class="modal-container scroll-cont">
-      <div class="modal-header">
-        <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isModalOpen = false"></a>
-        <div class="modal-title h5" [innerHTML]="'Details: ' + currentProgramEntry.title"></div>
-      </div>
-      <div class="modal-body">
-        <div class="content">
-          @if (currentProgramEntry.is_deprecated) {
-            <span class="label label-warning">This program item seems to be out-of-date!</span>
-          }
-          <table class="table">
-            <tr>
-              <td>
-                <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | appDate:'full-medium' }}
-                - {{ currentProgramEntry.end_date_time | appDate:'time-medium' }}
-                ({{ currentProgramEntry.duration_in_minutes }} Minutes)
-              </td>
-            </tr>
-            <tr>
-              <td><strong>Channel:</strong> {{ apiService.getChannelById(currentProgramEntry.channel_id)?.title }}</td>
-            </tr>
-            @if (currentProgramEntry.image_links && currentProgramEntry.image_links.length > 0) {
+      @if (isEntryLoading) {
+        <div class="modal-body">
+          <div class="loading loading-lg"></div>
+        </div>
+      } @else if (currentProgramEntry) {
+        <div class="modal-header">
+          <a href="javascript:void(0)" class="btn btn-clear float-right" aria-label="Close" (click)="closeModal()"></a>
+          <div class="modal-title h5" [innerHTML]="'Details: ' + currentProgramEntry.title"></div>
+        </div>
+        <div class="modal-body">
+          <div class="content">
+            @if (currentProgramEntry.is_deprecated) {
+              <span class="label label-warning">This program item seems to be out-of-date!</span>
+            }
+            <table class="table">
               <tr>
-                <td><img class="img-responsive img-fit-contain"
-                alt="program entry preview image" src="{{currentProgramEntry.image_links[0].url}}"/></td>
+                <td>
+                  <strong>Air time:</strong> {{ currentProgramEntry.start_date_time | appDate:'full-medium' }}
+                  - {{ currentProgramEntry.end_date_time | appDate:'time-medium' }}
+                  ({{ currentProgramEntry.duration_in_minutes }} Minutes)
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Channel:</strong> {{ apiService.getChannelById(currentProgramEntry.channel_id)?.title }}</td>
+              </tr>
+              @if (currentProgramEntry.image_links && currentProgramEntry.image_links.length > 0) {
+                <tr>
+                  <td><img class="img-responsive img-fit-contain"
+                  alt="program entry preview image" src="{{currentProgramEntry.image_links[0].url}}"/></td>
+                </tr>
+              }
+              <tr>
+                <td>
+                  <strong>Description:</strong>
+                  <p class="text-normal" [innerHTML]="currentProgramEntry.description">
+                  </p>
+                </td>
+              </tr>
+              @if (currentProgramEntry.homepage) {
+                <tr>
+                  <td><strong>Homepage:</strong>&nbsp;<a href="{{ currentProgramEntry.homepage }}"
+                target="_blank">{{ currentProgramEntry.homepage }}</a></td>
               </tr>
             }
-            <tr>
-              <td>
-                <strong>Description:</strong>
-                <p class="text-normal" [innerHTML]="currentProgramEntry.description">
-                </p>
-              </td>
-            </tr>
-            @if (currentProgramEntry.homepage) {
+            @if (currentProgramEntry.url) {
               <tr>
-                <td><strong>Homepage:</strong>&nbsp;<a href="{{ currentProgramEntry.homepage }}"
-              target="_blank">{{ currentProgramEntry.homepage }}</a></td>
+                <td><strong>URL:</strong>&nbsp;<a href="{{ currentProgramEntry.url }}"
+              target="_blank">{{ currentProgramEntry.url }}</a></td>
             </tr>
           }
-          @if (currentProgramEntry.url) {
-            <tr>
-              <td><strong>URL:</strong>&nbsp;<a href="{{ currentProgramEntry.url }}"
-            target="_blank">{{ currentProgramEntry.url }}</a></td>
+          <tr>
+            <td class="text-gray">
+              <strong>Technical details:</strong>
+              <table class="table table-striped item-technical-detail-table">
+                <tr>
+                  <td><strong>ID</strong></td>
+                  <td>{{ currentProgramEntry.id }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Created at</strong></td>
+                  <td>{{ currentProgramEntry.created_at  | appDate: 'full' }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Updated at</strong></td>
+                  <td>{{ currentProgramEntry.updated_at  | appDate:'full' }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Last checked at</strong></td>
+                  <td>{{ currentProgramEntry.last_check | appDate:'full' }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Start Time</strong></td>
+                  <td>{{ currentProgramEntry.start_date_time | appDate:'full' }}</td>
+                </tr>
+                <tr>
+                  <td><strong>End Time</strong></td>
+                  <td>{{ currentProgramEntry.end_date_time | appDate:'full' }}</td>
+                </tr>
+              </table>
+            </td>
           </tr>
-        }
-        <tr>
-          <td class="text-gray">
-            <strong>Technical details:</strong>
-            <table class="table table-striped item-technical-detail-table">
-              <tr>
-                <td><strong>ID</strong></td>
-                <td>{{ currentProgramEntry.id }}</td>
-              </tr>
-              <tr>
-                <td><strong>Created at</strong></td>
-                <td>{{ currentProgramEntry.created_at  | appDate: 'full' }}</td>
-              </tr>
-              <tr>
-                <td><strong>Updated at</strong></td>
-                <td>{{ currentProgramEntry.updated_at  | appDate:'full' }}</td>
-              </tr>
-              <tr>
-                <td><strong>Last checked at</strong></td>
-                <td>{{ currentProgramEntry.last_check | appDate:'full' }}</td>
-              </tr>
-              <tr>
-                <td><strong>Start Time</strong></td>
-                <td>{{ currentProgramEntry.start_date_time | appDate:'full' }}</td>
-              </tr>
-              <tr>
-                <td><strong>End Time</strong></td>
-                <td>{{ currentProgramEntry.end_date_time | appDate:'full' }}</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
+        </table>
+      </div>
     </div>
-  </div>
+  }
   <div class="modal-footer">
   </div>
 </div>
@@ -147,10 +153,10 @@ class="icon icon-arrow-right"></i></button>
 }
 
 <div class="modal modal-md missing_program_entries_modal" [ngClass]="{'active': isMissingDataModalOpen}">
-  <a href="#close" class="modal-overlay" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
+  <a href="javascript:void(0)" class="modal-overlay" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
   <div class="modal-container scroll-cont">
     <div class="modal-header">
-      <a href="#close" class="btn btn-clear float-right" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
+      <a href="javascript:void(0)" class="btn btn-clear float-right" aria-label="Close" (click)="isMissingDataModalOpen = false"></a>
       <div class="modal-title h5" [innerText]="'Program information missing'"></div>
     </div>
     <div class="modal-body">

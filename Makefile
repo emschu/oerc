@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.22.0"
-APP_VERSION_STR = "0-22-0"
+APP_VERSION_DOT = "0.23.0"
+APP_VERSION_STR = "0-23-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -71,7 +71,7 @@ lint-fix: ## lint-fix the code
 .PHONY: test
 test: ## run unit, integration and api tests
 	$(GO) test -v -race ./...
-	$(GO) test -v -trace=/dev/null ./...
+	$(GO) test -v -trace=/dev/null .
 
 .PHONY: integration-test-prepare
 integration-test-prepare: ## start (local) oerc server to run integration tests against

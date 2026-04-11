@@ -149,6 +149,38 @@
         }
       }
     },
+    "/tv-shows": {
+      "get": {
+        "operationId": "tvShowGet",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TvShowResponse"
+                }
+              }
+            },
+            "description": "get all channels"
+          },
+          "500": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "500 message"
+          }
+        },
+        "x-response-headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControlHeader"
+          }
+        }
+      }
+    },
     "/channel/{channel_id}": {
       "get": {
         "operationId": "singleChannelGET",
@@ -1126,6 +1158,54 @@
         "title": "Channel",
         "type": "object"
       },
+      "TvShowResponse": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "technical_id": {
+            "type": "string"
+          },
+          "homepage": {
+            "type": "string"
+          },
+          "channel_family_id": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "title",
+          "url",
+          "hash",
+          "technical_id",
+          "homepage",
+          "channel_family_id"
+        ],
+        "title": "TvShowResponse",
+        "type": "array"
+      },
       "ImageLink": {
         "properties": {
           "created_at": {
@@ -1168,10 +1248,12 @@
             "type": "integer"
           },
           "created_at": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "updated_at": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "title": {
             "type": "string"
@@ -1263,10 +1345,12 @@
             "type": "integer"
           },
           "created_at": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "updated_at": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           },
           "message": {
             "type": "string"
@@ -1293,6 +1377,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "page_size": {
+            "format": "int64",
+            "type": "integer"
+          },
           "entry_count": {
             "format": "int64",
             "type": "integer"
@@ -1309,6 +1397,7 @@
           "entry_count",
           "page",
           "page_count",
+          "page_size",
           "size"
         ],
         "title": "LogEntryResponse",
