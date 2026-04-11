@@ -24,7 +24,7 @@
 
 @if (isLive !== true) {
   <div class="modal modal-md no-connection-modal" [ngClass]="{'active': !isLive}">
-    <a href="#close" class="modal-overlay" aria-label="Close"></a>
+    <a href="javascript:void(0)" class="modal-overlay" aria-label="Close"></a>
     <div class="modal-container scroll-cont">
       <div class="modal-header">
         <div class="modal-title h5 text-center">Caution: No connection to the backend server!</div>

@@ -59,6 +59,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   public items: DataSet<DataItem, 'id'>;
   public timeLine?: Timeline;
   currentProgramEntry?: ProgramEntry;
+  isEntryLoading = false;
   isModalOpen = false;
   isMissingDataModalOpen = false;
 
@@ -152,7 +153,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // create groups
     const groups: DataSet<TimelineGroup> = new DataSet({fieldId: 'id'});
-    this.channelSubscription = this.apiService.channelSubjectVar.subscribe((value: ChannelResponse | null) => {
+    this.channelSubscription = this.apiService.channelSubject.subscribe((value: ChannelResponse | null) => {
       if (!value) {
         return;
       }
@@ -446,10 +447,30 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
       if (!clickedEntryId) {
         return;
       }
-      this.loadingSubscription = this.apiService.entry(clickedEntryId).subscribe(value => {
-        this.isModalOpen = true;
-        this.currentProgramEntry = value;
+      this.isModalOpen = true;
+      this.isEntryLoading = true;
+      this.currentProgramEntry = undefined;
+
+      if (this.loadingSubscription) {
+        this.loadingSubscription.unsubscribe();
+      }
+      this.loadingSubscription = this.apiService.entry(clickedEntryId).subscribe({
+        next: value => {
+          this.isEntryLoading = false;
+          this.currentProgramEntry = value;
+        },
+        error: () => {
+          this.isEntryLoading = false;
+        }
       });
+    }
+  }
+
+  closeModal(): void {
+    this.isModalOpen = false;
+    this.isEntryLoading = false;
+    if (this.loadingSubscription) {
+      this.loadingSubscription.unsubscribe();
     }
   }
 
@@ -462,7 +483,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (event.key === 'Escape') {
-      this.isModalOpen = false;
+      this.closeModal();
     }
     if (event.key === 'r' || event.key === 'ArrowRight') {
       this.moveRight();

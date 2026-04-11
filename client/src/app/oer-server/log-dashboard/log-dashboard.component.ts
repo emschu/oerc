@@ -20,6 +20,8 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
 import {LogEntryResponse} from '../entities';
 import {Subscription} from 'rxjs';
+import {NavigationEnd, Router} from '@angular/router';
+import {filter} from 'rxjs/operators';
 
 @Component({
     selector: 'app-logdashboard',
@@ -29,20 +31,52 @@ import {Subscription} from 'rxjs';
 })
 export class LogDashboardComponent implements OnInit, OnDestroy {
   logEntries: LogEntryResponse | null = null;
+  public currentPage = 1;
+  public totalPages = 0;
+  public totalEntryCount = 0;
 
   private logEntrySubscription: Subscription | null = null;
+  private routerEventsSubscription: Subscription | null = null;
 
-  constructor(private apiService: ApiService) {
+  constructor(private apiService: ApiService, private router: Router) {
   }
 
   ngOnInit(): void {
+    this.routerEventsSubscription = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      const navigationEndEvent = event as NavigationEnd;
+      if (navigationEndEvent.urlAfterRedirects === '/log') {
+        this.currentPage = 1;
+        this.loadLog();
+      }
+    });
+    this.loadLog();
+  }
+
+  public goToNextPage(): void {
+    this.currentPage++;
+    this.loadLog();
+  }
+
+  public goToPreviousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadLog();
+    }
+  }
+
+  public goToPage(page: number): void {
+    this.currentPage = page;
     this.loadLog();
   }
 
   private loadLog(): void {
     this.apiService.isLoadingSubject.next(true);
-    this.logEntrySubscription = this.apiService.logEntries().subscribe(value => {
+    this.logEntrySubscription = this.apiService.logEntries(this.currentPage - 1).subscribe(value => {
       this.logEntries = value;
+      this.totalPages = value.page_count + 1;
+      this.totalEntryCount = value.entry_count;
       setTimeout(() => {
         this.apiService.isLoadingSubject.next(false);
       }, 250);
@@ -51,5 +85,6 @@ export class LogDashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.logEntrySubscription?.unsubscribe();
+    this.routerEventsSubscription?.unsubscribe();
   }
 }

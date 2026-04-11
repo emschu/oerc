@@ -21,7 +21,7 @@
     <div class="card">
       <div class="card-body">
         <h3>Log entries @if (logEntries && logEntries.size > 0) {
-          <span>(last {{ logEntries.size }} entries)</span>
+          <span>({{ logEntries.elements.length }} entries out of {{ totalEntryCount }})</span>
         }</h3>
       </div>
     </div>
@@ -30,22 +30,20 @@
 <div class="columns flex-centered">
   <div class="column col-10">
 
-    @if (!logEntries || logEntries.size === 0) {
-      <div class="text-center m-2">
-        <h3>No log entries available</h3>
-      </div>
-    }
-
-    @if (logEntries && logEntries.size > 0) {
-      <div class="log_table">
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Message</th>
-            </tr>
-          </thead>
-          @if (logEntries !== null) {
+    @if (logEntries) {
+      @if (logEntries.size === 0) {
+        <div class="text-center m-2">
+          <h3>No log entries available</h3>
+        </div>
+      } @else {
+        <div class="log_table">
+          <table>
+            <thead>
+              <tr>
+                <th class="col_date">Time</th>
+                <th class="col_message">Message</th>
+              </tr>
+            </thead>
             <tbody>
               @for (item of logEntries.elements; track item) {
                 <tr>
@@ -54,9 +52,43 @@
                 </tr>
               }
             </tbody>
+          </table>
+        </div>
+
+        <ul class="pagination">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a (click)="goToPreviousPage()" tabindex="-1">Previous</a>
+          </li>
+          <li class="page-item" [class.active]="currentPage === 1">
+            <a (click)="goToPage(1)">1</a>
+          </li>
+          @if (currentPage > 4) {
+            <li class="page-item">
+              <span>...</span>
+            </li>
           }
-        </table>
-      </div>
+          @for (p of [currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2]; track p) {
+            @if (p > 1 && p < totalPages) {
+              <li class="page-item" [class.active]="currentPage === p">
+                <a (click)="goToPage(p)">{{ p }}</a>
+              </li>
+            }
+          }
+          @if (currentPage < totalPages - 3) {
+            <li class="page-item">
+              <span>...</span>
+            </li>
+          }
+          @if (totalPages > 1) {
+            <li class="page-item" [class.active]="currentPage === totalPages" [class.d-none]="totalPages === 1">
+              <a (click)="goToPage(totalPages)">{{ totalPages }}</a>
+            </li>
+          }
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a (click)="goToNextPage()">Next</a>
+          </li>
+        </ul>
+      }
     }
   </div>
 </div>

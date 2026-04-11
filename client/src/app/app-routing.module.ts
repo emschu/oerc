@@ -25,11 +25,13 @@ import {CreditsComponent} from './oer-server/credits/credits.component';
 import {SearchComponent} from './oer-server/search/search.component';
 import {LogDashboardComponent} from './oer-server/log-dashboard/log-dashboard.component';
 import {XmltvComponent} from "./oer-server/xmltv/xmltv.component";
+import {TvShowsComponent} from "./oer-server/tv-shows/tv-shows.component";
 
 const routes: Routes = [
   {path: '', component: DashboardComponent},
   {path: 'channels', loadComponent: () => import('./oer-server/channels/channels.component').then(m => m.ChannelsComponent)},
   {path: 'recommendations', component: RecommendationComponent},
+  {path: 'tv-shows', component: TvShowsComponent},
   {path: 'xmltv', component: XmltvComponent},
   {path: 'log', component: LogDashboardComponent},
   {path: 'credits', component: CreditsComponent},

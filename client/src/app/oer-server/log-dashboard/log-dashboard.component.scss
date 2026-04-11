@@ -16,23 +16,32 @@
 // License along with this program.
 // If not, see <https://www.gnu.org/licenses/>.
 .log_table {
-  max-height: 10vh;
   table {
-    overflow: scroll;
+    width: 100%;
     tr {
       padding: 0;
-      td {
+      td, th {
         margin: 0;
         border-bottom: #d73e48 1px dotted;
+        text-align: left;
       }
     }
   }
 
   .col_date {
-    width: 10%;
+    width: 25%;
+    min-width: 200px;
   }
   .col_message {
     width: 75%;
   }
   margin-bottom: 3rem;
+}
+
+.pagination {
+  margin-top: 1rem;
+  margin-bottom: 3rem;
+  a {
+    cursor: pointer;
+  }
 }
