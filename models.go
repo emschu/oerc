@@ -74,7 +74,7 @@ func (f ChannelFamily) getXMLTvChannelPrefix() string {
 type ManagedRecord struct {
 	Title           string        `gorm:"size:500" json:"title"`
 	URL             string        `gorm:"size:1500" json:"url"`
-	Hash            string        `gorm:"type:varchar(32);uniqueIndex;not null" json:"hash"`
+	Hash            string        `gorm:"type:varchar(32);not null" json:"hash"`
 	TechnicalID     string        `gorm:"index;type:varchar(64);null" json:"technical_id"`
 	Homepage        string        `gorm:"size:1500" json:"homepage"`
 	ChannelFamily   ChannelFamily `json:"-"`
