@@ -1,5 +1,11 @@
 # Changelog oerc
 
+## 0.23.0 - 2026/04/11
+- Switch to new ARD api
+- api: add tv shows
+- client: paginate the log view, add more info, update dependencies
+- Golang 1.25
+
 ## 0.22.0 - 2026/02/21
 - Dependency updates
 - Fix `oerc search`

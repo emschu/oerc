@@ -129,6 +129,7 @@ type LogEntriesResponse struct {
 	Size       int64       `json:"size"`
 	Page       int64       `json:"page"`
 	PageCount  int64       `json:"page_count"`
+	PageSize   int64       `json:"page_size"`
 	EntryCount int64       `json:"entry_count"`
 }
 
@@ -200,10 +201,11 @@ func initRouter() *gin.Engine {
 		c.JSON(http.StatusOK, gin.H{"data": "Pong", "date": time.Now()})
 	})
 	apiV2.GET("/status", getStatusHandler)
+	// tv-shows
+	apiV2.GET("/tv-shows", getTvShowsHandler)
 	// channel data
 	apiV2.GET("/channels", getChannelsHandler)
 	apiV2.PUT("/channels", putChannelsHandler)
-
 	apiV2.GET("/channel/:channel_id", getSingleChannelHandler)
 	// program data
 	apiV2.GET("/program/yesterday", getProgramYesterdayHandler)

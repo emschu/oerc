@@ -20,15 +20,6 @@ import (
 	"compress/gzip"
 	"crypto/md5"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/alitto/pond"
-	"github.com/gocolly/colly/v2"
-	"github.com/microcosm-cc/bluemonday"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
 	"io"
 	"log"
 	"math"
@@ -42,6 +33,16 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/alitto/pond"
+	"github.com/gocolly/colly/v2"
+	"github.com/microcosm-cc/bluemonday"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 var (
@@ -350,12 +351,21 @@ func trimAndSanitizeString(rawString string) string {
 
 // appLog this function should be used to write log entries to the db log
 func appLog(msg string) {
+	infoLog(msg)
+
+	log.Printf("error in parse process: '%s'\n", msg)
+}
+
+// appLog this function should be used to write log entries to the db log
+func infoLog(msg string) {
 	db := getDb()
 	parsingError := &LogEntry{}
 	parsingError.Message = trimAndSanitizeString(msg)
 	db.Save(parsingError)
 
-	log.Printf("error in parse process: '%s'\n", msg)
+	if verboseGlobal {
+		log.Printf("info log: '%s'\n", msg)
+	}
 }
 
 // saveProgramEntryRecord: method to store or create a program entry gorm record
@@ -369,7 +379,6 @@ func (p *ProgramEntry) saveProgramEntryRecord(db *gorm.DB) {
 			p.Description = p.Description[0:30000]
 		}
 
-		// TODO handle different technical id case
 		if verboseGlobal {
 			log.Printf("Updating program entry #%d.\n", p.ID)
 		}
