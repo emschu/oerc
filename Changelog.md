@@ -1,5 +1,8 @@
 # Changelog oerc
 
+## 0.24.0 - 2026/06/27
+- Update go + npm dependencies
+
 ## 0.23.0 - 2026/04/11
 - Switch to new ARD api
 - api: add tv shows
