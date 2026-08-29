@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-// XMLTV Document structure
+// Document XMLTV structure
 type Document struct {
 	Channel   []ChannelItem   `xml:"channel"`
 	Programme []ProgrammeItem `xml:"programme"`
@@ -269,6 +269,12 @@ func mapProgramEntryToXMLTV(pe *ProgramEntry) ProgrammeItem {
 func writeXMLTVToString(doc *Document) (string, error) {
 	var stringWriter strings.Builder
 	encoder := xml.NewEncoder(&stringWriter)
+	defer func(encoder *xml.Encoder) {
+		err := encoder.Close()
+		if err != nil {
+			log.Fatalf("error closing XMLTV encoder: %v", err)
+		}
+	}(encoder)
 	encoder.Indent("", "  ")
 	if err := encoder.Encode(doc); err != nil {
 		return "", fmt.Errorf("error encoding XMLTV document: %v", err)

@@ -17,9 +17,10 @@
 package main
 
 import (
+	"testing"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func setupInMemoryDbForTesting() {

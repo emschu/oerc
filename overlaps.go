@@ -82,10 +82,9 @@ func FindOverlapsGlobal() {
 // central method to find, store and process overlapping program entries
 func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
 	defer wg.Done()
-	var dailyProgramEntries []ProgramEntry
 
 	db := getDb()
-	collisionMap := findOverlaps(db, channel, day, &dailyProgramEntries)
+	collisionMap := findOverlaps(db, channel, day)
 	if len(*collisionMap) == 0 {
 		return
 	}
@@ -96,7 +95,7 @@ func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
 		log.Printf("Processing %d program entry collisions of channel '%s' on day '%s'.\n", len(overlapIDs), channel.Title, day.Format("2006-01-02"))
 	}
 
-	for programEntryID, _ := range *collisionMap {
+	for programEntryID := range *collisionMap {
 		processOverlaps(db, &programEntryID)
 	}
 
@@ -162,8 +161,8 @@ func storeCollisions(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 	return affectedIDs
 }
 
-// this method asks the database for overlapping items and store the results in a map
-func findOverlaps(db *gorm.DB, channel *Channel, day time.Time, dailyProgramEntries *[]ProgramEntry) *map[uint][]uint {
+// this method asks the database for overlapping items and stores the results in a map
+func findOverlaps(db *gorm.DB, channel *Channel, day time.Time) *map[uint][]uint {
 	startOfDay := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location())
 	endOfDay := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, day.Location())
 

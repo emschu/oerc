@@ -18,6 +18,7 @@ package main
 
 import (
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -108,7 +109,7 @@ func SearchProgram() {
 			reccEntry.Keywords = strings.Join(keywords, ",")
 
 			if reccEntry.ID > 0 {
-				db.Model(&reccEntry).Updates(map[string]interface{}{
+				db.Model(&reccEntry).Updates(map[string]any{
 					"keywords":        reccEntry.Keywords,
 					"start_date_time": programEntry.StartDateTime,
 					"channel_id":      programEntry.ChannelID,
@@ -154,10 +155,5 @@ func isChannelFamilyExcluded(family *ChannelFamily) bool {
 
 // method to check if a single program entry should be skipped because its channel id is contained in the first parameter
 func isChannelExcluded(excludedChannelIDs *[]uint, programEntry *ProgramEntry) bool {
-	for _, skippedChannelID := range *excludedChannelIDs {
-		if programEntry.ChannelID == skippedChannelID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(*excludedChannelIDs, programEntry.ChannelID)
 }
