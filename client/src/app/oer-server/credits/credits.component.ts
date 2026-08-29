@@ -16,13 +16,14 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import {environment} from '../../../environments/environment';
 
 @Component({
     selector: 'app-credits',
     templateUrl: './credits.component.html',
     styleUrls: ['./credits.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CreditsComponent {

@@ -17,13 +17,14 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {ApiService} from './oer-server/api.service';
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AppComponent implements OnInit, OnDestroy {

@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {AfterViewInit, Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ApiService} from '../api.service';
 import {DataGroup, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
 import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
@@ -44,6 +44,7 @@ interface TimelineGroup extends DataGroup {
     selector: 'app-oer-timeline',
     templateUrl: './timeline.component.html',
     styleUrls: ['./timeline.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {

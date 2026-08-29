@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {ApiService} from '../api.service';
 import {ProgramEntry} from '../entities';
@@ -29,6 +29,7 @@ import {first} from 'rxjs/operators';
     selector: 'app-search',
     templateUrl: './search.component.html',
     styleUrls: ['./search.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SearchComponent extends AbstractReadMoreComponent implements OnInit, OnDestroy {

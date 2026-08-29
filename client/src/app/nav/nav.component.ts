@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {Subscription} from 'rxjs';
 import {ApiService} from '../oer-server/api.service';
 import {SearchService} from '../oer-server/search/search.service';
@@ -26,6 +26,7 @@ import {Router} from '@angular/router';
     selector: 'app-nav',
     templateUrl: './nav.component.html',
     styleUrls: ['./nav.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class NavComponent implements OnInit, OnDestroy {

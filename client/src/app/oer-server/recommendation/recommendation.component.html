@@ -74,10 +74,10 @@
                   }<br/>
                   <em>Keywords: {{ item.keywords }}</em>
                 </td>
-                <td class="col_title" [innerHTML]="item?.program_entry?.title | search:item.keywords">
+                <td class="col_title" [innerHTML]="$safeNavigationMigration(item?.program_entry?.title) | search:item.keywords">
                 </td>
                 <td class="col_description"
-                [innerHTML]="item?.program_entry?.description | readMore | search:item.keywords"></td>
+                [innerHTML]="$safeNavigationMigration(item?.program_entry?.description) | readMore | search:item.keywords"></td>
               </tr>
             }
           </tbody>

@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ApiService} from '../api.service';
 import {StatusResponse} from '../entities';
 import {Subscription} from 'rxjs';
@@ -25,6 +25,7 @@ import {Subscription} from 'rxjs';
     selector: 'app-oer-status-display',
     templateUrl: './status.component.html',
     styleUrls: ['./status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class StatusComponent implements OnInit, OnDestroy {

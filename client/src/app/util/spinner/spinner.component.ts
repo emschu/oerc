@@ -16,12 +16,13 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'app-spinner',
     templateUrl: './spinner.component.html',
     styleUrls: ['./spinner.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class SpinnerComponent {

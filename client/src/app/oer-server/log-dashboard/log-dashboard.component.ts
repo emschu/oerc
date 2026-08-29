@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ApiService} from '../api.service';
 import {LogEntryResponse} from '../entities';
 import {Subscription} from 'rxjs';
@@ -27,6 +27,7 @@ import {filter} from 'rxjs/operators';
     selector: 'app-logdashboard',
     templateUrl: './log-dashboard.component.html',
     styleUrls: ['./log-dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class LogDashboardComponent implements OnInit, OnDestroy {

@@ -22,7 +22,7 @@ import {StatusComponent} from './status/status.component';
 import {ApiService} from './api.service';
 import {TimelineComponent} from './timeline/timeline.component';
 import {BrowserModule} from '@angular/platform-browser';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import {RecommendationComponent} from './recommendation/recommendation.component';
 import {DashboardComponent} from './dashboard/dashboard.component';
 import {CreditsComponent} from './credits/credits.component';
@@ -63,7 +63,7 @@ import {XmltvComponent} from "./xmltv/xmltv.component";
         ApiService,
         SearchService,
         StateService,
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
     ] })
 export class OercClientModule {
 }

@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {Recommendation} from '../entities';
 import {ApiService} from '../api.service';
 import {AbstractReadMoreComponent} from '../AbstractReadMoreComponent';
@@ -28,6 +28,7 @@ import dayjs from 'dayjs';
     selector: 'app-recommendation',
     templateUrl: './recommendation.component.html',
     styleUrls: ['./recommendation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RecommendationComponent extends AbstractReadMoreComponent implements OnInit, OnDestroy {

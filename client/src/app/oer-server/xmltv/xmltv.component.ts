@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import dayjs from "dayjs";
 import {environment} from "../../../environments/environment";
 
@@ -25,6 +25,7 @@ import {environment} from "../../../environments/environment";
     selector: 'app-xmltv',
     templateUrl: './xmltv.component.html',
     styleUrl: './xmltv.component.scss',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class XmltvComponent {

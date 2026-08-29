@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Component, inject, OnInit, signal} from '@angular/core';
+import {Component, inject, OnInit, signal, ChangeDetectionStrategy} from '@angular/core';
 import {first} from "rxjs/operators";
 import {Channel, ChannelResponse} from "../entities";
 import {ApiService} from "../api.service";
@@ -27,6 +27,7 @@ import {CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray} from "@angular/cdk/d
   selector: 'app-channels',
   imports: [CdkDrag, CdkDropList],
   templateUrl: './channels.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './channels.component.scss',
 })
 export class ChannelsComponent implements OnInit {
