@@ -17,8 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {ApiService} from './oer-server/api.service';
-import {ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit} from '@angular/core';
-import {Subscription} from 'rxjs';
+import {ChangeDetectionStrategy, Component, effect, HostListener, inject, OnInit} from '@angular/core';
 import {NavComponent} from './nav/nav.component';
 import {RouterOutlet} from '@angular/router';
 import {NgClass} from '@angular/common';
@@ -35,27 +34,14 @@ import {NgClass} from '@angular/common';
     NgClass
   ]
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
   isLive = false;
   public apiService = inject(ApiService);
-  private isLiveSubscription: Subscription | null = null;
   private inited = false;
 
   constructor() {
-  }
-
-  @HostListener('document:visibilitychange', ['$event'])
-  onPageVisible(event: Event): void {
-    if (document.hidden) {
-      this.apiService.isWindowOpenedSubject.next(false);
-    } else {
-      this.apiService.isWindowOpenedSubject.next(true);
-    }
-  }
-
-  ngOnInit(): void {
-    this.apiService.init();
-    this.isLiveSubscription = this.apiService.isLiveSubject.subscribe(value => {
+    effect(() => {
+      const value = this.apiService.isLive();
       if (!this.inited && value !== null) {
         this.inited = true;
       }
@@ -65,7 +51,16 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.isLiveSubscription?.unsubscribe();
+  @HostListener('document:visibilitychange', ['$event'])
+  onPageVisible(event: Event): void {
+    if (document.hidden) {
+      this.apiService.isWindowOpenedSubject.set(false);
+    } else {
+      this.apiService.isWindowOpenedSubject.set(true);
+    }
+  }
+
+  ngOnInit(): void {
+    this.apiService.init();
   }
 }

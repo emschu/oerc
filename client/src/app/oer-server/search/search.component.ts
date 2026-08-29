@@ -68,9 +68,9 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
     this.activeRoute.queryParamMap.pipe(first()).subscribe((value) => {
       const searchKey = value.get('query') ?? '';
       this.searchString = searchKey;
-      this.searchService.lastSearchStringSubject.next(searchKey);
+      this.searchService.lastSearchStringSubject.set(searchKey);
       this.isSearchInProgressIndicator = true;
-      this.apiService.isLoadingSubject.next(true);
+      this.apiService.isLoadingSubject.set(true);
       this.searchSubscription = this.apiService.search(searchKey).subscribe(value1 => {
           this.isInErrors = false;
           if (value1) {
@@ -80,7 +80,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           }
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
-            this.apiService.isLoadingSubject.next(false);
+            this.apiService.isLoadingSubject.set(false);
           }, 300);
         },
         err => {
@@ -89,7 +89,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           this.programEntryList = [];
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
-            this.apiService.isLoadingSubject.next(false);
+            this.apiService.isLoadingSubject.set(false);
           }, 300);
           return new Observable();
         });

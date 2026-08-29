@@ -16,19 +16,19 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Injectable} from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
+import {Injectable, signal, WritableSignal} from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SearchService {
-  private _lastSearchStringSubject = new BehaviorSubject<string>('');
+  private _lastSearchStringSubject = signal<string>('');
+  public lastSearchString = this._lastSearchStringSubject.asReadonly();
 
   constructor() {
   }
 
-  get lastSearchStringSubject(): BehaviorSubject<string> {
+  get lastSearchStringSubject(): WritableSignal<string> {
     return this._lastSearchStringSubject;
   }
 }

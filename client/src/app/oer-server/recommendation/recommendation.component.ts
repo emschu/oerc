@@ -59,7 +59,7 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
   }
 
   private loadRecommendations(): void {
-    this.apiService.isLoadingSubject.next(true);
+    this.apiService.isLoadingSubject.set(true);
     this.fetchRecommendations('now');
   }
 
@@ -102,11 +102,11 @@ export class RecommendationComponent extends AbstractReadMoreComponent implement
       from = from.second(0);
       from = from.millisecond(0);
     }
-    this.apiService.isLoadingSubject.next(true);
+    this.apiService.isLoadingSubject.set(true);
     this.apiService.recommendations(from).pipe(first()).subscribe(value => {
       this.recommendations = value;
       setTimeout(() => {
-        this.apiService.isLoadingSubject.next(false);
+        this.apiService.isLoadingSubject.set(false);
       }, 250);
     });
   }

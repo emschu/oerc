@@ -16,8 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
-import {Subscription} from 'rxjs';
+import {ChangeDetectionStrategy, Component, effect, inject, OnInit} from '@angular/core';
 import {ApiService} from '../oer-server/api.service';
 import {SearchService} from '../oer-server/search/search.service';
 import {Router, RouterLink} from '@angular/router';
@@ -34,32 +33,23 @@ import {NgClass} from '@angular/common';
     NgClass
   ]
 })
-export class NavComponent implements OnInit, OnDestroy {
+export class NavComponent implements OnInit {
   currentSearchPhrase = '';
-  isLoading = false;
 
   public apiService = inject(ApiService);
   public searchService = inject(SearchService);
   private router = inject(Router);
 
-  private searchPhraseSubscription: Subscription | null = null;
-  private isLoadingSubscription: Subscription | null = null;
   private searchTextElement: HTMLElement | null = null;
 
   constructor() {
+    effect(() => {
+      this.currentSearchPhrase = this.searchService.lastSearchString();
+    });
   }
 
   ngOnInit(): void {
     this.searchTextElement = document.getElementById('search_text');
-
-    this.searchPhraseSubscription = this.searchService.lastSearchStringSubject.subscribe(value => {
-      if (value !== this.currentSearchPhrase) {
-        this.currentSearchPhrase = value;
-      }
-    });
-    this.isLoadingSubscription = this.apiService.isLoadingSubject.subscribe(value => {
-      this.isLoading = value;
-    });
     this.searchTextElement?.focus();
   }
 
@@ -73,11 +63,6 @@ export class NavComponent implements OnInit, OnDestroy {
   }
 
   openSection(): void {
-    this.searchService.lastSearchStringSubject.next('');
-  }
-
-  ngOnDestroy(): void {
-    this.searchPhraseSubscription?.unsubscribe();
-    this.isLoadingSubscription?.unsubscribe();
+    this.searchService.lastSearchStringSubject.set('');
   }
 }

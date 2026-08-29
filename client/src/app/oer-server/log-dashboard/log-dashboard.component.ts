@@ -80,13 +80,13 @@ export class LogDashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadLog(): void {
-    this.apiService.isLoadingSubject.next(true);
+    this.apiService.isLoadingSubject.set(true);
     this.logEntrySubscription = this.apiService.logEntries(this.currentPage - 1).subscribe(value => {
       this.logEntries = value;
       this.totalPages = value.page_count + 1;
       this.totalEntryCount = value.entry_count;
       setTimeout(() => {
-        this.apiService.isLoadingSubject.next(false);
+        this.apiService.isLoadingSubject.set(false);
       }, 250);
     });
   }

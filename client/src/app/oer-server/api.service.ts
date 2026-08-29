@@ -16,11 +16,18 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Injectable} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import {BehaviorSubject, EMPTY, Observable, Subscription} from 'rxjs';
+import {Injectable, signal, WritableSignal} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {EMPTY, Observable, Subscription} from 'rxjs';
 import {
-  Channel, ChannelResponse, LogEntryResponse, Pong, ProgramEntry, ProgramResponse, Recommendation, StatusResponse,
+  Channel,
+  ChannelResponse,
+  LogEntryResponse,
+  Pong,
+  ProgramEntry,
+  ProgramResponse,
+  Recommendation,
+  StatusResponse,
   TvShow
 } from './entities';
 import {IdType} from 'vis-timeline';
@@ -34,14 +41,22 @@ import dayjs from 'dayjs';
 export class ApiService {
   private apiEndpoint = `${environment.serverEndpoint}`;
 
-  private _isLiveSubject = new BehaviorSubject<boolean | null>(null);
-  private _channelSubject = new BehaviorSubject<ChannelResponse | null>(null);
-  private _programSubject = new BehaviorSubject<ProgramResponse | null>(null);
-  private _tvShowSubject = new BehaviorSubject<TvShow[] | null>(null);
-  private _isLoadingSubject = new BehaviorSubject<boolean>(true);
-  private _isInErrorsSubject = new BehaviorSubject<boolean>(false);
-  private _isWindowOpenedSubject = new BehaviorSubject<boolean>(true);
-  private _statusSubject = new BehaviorSubject<StatusResponse | null>(null);
+  private _isLiveSubject = signal<boolean | null>(null);
+  public isLive = this._isLiveSubject.asReadonly();
+  private _channelSubject = signal<ChannelResponse | null>(null);
+  public channelsSignal = this._channelSubject.asReadonly();
+  private _programSubject = signal<ProgramResponse | null>(null);
+  public programSignal = this._programSubject.asReadonly();
+  private _tvShowSubject = signal<TvShow[] | null>(null);
+  public tvShows = this._tvShowSubject.asReadonly();
+  private _isLoadingSubject = signal<boolean>(true);
+  public isLoading = this._isLoadingSubject.asReadonly();
+  private _isInErrorsSubject = signal<boolean>(false);
+  public isInErrors = this._isInErrorsSubject.asReadonly();
+  private _isWindowOpenedSubject = signal<boolean>(true);
+  public isWindowOpened = this._isWindowOpenedSubject.asReadonly();
+  private _statusSubject = signal<StatusResponse | null>(null);
+  public status = this._statusSubject.asReadonly();
 
   private channelStore: Channel[] = [];
   private fetchedDays: Date[] = [];
@@ -59,7 +74,7 @@ export class ApiService {
 
   public init(): void {
     setInterval(() => {
-      if (this._isWindowOpenedSubject.getValue()) {
+      if (this._isWindowOpenedSubject()) {
         this.liveCheck();
       }
     }, 10000);
@@ -70,14 +85,14 @@ export class ApiService {
     return this.ping().pipe(first()).subscribe(
       data => {
         if (data) {
-          this._isLiveSubject.next(true);
+          this._isLiveSubject.set(true);
         } else {
-          this._isLiveSubject.next(false);
+          this._isLiveSubject.set(false);
         }
       },
       error => {
         console.log(error);
-        this._isLiveSubject.next(false);
+        this._isLiveSubject.set(false);
       }
     );
   }
@@ -87,14 +102,14 @@ export class ApiService {
       return;
     }
     this.isFetchingChannels = true;
-    this._isLoadingSubject.next(true);
+    this._isLoadingSubject.set(true);
     this.channels().pipe(first()).subscribe((value: ChannelResponse) => {
       if (value) {
-        this._channelSubject.next(value);
+        this._channelSubject.set(value);
         this.channelStore = value.data;
       }
       this.isFetchingChannels = false;
-      setTimeout(() => this._isLoadingSubject.next(false), 250);
+      setTimeout(() => this._isLoadingSubject.set(false), 250);
     });
   }
 
@@ -122,7 +137,7 @@ export class ApiService {
     return this.put<ChannelResponse>(this.apiEndpoint + '/channels', channels).pipe(
       tap((value: ChannelResponse) => {
         if (value) {
-          this._channelSubject.next(value);
+          this._channelSubject.set(value);
           this.channelStore = value.data;
         }
       })
@@ -165,46 +180,46 @@ export class ApiService {
     return this.get<Pong>(this.apiEndpoint + '/ping');
   }
 
-  public updateTvShows(){
+  public updateTvShows() {
     this.get<TvShow[]>(`${this.apiEndpoint}/tv-shows`)
       .pipe(first())
-      .subscribe(value => this._tvShowSubject.next(value));
+      .subscribe(value => this._tvShowSubject.set(value));
   }
 
-  get tvShowSubject(): BehaviorSubject<TvShow[] | null> {
+  get tvShowSubject(): WritableSignal<TvShow[] | null> {
     return this._tvShowSubject;
   }
 
-  get channelSubject(): BehaviorSubject<ChannelResponse | null> {
+  get channelSubject(): WritableSignal<ChannelResponse | null> {
     return this._channelSubject;
   }
 
-  get programSubject(): BehaviorSubject<ProgramResponse | null> {
+  get programSubject(): WritableSignal<ProgramResponse | null> {
     return this._programSubject;
   }
 
-  get isLoadingSubject(): BehaviorSubject<boolean> {
+  get isLoadingSubject(): WritableSignal<boolean> {
     return this._isLoadingSubject;
   }
 
-  get isInErrorsSubject(): BehaviorSubject<boolean> {
+  get isInErrorsSubject(): WritableSignal<boolean> {
     return this._isInErrorsSubject;
   }
 
-  get isLiveSubject(): BehaviorSubject<boolean | null> {
+  get isLiveSubject(): WritableSignal<boolean | null> {
     return this._isLiveSubject;
   }
 
-  get isWindowOpenedSubject(): BehaviorSubject<boolean> {
+  get isWindowOpenedSubject(): WritableSignal<boolean> {
     return this._isWindowOpenedSubject;
   }
 
-  get statusSubject(): BehaviorSubject<StatusResponse | null> {
+  get statusSubject(): WritableSignal<StatusResponse | null> {
     return this._statusSubject;
   }
 
   fetchProgramForDay(dateToFetch: Date): void {
-    this._isLoadingSubject.next(true);
+    this._isLoadingSubject.set(true);
 
     this.fetchedDays.push(new Date(dateToFetch.getFullYear(), dateToFetch.getMonth(), dateToFetch.getDate()));
 
@@ -215,13 +230,13 @@ export class ApiService {
       if (!value) {
         return;
       }
-      this._programSubject.next(value);
-      setTimeout(() => this._isLoadingSubject.next(false), 1500);
+      this._programSubject.set(value);
+      setTimeout(() => this._isLoadingSubject.set(false), 1500);
     });
   }
 
   search(searchKey: string): Observable<ProgramEntry[]> {
-    this._isLoadingSubject.next(true);
+    this._isLoadingSubject.set(true);
     return this.get<ProgramEntry[]>(this.apiEndpoint + '/search?query=' + encodeURIComponent(searchKey));
   }
 
@@ -230,7 +245,7 @@ export class ApiService {
       if (!statusResponse) {
         return;
       }
-      this._statusSubject.next(statusResponse);
+      this._statusSubject.set(statusResponse);
     });
   }
 
@@ -242,17 +257,17 @@ export class ApiService {
    * @private
    */
   private get<T>(url: string, options = {}): Observable<T> {
-    if (!url.endsWith('/ping') && ((this._isInErrorsSubject.getValue() || this._isLiveSubject.getValue() === false))) {
+    if (!url.endsWith('/ping') && ((this._isInErrorsSubject() || this._isLiveSubject() === false))) {
       console.log(`api in errors or not live. Skipping request to url ${url}.`);
       return EMPTY;
     }
-    const inErrAlready = this._isInErrorsSubject.getValue();
+    const inErrAlready = this._isInErrorsSubject();
     return this.http.get<T>(url, options).pipe(
       timeout(environment.apiRequestTimeoutInSecs * 1000),
       tap(
         _ => {
           if (inErrAlready) {
-            this._isInErrorsSubject.next(false);
+            this._isInErrorsSubject.set(false);
           }
         }
       ),
@@ -261,10 +276,10 @@ export class ApiService {
           console.log('request timeout reached!', err);
         }
         if (!inErrAlready) {
-          this._isInErrorsSubject.next(true);
+          this._isInErrorsSubject.set(true);
         }
         if (url.endsWith('/ping')) {
-          this._isLiveSubject.next(false);
+          this._isLiveSubject.set(false);
         }
         console.error('http GET call err', url, err);
         return EMPTY;
@@ -281,17 +296,17 @@ export class ApiService {
    * @private
    */
   private put<T>(url: string, body: any, options = {}): Observable<T> {
-    if (this._isInErrorsSubject.getValue() || this._isLiveSubject.getValue() === false) {
+    if (this._isInErrorsSubject() || this._isLiveSubject() === false) {
       console.log(`api in errors or not live. Skipping request to url ${url}.`);
       return EMPTY;
     }
-    const inErrAlready = this._isInErrorsSubject.getValue();
+    const inErrAlready = this._isInErrorsSubject();
     return this.http.put<T>(url, body, options).pipe(
       timeout(environment.apiRequestTimeoutInSecs * 1000),
       tap(
         _ => {
           if (inErrAlready) {
-            this._isInErrorsSubject.next(false);
+            this._isInErrorsSubject.set(false);
           }
         }
       ),
@@ -300,7 +315,7 @@ export class ApiService {
           console.log('request timeout reached!', err);
         }
         if (!inErrAlready) {
-          this._isInErrorsSubject.next(true);
+          this._isInErrorsSubject.set(true);
         }
         console.error('http PUT call err', url, err);
         return EMPTY;

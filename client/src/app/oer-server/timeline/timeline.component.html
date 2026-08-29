@@ -47,8 +47,8 @@
       <div class="col">
         <label>
           <label class="form-switch">
-            <input type="checkbox" [ngModel]="showDeprecatedEntries | async"
-                   (ngModelChange)="showDeprecatedEntries.next($event)"/>
+            <input type="checkbox" [ngModel]="showDeprecatedEntries()"
+                   (ngModelChange)="showDeprecatedEntries.set($event)"/>
             <i class="form-icon"></i> Show overlaps <span
             title="Overlaps are time range conflicts of program entries. The newest entry is taken in doubt.">&#9432;</span>
           </label>

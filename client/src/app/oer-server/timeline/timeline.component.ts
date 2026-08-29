@@ -16,18 +16,18 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {AfterViewInit, ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, ChangeDetectionStrategy, Component, effect, HostListener, inject, OnDestroy, OnInit, signal} from '@angular/core';
+import {toObservable} from '@angular/core/rxjs-interop';
 import {ApiService} from '../api.service';
 import {DataGroup, DataItem, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
-import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
-import {BehaviorSubject, Subscription} from 'rxjs';
+import {Channel, ProgramEntry, ProgramEntryEssential, StatusResponse} from '../entities';
+import {Subscription} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {first, skip} from 'rxjs/operators';
 import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import * as flatPickrLang from 'flatpickr/dist/l10n/de';
 import {DataSet} from 'vis-data';
-import {AsyncPipe} from '@angular/common';
 import {AppDatePipe} from '../../util/app-date.pipe';
 import {FormsModule} from '@angular/forms';
 import dayjs from 'dayjs';
@@ -49,7 +49,6 @@ interface TimelineGroup extends DataGroup {
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [
-    AsyncPipe,
     AppDatePipe,
     FormsModule
   ]
@@ -62,6 +61,31 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor() {
     this.items = new DataSet();
     this.channels = [];
+
+    effect(() => {
+      const value = this.apiService.channelsSignal();
+      if (value && this.timeLine) {
+        this.channels = value.data;
+        const groupData: TimelineGroup[] = value.data.map(
+          (singleChannel: Channel) => ({
+            id: singleChannel.id,
+            content: singleChannel.title,
+            subgroupStack: true,
+            priority: singleChannel.priority
+          })
+        );
+        this.timeLine.setGroups(groupData);
+      }
+    });
+
+    effect(() => {
+      const showDeprecated = this.showDeprecatedEntries();
+      this.stateService.setShowDeprecatedEntries(showDeprecated);
+      this.timeLine?.setItems(this.items);
+      if (this.timeLine) {
+        this.apiService.fetchProgramForDay(new Date(this.timeLine.getWindow().start));
+      }
+    });
   }
 
   private static i = 0;
@@ -74,10 +98,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   isMissingDataModalOpen = false;
 
   // bound to form-switch-control + initial value
-  showDeprecatedEntries = new BehaviorSubject(this.stateService.getShowDeprecatedEntries());
+  showDeprecatedEntries = signal(this.stateService.getShowDeprecatedEntries());
 
   // subscriptions managed by this component
-  channelSubscription?: Subscription;
   programSubscription?: Subscription;
   loadingSubscription?: Subscription;
   showDeprecatedEntriesSubscription?: Subscription;
@@ -86,11 +109,14 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private readonly _datePickerFormat = 'DD.MM.YY HH:mm';
 
+  private status$ = toObservable(this.apiService.statusSubject);
+  private showDeprecated$ = toObservable(this.showDeprecatedEntries);
+  private program$ = toObservable(this.apiService.programSubject);
 
   ngOnInit(): void {
     this.initTimeLine();
 
-    this.apiService.statusSubject.pipe(first()).subscribe(statusResponse => {
+    this.status$.pipe(first()).subscribe((statusResponse: StatusResponse | null) => {
       this.dateTimePickrInstance = flatpickr('#timeline_date_range_picker', {
         locale: flatPickrLang.German,
         now: dayjs().locale(environment.locale).format(),
@@ -139,11 +165,9 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
-    this.channelSubscription?.unsubscribe();
-    this.loadingSubscription?.unsubscribe();
     this.programSubscription?.unsubscribe();
+    this.loadingSubscription?.unsubscribe();
     this.showDeprecatedEntriesSubscription?.unsubscribe();
-    this.showDeprecatedEntries.unsubscribe();
 
     this.timeLine?.destroy();
   }
@@ -163,25 +187,6 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // create groups
     const groups: DataSet<TimelineGroup> = new DataSet({fieldId: 'id'});
-    this.channelSubscription = this.apiService.channelSubject.subscribe((value: ChannelResponse | null) => {
-      if (!value) {
-        return;
-      }
-      groups.clear();
-      this.channels = value.data;
-      value.data.forEach(
-        (singleChannel: Channel) => {
-          groups.add({
-            id: singleChannel.id,
-            content: singleChannel.title,
-            subgroupStack: true,
-            subgroupOrder: () => 0,
-            priority: singleChannel.priority
-          });
-        });
-    });
-
-    // Configuration for the Timeline
     const now = dayjs().locale(environment.locale);
     const options: TimelineOptions = {
       align: 'center',
@@ -230,7 +235,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     this.timeLine.on('rangechanged', this.rangeChange.bind(this));
     this.timeLine.on('doubleClick', this.itemClicked.bind(this));
 
-    this.showDeprecatedEntriesSubscription = this.showDeprecatedEntries.pipe(skip(1)).subscribe(value => {
+    this.showDeprecatedEntriesSubscription = this.showDeprecated$.pipe(skip(1)).subscribe((value: any) => {
       this.stateService.setShowDeprecatedEntries(value);
       if (!value) {
         this.items.clear();
@@ -244,14 +249,14 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
     const midnight = dayjs().locale(environment.locale).hour(0).minute(0).second(0);
 
     if (!this.programSubscription || this.programSubscription.closed) {
-      this.programSubscription = this.apiService.programSubject.subscribe(programResponse => {
+      this.programSubscription = this.program$.subscribe((programResponse: any) => {
         if (!programResponse || programResponse.program_list?.length === 0) {
           return;
         }
-        this.apiService.isLoadingSubject.next(true);
+        this.apiService.isLoadingSubject.set(true);
 
-        const showDeprecatedEntries = this.showDeprecatedEntries.getValue();
-        const programEntries = programResponse.program_list.flatMap((value): ProgramEntryEssential => {
+        const showDeprecatedEntries = this.showDeprecatedEntries();
+        const programEntries = programResponse.program_list.flatMap((value: any): ProgramEntryEssential => {
           return {
             id: value.id,
             created_at: value.created_at,
@@ -271,7 +276,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
           return ' | CreatedAt: ' + dayjs(singleProgramEntry.created_at).locale(environment.locale).format('D.M HH:mm:ss');
         }
 
-        programEntries.forEach(singleProgramEntry => {
+        programEntries.forEach((singleProgramEntry: any) => {
           if (!showDeprecatedEntries && singleProgramEntry.is_deprecated) {
             // just ignore them
             return;
@@ -292,7 +297,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
         if (showDeprecatedEntries) {
           const deprecatedEntries: DeepPartial<UpdateItem<DataItem, 'id'>[]> = [];
-          programEntries.filter(value => value.is_deprecated).forEach(singleProgramEntry => {
+          programEntries.filter((value: any) => value.is_deprecated).forEach((singleProgramEntry: any) => {
             // this is a very expensive loop
             const overlaps = this.items.get({
               filter: item => {
@@ -379,7 +384,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         setTimeout(() => {
-          this.apiService.isLoadingSubject.next(false);
+          this.apiService.isLoadingSubject.set(false);
         }, 500);
       });
     }
@@ -465,7 +470,7 @@ export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
         this.loadingSubscription.unsubscribe();
       }
       this.loadingSubscription = this.apiService.entry(clickedEntryId).subscribe({
-        next: value => {
+        next: (value: ProgramEntry) => {
           this.isEntryLoading = false;
           this.currentProgramEntry = value;
         },

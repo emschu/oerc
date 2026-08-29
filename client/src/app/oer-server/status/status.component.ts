@@ -16,10 +16,9 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, inject, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
 import {StatusResponse} from '../entities';
-import {Subscription} from 'rxjs';
 import {AppDatePipe} from '../../util/app-date.pipe';
 import {DecimalPipe} from '@angular/common';
 
@@ -34,22 +33,16 @@ import {DecimalPipe} from '@angular/common';
     DecimalPipe
   ]
 })
-export class StatusComponent implements OnInit, OnDestroy {
+export class StatusComponent implements OnInit {
   public currentStatus: StatusResponse | null = null;
-  statusSubscription: Subscription | null = null;
-
   private oerApiService = inject(ApiService);
 
   constructor() {
-  }
-
-  ngOnInit(): void {
-    this.statusSubscription = this.oerApiService.statusSubject.subscribe(value => {
-      this.currentStatus = value;
+    effect(() => {
+      this.currentStatus = this.oerApiService.status();
     });
   }
 
-  ngOnDestroy(): void {
-    this.statusSubscription?.unsubscribe();
+  ngOnInit(): void {
   }
 }
