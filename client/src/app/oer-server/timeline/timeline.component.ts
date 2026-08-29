@@ -16,9 +16,9 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {AfterViewInit, Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {AfterViewInit, ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
-import {DataGroup, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
+import {DataGroup, DataItem, IdType, Timeline, TimelineEventPropertiesResult, TimelineOptions, TimelineWindow} from 'vis-timeline';
 import {Channel, ChannelResponse, ProgramEntry, ProgramEntryEssential} from '../entities';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import {environment} from '../../../environments/environment';
@@ -27,13 +27,15 @@ import {StateService} from '../state.service';
 import flatpickr from 'flatpickr';
 import * as flatPickrLang from 'flatpickr/dist/l10n/de';
 import {DataSet} from 'vis-data';
-import {DataItem} from 'vis-timeline';
-import {DataInterface} from 'vis-data';
+import {AsyncPipe} from '@angular/common';
+import {AppDatePipe} from '../../util/app-date.pipe';
+import {FormsModule} from '@angular/forms';
+import dayjs from 'dayjs';
+
 type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
   [key in keyof T]?: DeepPartial<T[key]>;
 } : T;
 type UpdateItem<Item, IdProp extends string> = DeepPartial<Item & Record<IdProp, string | number>> & Record<IdProp, string | number>;
-import dayjs from 'dayjs';
 import FlatPickrInstance = flatpickr.Instance;
 
 interface TimelineGroup extends DataGroup {
@@ -41,16 +43,23 @@ interface TimelineGroup extends DataGroup {
 }
 
 @Component({
-    selector: 'app-oer-timeline',
-    templateUrl: './timeline.component.html',
-    styleUrls: ['./timeline.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-oer-timeline',
+  templateUrl: './timeline.component.html',
+  styleUrls: ['./timeline.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    AsyncPipe,
+    AppDatePipe,
+    FormsModule
+  ]
 })
 export class TimelineComponent implements OnInit, OnDestroy, AfterViewInit {
 
-  constructor(public apiService: ApiService,
-              private stateService: StateService) {
+  public apiService = inject(ApiService);
+  private stateService = inject(StateService);
+
+  constructor() {
     this.items = new DataSet();
     this.channels = [];
   }

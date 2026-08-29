@@ -16,28 +16,37 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit} from '@angular/core';
 import {Recommendation} from '../entities';
 import {ApiService} from '../api.service';
 import {AbstractReadMoreComponent} from '../AbstractReadMoreComponent';
 import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
 import dayjs from 'dayjs';
+import {AppDatePipe} from '../../util/app-date.pipe';
+import {ReadMorePipe} from '../read-more.pipe';
+import {SearchPipe} from '../search.pipe';
 
 @Component({
-    selector: 'app-recommendation',
-    templateUrl: './recommendation.component.html',
-    styleUrls: ['./recommendation.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-recommendation',
+  templateUrl: './recommendation.component.html',
+  styleUrls: ['./recommendation.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    AppDatePipe,
+    ReadMorePipe,
+    SearchPipe
+  ]
 })
 export class RecommendationComponent extends AbstractReadMoreComponent implements OnInit, OnDestroy {
 
   recommendations: Recommendation[] | null = null;
+  public apiService = inject(ApiService);
 
   private recommendationSubscription: Subscription | null = null;
 
-  constructor(public apiService: ApiService) {
+  constructor() {
     super();
   }
 

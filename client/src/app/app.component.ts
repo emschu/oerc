@@ -17,22 +17,31 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 import {ApiService} from './oer-server/api.service';
-import {Component, HostListener, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
+import {NavComponent} from './nav/nav.component';
+import {RouterOutlet} from '@angular/router';
+import {NgClass} from '@angular/common';
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    NavComponent,
+    RouterOutlet,
+    NgClass
+  ]
 })
 export class AppComponent implements OnInit, OnDestroy {
   isLive = false;
+  public apiService = inject(ApiService);
   private isLiveSubscription: Subscription | null = null;
   private inited = false;
 
-  constructor(public apiService: ApiService) {
+  constructor() {
   }
 
   @HostListener('document:visibilitychange', ['$event'])

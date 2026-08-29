@@ -16,23 +16,32 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
 import {StatusResponse} from '../entities';
 import {Subscription} from 'rxjs';
+import {AppDatePipe} from '../../util/app-date.pipe';
+import {DecimalPipe} from '@angular/common';
 
 @Component({
-    selector: 'app-oer-status-display',
-    templateUrl: './status.component.html',
-    styleUrls: ['./status.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-oer-status-display',
+  templateUrl: './status.component.html',
+  styleUrls: ['./status.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    AppDatePipe,
+    DecimalPipe
+  ]
 })
 export class StatusComponent implements OnInit, OnDestroy {
   public currentStatus: StatusResponse | null = null;
   statusSubscription: Subscription | null = null;
 
-  constructor(private oerApiService: ApiService) {}
+  private oerApiService = inject(ApiService);
+
+  constructor() {
+  }
 
   ngOnInit(): void {
     this.statusSubscription = this.oerApiService.statusSubject.subscribe(value => {

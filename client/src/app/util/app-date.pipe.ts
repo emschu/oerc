@@ -16,13 +16,13 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Pipe, PipeTransform } from '@angular/core';
+import {Pipe, PipeTransform} from '@angular/core';
 import {environment} from '../../environments/environment';
-import dayjs, {Dayjs} from 'dayjs';
+import dayjs from 'dayjs';
 
 @Pipe({
-    name: 'appDate',
-    standalone: false
+  name: 'appDate',
+  standalone: true
 })
 export class AppDatePipe implements PipeTransform {
 
@@ -38,13 +38,17 @@ export class AppDatePipe implements PipeTransform {
     }
     let dateFormat = this.FULL_DATE_TIME_HUMAN;
     switch (args[0]) {
-      case 'full': break;
+      case 'full':
+        break;
       case 'time-medium':
-        dateFormat = this.MEDIUM_TIME; break;
+        dateFormat = this.MEDIUM_TIME;
+        break;
       case 'date-medium':
-        dateFormat = this.MEDIUM_DATE; break;
+        dateFormat = this.MEDIUM_DATE;
+        break;
       case 'full-medium':
-        dateFormat = this.MEDIUM_DATE_TIME; break;
+        dateFormat = this.MEDIUM_DATE_TIME;
+        break;
     }
     return dayjs(value).locale(environment.locale).format(dateFormat);
   }

@@ -16,19 +16,23 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
 import {ApiService} from '../api.service';
 import {LogEntryResponse} from '../entities';
 import {Subscription} from 'rxjs';
 import {NavigationEnd, Router} from '@angular/router';
 import {filter} from 'rxjs/operators';
+import {AppDatePipe} from '../../util/app-date.pipe';
 
 @Component({
-    selector: 'app-logdashboard',
-    templateUrl: './log-dashboard.component.html',
-    styleUrls: ['./log-dashboard.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-logdashboard',
+  templateUrl: './log-dashboard.component.html',
+  styleUrls: ['./log-dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    AppDatePipe
+  ]
 })
 export class LogDashboardComponent implements OnInit, OnDestroy {
   logEntries: LogEntryResponse | null = null;
@@ -36,10 +40,13 @@ export class LogDashboardComponent implements OnInit, OnDestroy {
   public totalPages = 0;
   public totalEntryCount = 0;
 
+  private apiService = inject(ApiService);
+  private router = inject(Router);
+
   private logEntrySubscription: Subscription | null = null;
   private routerEventsSubscription: Subscription | null = null;
 
-  constructor(private apiService: ApiService, private router: Router) {
+  constructor() {
   }
 
   ngOnInit(): void {

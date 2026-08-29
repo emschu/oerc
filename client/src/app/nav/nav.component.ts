@@ -16,30 +16,37 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, OnDestroy, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
 import {ApiService} from '../oer-server/api.service';
 import {SearchService} from '../oer-server/search/search.service';
-import {Router} from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
+import {NgClass} from '@angular/common';
 
 @Component({
-    selector: 'app-nav',
-    templateUrl: './nav.component.html',
-    styleUrls: ['./nav.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-nav',
+  templateUrl: './nav.component.html',
+  styleUrls: ['./nav.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    RouterLink,
+    NgClass
+  ]
 })
 export class NavComponent implements OnInit, OnDestroy {
   currentSearchPhrase = '';
   isLoading = false;
 
+  public apiService = inject(ApiService);
+  public searchService = inject(SearchService);
+  private router = inject(Router);
+
   private searchPhraseSubscription: Subscription | null = null;
   private isLoadingSubscription: Subscription | null = null;
   private searchTextElement: HTMLElement | null = null;
 
-  constructor(public apiService: ApiService,
-              public searchService: SearchService,
-              private router: Router) {
+  constructor() {
   }
 
   ngOnInit(): void {

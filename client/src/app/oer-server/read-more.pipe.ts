@@ -19,8 +19,8 @@
 import {Pipe, PipeTransform} from '@angular/core';
 
 @Pipe({
-    name: 'readMore',
-    standalone: false
+  name: 'readMore',
+  standalone: true
 })
 export class ReadMorePipe implements PipeTransform {
 
