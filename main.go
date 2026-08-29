@@ -36,7 +36,7 @@ import (
 )
 
 var (
-	version       = "0.24.0"
+	version       = "0.25.0"
 	appConf       AppConfig
 	status        Status
 	verboseGlobal = false
@@ -584,13 +584,15 @@ func initialStartup(c *cli.Context) {
 	appConf = AppConfig{}
 	if c != nil {
 		configurationFile := appConf.loadConfiguration(c.Path("config"), false)
-		if len(c.Path("config")) == 0 && configurationFile != nil {
+		if configurationFile == nil {
 			confBox := rice.MustFindBox("config")
-			log.Printf("Trying to create default configuration at '%s'.\n", *configurationFile)
-			err := os.WriteFile(*configurationFile, confBox.MustBytes(".oerc_default.dist.yaml"), 0600)
+			defaultConfigurationPath := appConf.getDefaultConfigurationPath(false)
+			log.Printf("Created default configuration at '%s'.\n", defaultConfigurationPath)
+			err := os.WriteFile(defaultConfigurationPath, confBox.MustBytes(".oerc_default.dist.yaml"), 0600)
 			if err != nil {
-				log.Fatalf("Error creating default configuration at '%s': %v.\n", *configurationFile, err)
+				log.Fatalf("Error creating default configuration at '%s': %v.\n", defaultConfigurationPath, err)
 			}
+			appConf.loadConfiguration(defaultConfigurationPath, true)
 		}
 	}
 	isValid := appConf.verifyConfiguration()

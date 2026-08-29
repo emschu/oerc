@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.24.0"
-APP_VERSION_STR = "0-24-0"
+APP_VERSION_DOT = "0.25.0"
+APP_VERSION_STR = "0-25-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -46,8 +46,8 @@ clean: ## clean up project
 .PHONY: setup
 setup: ## install required project and (dev) dependencies
 	$(GO) mod download
-	$(GO) get github.com/GeertJohan/go.rice
-	$(GO) get github.com/GeertJohan/go.rice/rice
+	$(GO) install github.com/GeertJohan/go.rice@latest
+	$(GO) install github.com/GeertJohan/go.rice/rice@latest
 	$(GO) install github.com/mgechev/revive@latest
 	python -m pip install --user schemathesis
 
