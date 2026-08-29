@@ -46,7 +46,6 @@ clean: ## clean up project
 .PHONY: setup
 setup: ## install required project and (dev) dependencies
 	$(GO) mod download
-	$(GO) install github.com/GeertJohan/go.rice@latest
 	$(GO) install github.com/GeertJohan/go.rice/rice@latest
 	$(GO) install github.com/mgechev/revive@latest
 	python -m pip install --user schemathesis
