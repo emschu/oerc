@@ -22,7 +22,7 @@ import (
 )
 
 func TestARDParserInterfaceCompliance(t *testing.T) {
-	var parserInst interface{} = &ARDParser{}
+	var parserInst any = &ARDParser{}
 	_, ok := parserInst.(ParserInterface)
 	if !ok {
 		t.Fatalf("Incompliant ARDParser instance detected!")
@@ -30,7 +30,7 @@ func TestARDParserInterfaceCompliance(t *testing.T) {
 }
 
 func TestZDFParserInterfaceCompliance(t *testing.T) {
-	var parserInst interface{} = &ZDFParser{}
+	var parserInst any = &ZDFParser{}
 	_, ok := parserInst.(ParserInterface)
 	if !ok {
 		t.Fatalf("Incompliant ZDFParser instance detected!")
@@ -38,7 +38,7 @@ func TestZDFParserInterfaceCompliance(t *testing.T) {
 }
 
 func TestORFParserInterfaceCompliance(t *testing.T) {
-	var parserInst interface{} = &ORFParser{}
+	var parserInst any = &ORFParser{}
 	_, ok := parserInst.(ParserInterface)
 	if !ok {
 		t.Fatalf("Incompliant ORFParser instance detected!")
@@ -46,7 +46,7 @@ func TestORFParserInterfaceCompliance(t *testing.T) {
 }
 
 func TestSRFParserInterfaceCompliance(t *testing.T) {
-	var parserInst interface{} = &SRFParser{}
+	var parserInst any = &SRFParser{}
 	_, ok := parserInst.(ParserInterface)
 	if !ok {
 		t.Fatalf("Incompliant SRFParser instance detected!")

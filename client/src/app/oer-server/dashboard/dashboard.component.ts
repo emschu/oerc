@@ -16,16 +16,24 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Component } from '@angular/core';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {StatusComponent} from '../status/status.component';
+import {TimelineComponent} from '../timeline/timeline.component';
 
 @Component({
-    selector: 'app-dashboard',
-    templateUrl: './dashboard.component.html',
-    styleUrls: ['./dashboard.component.scss'],
-    standalone: false
+  selector: 'app-dashboard',
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    StatusComponent,
+    TimelineComponent
+  ]
 })
 export class DashboardComponent {
 
-  constructor() { }
+  constructor() {
+  }
 
 }

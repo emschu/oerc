@@ -382,7 +382,7 @@ func (p *ProgramEntry) saveProgramEntryRecord(db *gorm.DB) {
 		if verboseGlobal {
 			log.Printf("Updating program entry #%d.\n", p.ID)
 		}
-		db.Model(&p).Updates(map[string]interface{}{
+		db.Model(&p).Updates(map[string]any{
 			"Description":     p.Description,
 			"StartDateTime":   p.StartDateTime,
 			"EndDateTime":     p.EndDateTime,

@@ -18,7 +18,7 @@
 -->
 <header class="navbar app-navbar">
   <section class="navbar-section ml-1 mr-1">
-    <a routerLink="/" class="btn navbar-brand m-2" (click)="openSection()"><img src="assets/logo.svg" alt="logo" />Overview</a>
+    <a routerLink="/" class="btn navbar-brand m-2" (click)="openSection()"><img src="assets/logo.svg" alt="logo"/>Overview</a>
     <a routerLink="/channels" class="btn" (click)="openSection()"><em class="icon icon-bookmark"></em>Channels</a>
     <a routerLink="/recommendations" class="btn" (click)="openSection()"><em class="icon icon-bookmark"></em>Recommendations</a>
     <a routerLink="/xmltv" class="btn" (click)="openSection()"><em class="icon icon-bookmark"></em>XmlTV</a>
@@ -26,10 +26,13 @@
     <span class="credits-action-item" routerLink="/credits" (click)="openSection()" title="Credits">&#9432;</span>
   </section>
   <section class="navbar-section ml-1 mr-1">
-    <div [ngClass]="{'d-invisible': !isLoading }" class="navbar-indicator loading"></div>
+    <div [ngClass]="{'d-invisible': !apiService.isLoading() }" class="navbar-indicator loading"></div>
     <div class="input-group input-inline">
-      <input id="search_text" class="form-input" type="text" placeholder="Search..." (keyup.enter)="searchFor()" [value]="currentSearchPhrase" />
-      <button class="btn btn-primary input-group-btn" (click)="searchFor()" (keyup.enter)="searchFor()"><i class="icon icon-search"></i>Search</button>
+      <input id="search_text" class="form-input" type="text" placeholder="Search..." (keyup.enter)="searchFor()"
+             [value]="currentSearchPhrase"/>
+      <button class="btn btn-primary input-group-btn" (click)="searchFor()" (keyup.enter)="searchFor()"><i
+        class="icon icon-search"></i>Search
+      </button>
     </div>
   </section>
 </header>

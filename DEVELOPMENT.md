@@ -7,8 +7,8 @@ Be sure to run `make build` (if you updated something there) before filing a pul
 ### Build/Configuration Instructions
 
 #### Prerequisites
-- Go 1.25+
-- PostgreSQL 12+
+- Go
+- PostgreSQL
 - Node.js (for frontend development)
 
 #### Setup

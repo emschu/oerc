@@ -19,19 +19,22 @@
 @if (currentStatus) {
   <table class="table">
     <tbody>
-      <tr>
-        <td><strong>Program entries</strong></td>
-        <td>{{ currentStatus.program_entry_count | number }}</td>
-        <td><strong>Image links</strong></td>
-        <td>{{ currentStatus.image_links_count | number }}</td>
-        <td><strong>TV shows</strong></td>
-        <td>{{ currentStatus.tv_show_count | number }}</td>
-        <td><strong>Data time range</strong></td>
-        @if (currentStatus !== null) {
-          <td>{{ currentStatus.data_start_time | appDate: 'date-medium' }}
-          - {{ currentStatus.data_end_time | appDate : 'full-medium' }}</td>
-          }<td *ngElse></td>
-        </tr>
-      </tbody>
-    </table>
-  }
+    <tr>
+      <td><strong>Program entries</strong></td>
+      <td>{{ currentStatus.program_entry_count | number }}</td>
+      <td><strong>Image links</strong></td>
+      <td>{{ currentStatus.image_links_count | number }}</td>
+      <td><strong>TV shows</strong></td>
+      <td>{{ currentStatus.tv_show_count | number }}</td>
+      <td><strong>Data time range</strong></td>
+      @if (currentStatus !== null) {
+        <td>{{ currentStatus.data_start_time | appDate: 'date-medium' }}
+          - {{ currentStatus.data_end_time | appDate : 'full-medium' }}
+        </td>
+      } @else {
+        <td></td>
+      }
+    </tr>
+    </tbody>
+  </table>
+}

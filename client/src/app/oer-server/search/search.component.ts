@@ -16,7 +16,7 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {Component, HostListener, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {ApiService} from '../api.service';
 import {ProgramEntry} from '../entities';
@@ -24,12 +24,25 @@ import {AbstractReadMoreComponent} from '../AbstractReadMoreComponent';
 import {SearchService} from './search.service';
 import {Observable, Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
+import {AppDatePipe} from '../../util/app-date.pipe';
+import {ReadMorePipe} from '../read-more.pipe';
+import {SearchPipe} from '../search.pipe';
+import {FormsModule} from '@angular/forms';
+import {SpinnerComponent} from '../../util/spinner/spinner.component';
 
 @Component({
-    selector: 'app-search',
-    templateUrl: './search.component.html',
-    styleUrls: ['./search.component.scss'],
-    standalone: false
+  selector: 'app-search',
+  templateUrl: './search.component.html',
+  styleUrls: ['./search.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true,
+  imports: [
+    AppDatePipe,
+    ReadMorePipe,
+    SearchPipe,
+    FormsModule,
+    SpinnerComponent
+  ]
 })
 export class SearchComponent extends AbstractReadMoreComponent implements OnInit, OnDestroy {
   programEntryList: ProgramEntry[] = [];
@@ -37,11 +50,13 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
   isSearchInProgressIndicator = false;
   isInErrors = false;
 
+  public apiService = inject(ApiService);
+  private activeRoute = inject(ActivatedRoute);
+  private searchService = inject(SearchService);
+
   private searchSubscription: Subscription | null = null;
 
-  constructor(private activeRoute: ActivatedRoute,
-              private searchService: SearchService,
-              public apiService: ApiService) {
+  constructor() {
     super();
   }
 
@@ -53,9 +68,9 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
     this.activeRoute.queryParamMap.pipe(first()).subscribe((value) => {
       const searchKey = value.get('query') ?? '';
       this.searchString = searchKey;
-      this.searchService.lastSearchStringSubject.next(searchKey);
+      this.searchService.lastSearchStringSubject.set(searchKey);
       this.isSearchInProgressIndicator = true;
-      this.apiService.isLoadingSubject.next(true);
+      this.apiService.isLoadingSubject.set(true);
       this.searchSubscription = this.apiService.search(searchKey).subscribe(value1 => {
           this.isInErrors = false;
           if (value1) {
@@ -65,7 +80,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           }
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
-            this.apiService.isLoadingSubject.next(false);
+            this.apiService.isLoadingSubject.set(false);
           }, 300);
         },
         err => {
@@ -74,7 +89,7 @@ export class SearchComponent extends AbstractReadMoreComponent implements OnInit
           this.programEntryList = [];
           this.isSearchInProgressIndicator = false;
           setTimeout(() => {
-            this.apiService.isLoadingSubject.next(false);
+            this.apiService.isLoadingSubject.set(false);
           }, 300);
           return new Observable();
         });

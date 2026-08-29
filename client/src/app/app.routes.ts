@@ -16,17 +16,17 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import {NgModule} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
+
+import {Routes} from '@angular/router';
 import {RecommendationComponent} from './oer-server/recommendation/recommendation.component';
 import {DashboardComponent} from './oer-server/dashboard/dashboard.component';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {CreditsComponent} from './oer-server/credits/credits.component';
 import {SearchComponent} from './oer-server/search/search.component';
 import {LogDashboardComponent} from './oer-server/log-dashboard/log-dashboard.component';
-import {XmltvComponent} from "./oer-server/xmltv/xmltv.component";
+import {XmltvComponent} from './oer-server/xmltv/xmltv.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   {path: '', component: DashboardComponent},
   {path: 'channels', loadComponent: () => import('./oer-server/channels/channels.component').then(m => m.ChannelsComponent)},
   {path: 'recommendations', component: RecommendationComponent},
@@ -37,10 +37,3 @@ const routes: Routes = [
   {path: '404', component: NotFoundComponent},
   {path: '**', redirectTo: '/404'}
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes, {useHash: true})],
-  exports: [RouterModule]
-})
-export class AppRoutingModule {
-}

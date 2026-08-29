@@ -1,5 +1,10 @@
 # Changelog oerc
 
+## 0.25.0 - 2026/08/29
+- Fix `oerc init` default behavior  
+- Dependency updates
+- Golang 1.26
+
 ## 0.24.0 - 2026/06/27
 - Update go + npm dependencies
 

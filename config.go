@@ -121,16 +121,7 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 		}
 	}
 	// then look in current directory for config.yaml
-	homeDir, err := os.UserHomeDir()
-	homeDir = path.Clean(homeDir)
-	if err != nil {
-		if allowFail {
-			log.Fatalf("Home dir cannot be accessed - error: %v", err)
-		}
-		return nil
-	}
-	// then look in ~/.oerc.yaml
-	homeDirConfigFile := fmt.Sprintf("%s/%s", homeDir, ".oerc.yaml")
+	homeDirConfigFile := a.getDefaultConfigurationPath(allowFail)
 	homeDirCfgFileStat, errHomeDir := os.Stat(homeDirConfigFile)
 	if errHomeDir != nil {
 		if allowFail {
@@ -149,6 +140,19 @@ func (a *AppConfig) loadConfiguration(inputPath string, allowFail bool) *string 
 		log.Fatalf("Path '%s' is not a valid regular file.", homeDirConfigFile)
 	}
 	return nil
+}
+
+func (a *AppConfig) getDefaultConfigurationPath(allowFail bool) string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		if allowFail {
+			log.Fatalf("Home dir cannot be accessed - error: %v", err)
+		}
+	}
+	homeDir = path.Clean(homeDir)
+	// then look in ~/.oerc.yaml
+	homeDirConfigFile := fmt.Sprintf("%s/%s", homeDir, ".oerc.yaml")
+	return homeDirConfigFile
 }
 
 func loadYaml(path string) {

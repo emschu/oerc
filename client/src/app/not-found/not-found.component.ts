@@ -16,15 +16,17 @@
  * License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-import { Component } from '@angular/core';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
 
 @Component({
-    selector: 'app-not-found',
-    templateUrl: './not-found.component.html',
-    standalone: false
+  selector: 'app-not-found',
+  templateUrl: './not-found.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  standalone: true
 })
 export class NotFoundComponent {
 
-  constructor() { }
+  constructor() {
+  }
 
 }

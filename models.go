@@ -21,6 +21,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 )
@@ -177,10 +178,8 @@ func (p *ProgramEntry) considerTagExists(mainTagName *string) {
 	} else {
 		existingTags = []string{}
 	}
-	for _, tag := range existingTags {
-		if tag == *mainTagName {
-			return
-		}
+	if slices.Contains(existingTags, *mainTagName) {
+		return
 	}
 	existingTags = append(existingTags, trimAndSanitizeString(*mainTagName))
 	if verboseGlobal {

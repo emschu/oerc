@@ -17,10 +17,11 @@
 package main
 
 import (
-	"github.com/alitto/pond"
-	"gorm.io/gorm"
 	"log"
 	"time"
+
+	"github.com/alitto/pond"
+	"gorm.io/gorm"
 )
 
 // Parser common data structure of all parsers
@@ -135,7 +136,7 @@ func (p *Parser) Fetch(parserInterface ParserInterface) {
 
 	if GetAppConf().EnableProgramEntryCollection {
 		// import program entries for the configured date range
-		pool := pond.New(p.parallelWorkersCount, 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i interface{}) {
+		pool := pond.New(p.parallelWorkersCount, 100, getWorkerPoolIdleTimeout(), pond.PanicHandler(func(i any) {
 			log.Printf("Problem with goroutine pool: %v\n", i)
 		}))
 		for _, channel := range getChannelsOfFamily(db, channelFamily) {
