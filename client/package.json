@@ -30,7 +30,7 @@
     "rxjs": "^7.5.0",
     "spectre.css": "^0.5.9",
     "tslib": "^2.6.2",
-    "uuid": "^9.0.1",
+    "uuid": "^14.0.0",
     "vis-data": "^8.0.3",
     "vis-timeline": "^8.5.0",
     "vis-util": "^6.0.0",
