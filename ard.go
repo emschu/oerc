@@ -616,15 +616,15 @@ type ardAPIProgramItemDetail struct {
 	CoreSubline    string    `json:"coreSubline"`
 	LastMod        time.Time `json:"lastMod"`
 	Video          struct {
-		AvailableFrom time.Time `json:"availableFrom"`
-		AvailableTo   time.Time `json:"availableTo"`
-		BroadcastedOn time.Time `json:"broadcastedOn"`
-		CoreAssetType string    `json:"coreAssetType"`
-		CreatedAt     time.Time `json:"createdAt"`
-		CreatedBy     string    `json:"createdBy"`
-		CreationBrid  string    `json:"creationBrid"`
-		Duration      int       `json:"duration"`
-		EpisodeNumber string    `json:"episodeNumber"`
+		AvailableFrom time.Time   `json:"availableFrom"`
+		AvailableTo   time.Time   `json:"availableTo"`
+		BroadcastedOn time.Time   `json:"broadcastedOn"`
+		CoreAssetType string      `json:"coreAssetType"`
+		CreatedAt     time.Time   `json:"createdAt"`
+		CreatedBy     interface{} `json:"createdBy"`
+		CreationBrid  interface{} `json:"creationBrid"`
+		Duration      int         `json:"duration"`
+		EpisodeNumber interface{} `json:"episodeNumber"`
 		ExternalMedia []struct {
 			MediaType string `json:"mediaType"`
 			Ratio     string `json:"ratio"`
@@ -636,31 +636,31 @@ type ardAPIProgramItemDetail struct {
 			} `json:"versions"`
 		} `json:"externalMedia"`
 		Extras []struct {
-			Index string `json:"index"`
-			Text  string `json:"text"`
-			Type  string `json:"type"`
+			Index interface{} `json:"index"`
+			Text  string      `json:"text"`
+			Type  string      `json:"type"`
 		} `json:"extras"`
-		Fsk             string    `json:"fsk"`
-		GroupingId      string    `json:"groupingId"`
-		GroupingTitle   string    `json:"groupingTitle"`
-		GroupingWebUrl  string    `json:"groupingWebUrl"`
-		Id              string    `json:"id"`
-		ImageCredit     string    `json:"imageCredit"`
-		ImageUrl        string    `json:"imageUrl"`
-		IsTrailer       bool      `json:"isTrailer"`
-		SeasonNumber    string    `json:"seasonNumber"`
-		SingleReport    bool      `json:"singleReport"`
-		Source          string    `json:"source"`
-		SourceId        string    `json:"sourceId"`
-		SourceUpdatedAt time.Time `json:"sourceUpdatedAt"`
-		TagIds          []string  `json:"tagIds"`
+		Fsk             string        `json:"fsk"`
+		GroupingId      string        `json:"groupingId"`
+		GroupingTitle   string        `json:"groupingTitle"`
+		GroupingWebUrl  string        `json:"groupingWebUrl"`
+		Id              string        `json:"id"`
+		ImageCredit     string        `json:"imageCredit"`
+		ImageUrl        string        `json:"imageUrl"`
+		IsTrailer       bool          `json:"isTrailer"`
+		SeasonNumber    interface{}   `json:"seasonNumber"`
+		SingleReport    bool          `json:"singleReport"`
+		Source          string        `json:"source"`
+		SourceId        string        `json:"sourceId"`
+		SourceUpdatedAt time.Time     `json:"sourceUpdatedAt"`
+		TagIds          []interface{} `json:"tagIds"`
 		Text            struct {
 			Short string `json:"short"`
 		} `json:"text"`
-		Title     string    `json:"title"`
-		UpdatedAt time.Time `json:"updatedAt"`
-		UpdatedBy string    `json:"updatedBy"`
-		WebUrl    string    `json:"webUrl"`
+		Title     string      `json:"title"`
+		UpdatedAt time.Time   `json:"updatedAt"`
+		UpdatedBy interface{} `json:"updatedBy"`
+		WebUrl    string      `json:"webUrl"`
 	} `json:"video"`
 }
 

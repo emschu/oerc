@@ -92,7 +92,7 @@ USAGE:
    oerc [global options] command [command options]
 
 VERSION:
-   0.25.0, License: AGPLv3, https://github.com/emschu/oerc
+   0.25.1, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria

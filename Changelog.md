@@ -1,5 +1,8 @@
 # Changelog oerc
 
+## 0.25.1 - 2026/09/05
+- Fix ard api model types  
+
 ## 0.25.0 - 2026/08/29
 - Fix `oerc init` default behavior  
 - Dependency updates
