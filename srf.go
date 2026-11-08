@@ -23,6 +23,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -101,7 +102,7 @@ func (s *SRFParser) fetchTVShows() {
 
 // handleDay: handle a single day to fetch SRF program data
 func (s *SRFParser) handleDay(channel Channel, day time.Time) {
-	queryURL := fmt.Sprintf("https://www.srf.ch/play/v3/api/srf/production/tv-program-guide?date=%02d-%02d-%d&businessUnits=srf&reduced=false&channelId=%s", day.Year(), day.Month(), day.Day(), channel.TechnicalID)
+	queryURL := fmt.Sprintf("https://www.srf.ch/play/v3/api/srf/production/tv-program-guide?date=%02d-%02d-%02d&businessUnits=srf&reduced=false&channelId=%s", day.Year(), day.Month(), day.Day(), strings.ToLower(channel.TechnicalID))
 
 	response, err := doGetRequest(queryURL, map[string]string{
 		"accept":          "application/json, text/plain, */*",
@@ -120,6 +121,9 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 		appLog(errorMessage)
 		log.Printf("%s", errorMessage)
 		return
+	}
+	if len(apiObject.FailedIlRequests) != 0 && verboseGlobal {
+		log.Printf("Warn: Failed SRF request: %v\n", apiObject.FailedIlRequests)
 	}
 
 	if len(apiObject.Data) > 0 {

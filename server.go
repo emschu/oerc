@@ -86,7 +86,7 @@ func setupMaterializedView() {
 func refreshMaterializedView() {
 	if strings.ToLower(GetAppConf().DbType) != "postgres" {
 		if isDebug() {
-			log.Printf("Skipping the status view refresh, no materialized view in use\n")
+			log.Printf("Debug: Skipping the status view refresh, no materialized view in use\n")
 		}
 		return
 	}

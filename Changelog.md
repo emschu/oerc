@@ -1,6 +1,7 @@
 # Changelog oerc
 
 ## 0.26.0 - 2026/11/08
+- Fix wrong date formatting in SRF integration
 - Fix XMLTV export to emit a valid `<tv>` root and limit the XMLTV endpoint to 14 days
 - Refresh the PostgreSQL status view after `fetch`, `fetch-range` and `search`
 - Fix date parsing and DST-safe date ranges, including `full-overlap-check` on SQLite
