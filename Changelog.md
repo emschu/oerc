@@ -11,7 +11,7 @@
 - Parser and reliability fixes for ARD, ORF, SRF and ZDF
 - Fix log pagination in the web client
 - Upgrade PostgreSQL to 16
-- Dependency updates
+- Dependency updates for application and CI
 
 ## 0.25.1 - 2026/09/05
 - Fix ard api model types  
