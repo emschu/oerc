@@ -16,7 +16,7 @@ jobs:
         run: make release
       - name: Build Changelog
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v4
+        uses: mikepenz/release-changelog-builder-action@v6
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Prepare release assets
