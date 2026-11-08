@@ -25,7 +25,7 @@ Be sure to run `make build` (if you updated something there) before filing a pul
 3. Configure the database:
     - For development, you can use a PostgreSQL Docker container:
       ```bash
-      docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:14-alpine
+      docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:16-alpine
       ```
     - Create a configuration file at `~/.oerc.yaml` or use `-c <path>` to specify a custom location
     - Ensure database connection details are correctly set in the configuration file
@@ -84,5 +84,5 @@ Be sure to run `make build` (if you updated something there) before filing a pul
 
 #### Development PostgreSQL Container
 ```bash
-docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:14-alpine 
+docker run --name oer-postgres -p 5432:5432 -e POSTGRES_PASSWORD=root -e POSTGRES_DB=oer_server_dev -d postgres:16-alpine 
 ```

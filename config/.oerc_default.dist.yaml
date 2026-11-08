@@ -35,3 +35,8 @@ SearchSkipChannels:
   - ORF Sport +
 # if you don't know what this means, you should probably keep this value
 AccessControlAllowOrigin: "http://127.0.0.1:8080"
+# optional list of proxy ip addresses or cidr ranges whose X-Forwarded-For header
+# is trusted for the client ip detection of the webserver, e.g. of a reverse proxy
+#TrustedProxies:
+#  - 127.0.0.1
+#  - 10.0.0.0/8

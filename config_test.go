@@ -69,3 +69,27 @@ func defaultAppConfig() *AppConfig {
 		ServerPort: 8080,
 	}
 }
+
+func TestTrustedProxiesValidation(t *testing.T) {
+	config := defaultAppConfig()
+	config.DbSchema = "public"
+	config.TrustedProxies = []string{"127.0.0.1", "10.0.0.0/8"}
+	if !config.verifyConfiguration() {
+		t.Fatalf("Valid trusted proxies must be accepted!")
+	}
+
+	config.TrustedProxies = []string{"http://proxy.example:3128"}
+	if config.verifyConfiguration() {
+		t.Fatalf("A proxy url must not be accepted as trusted proxy!")
+	}
+
+	config.TrustedProxies = []string{"10.0.0.0/64"}
+	if config.verifyConfiguration() {
+		t.Fatalf("An invalid cidr range must not be accepted as trusted proxy!")
+	}
+
+	config.TrustedProxies = nil
+	if !config.verifyConfiguration() {
+		t.Fatalf("Empty trusted proxies must be accepted!")
+	}
+}

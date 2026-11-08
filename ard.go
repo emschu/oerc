@@ -145,7 +145,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		var details, err = getArdAPIResponse[ardAPIProgramItemDetail](programEntry.URL)
 		if err != nil {
 			appLog(fmt.Sprintf("error in call to ard API URL '%s': %v", programEntry.URL, err))
-			return
+			continue
 		}
 
 		programEntry.Homepage = trimAndSanitizeString(details.Video.WebUrl)
@@ -180,13 +180,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		}
 
 		if len(programEntry.ImageLinks) > 0 {
-			for _, img := range programEntry.ImageLinks {
-				if !ardImageLinkMatcher.MatchString(img.URL) && !ardImageLinkMatcher2.MatchString(img.URL) {
-					appLog(fmt.Sprintf("Found invalid image link '%s' for program entry with hash '%s'. Skipping.", img.URL, programEntry.Hash))
-					atomic.AddUint64(&status.TotalSkippedPE, 1)
-					continue
-				}
-			}
+			programEntry.ImageLinks = filterValidArdImageLinks(programEntry.ImageLinks)
 		}
 
 		programEntry.saveProgramEntryRecord(db)
@@ -229,11 +223,18 @@ func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ar
 func getArdAPIResponse[T any](url string) (*T, error) {
 	headers := map[string]string{}
 	resp, err := doGetRequest(url, headers, 3)
-	if resp == nil || err != nil {
+	if err != nil {
 		errMsg := fmt.Sprintf("Problem fetching URL '%s' with error '%v'", url, err)
 		appLog(errMsg)
 		log.Println(errMsg)
 		return nil, err
+	}
+	if resp == nil {
+		// doGetRequest can return (nil, nil) after exhausted retries with an empty body
+		errMsg := fmt.Sprintf("No response received for URL '%s'", url)
+		appLog(errMsg)
+		log.Println(errMsg)
+		return nil, fmt.Errorf("no response received for url '%s'", url)
 	}
 	var response T
 	jsonErr := json.Unmarshal([]byte(*resp), &response)
@@ -251,11 +252,18 @@ func getArdAPIResponseForTvShows[T any](url string) (*T, error) {
 		"Host": ardMediathekAPIHost,
 	}
 	resp, err := doGetRequest(url, headers, 3)
-	if resp == nil || err != nil {
+	if err != nil {
 		errMsg := fmt.Sprintf("Problem fetching URL '%s' with error '%v'", url, err)
 		appLog(errMsg)
 		log.Println(errMsg)
 		return nil, err
+	}
+	if resp == nil {
+		// doGetRequest can return (nil, nil) after exhausted retries with an empty body
+		errMsg := fmt.Sprintf("No response received for URL '%s'", url)
+		appLog(errMsg)
+		log.Println(errMsg)
+		return nil, fmt.Errorf("no response received for url '%s'", url)
 	}
 	var response T
 	jsonErr := json.Unmarshal([]byte(*resp), &response)
@@ -266,6 +274,28 @@ func getArdAPIResponseForTvShows[T any](url string) (*T, error) {
 		return nil, jsonErr
 	}
 	return &response, nil
+}
+
+// ardPageCount calculates the number of pages needed for the given amount of elements,
+// integer division before the ceiling would undercount the last partial page
+func ardPageCount(totalElements int, pageSize int) int {
+	if pageSize <= 0 || totalElements <= 0 {
+		return 0
+	}
+	return int(math.Ceil(float64(totalElements) / float64(pageSize)))
+}
+
+// filterValidArdImageLinks removes image links that do not match the known ard image url patterns
+func filterValidArdImageLinks(imageLinks []ImageLink) []ImageLink {
+	validImageLinks := make([]ImageLink, 0, len(imageLinks))
+	for _, img := range imageLinks {
+		if !ardImageLinkMatcher.MatchString(img.URL) && !ardImageLinkMatcher2.MatchString(img.URL) {
+			appLog(fmt.Sprintf("Found invalid image link '%s'. Removing it from the program entry.", img.URL))
+			continue
+		}
+		validImageLinks = append(validImageLinks, img)
+	}
+	return validImageLinks
 }
 
 // method to fetch all tv show data
@@ -292,10 +322,10 @@ func (a *ARDParser) fetchTVShows() {
 		}
 		var pageSizeLimit = 200
 		var totalElementsOfCategory = response.Pagination.TotalElements
-		var pageCount = int(math.Ceil(float64(totalElementsOfCategory / pageSizeLimit)))
+		var pageCount = ardPageCount(totalElementsOfCategory, pageSizeLimit)
 
-		for page := -1; page < pageCount; page++ {
-			singlePageURL := fmt.Sprintf("%s?pageSize=%d&pageNumber=%d", apiURL, pageSizeLimit, page+1)
+		for page := range pageCount {
+			singlePageURL := fmt.Sprintf("%s?pageSize=%d&pageNumber=%d", apiURL, pageSizeLimit, page)
 			response, err = getArdAPIResponseForTvShows[ardAPITvShowResponse](singlePageURL)
 			if err != nil || response == nil {
 				appLog(fmt.Sprintf("Problem fetching URL for tv show:'%s'", singlePageURL))

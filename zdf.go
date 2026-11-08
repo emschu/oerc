@@ -108,16 +108,10 @@ func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 			Preload("ImageLinks").
 			Find(&programEntry)
 		programEntry.Hash = hash
-		if programEntry.ID >= 0 && programEntry.isRecentlyUpdated() {
+		if programEntry.ID != 0 && programEntry.isRecentlyUpdated() {
 			atomic.AddUint64(&status.TotalSkippedPE, 1)
 			continue
 		}
-		_, ok := pendingHashes.Load(hash)
-		if ok {
-			// the same hash is already getting added
-			continue
-		}
-		pendingHashes.Store(hash, true)
 
 		programEntry.TechnicalID = broadcast.PosID
 		begin := broadcast.EffectiveAirtimeBegin
@@ -134,6 +128,15 @@ func (z *ZDFParser) handleDay(channel Channel, day time.Time) {
 			appLog(fmt.Sprintf("Error fetching zdf program entry at POSID '%s'. Invalid airtime begin or end date.", broadcast.PosID))
 			continue
 		}
+
+		// mark the hash as pending only after all validations passed, so that a
+		// skipped entry cannot block the same hash for the rest of the process
+		_, ok := pendingHashes.Load(hash)
+		if ok {
+			// the same hash is already getting added
+			continue
+		}
+		pendingHashes.Store(hash, true)
 
 		programEntry.StartDateTime = &begin
 		programEntry.EndDateTime = &end

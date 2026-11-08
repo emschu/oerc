@@ -17,6 +17,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"gorm.io/driver/sqlite"
@@ -32,17 +34,62 @@ func setupInMemoryDbForTesting() {
 	setupPersistence()
 }
 
+// setupIsolatedSqliteForTesting creates a temporary isolated sqlite database for
+// testing, the database and the configuration are restored on test cleanup
+func setupIsolatedSqliteForTesting(t *testing.T) {
+	t.Helper()
+	tmpDir, err := os.MkdirTemp("", "oerc-isolated-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	t.Cleanup(func() {
+		os.RemoveAll(tmpDir)
+	})
+
+	origConf := appConf
+	t.Cleanup(func() {
+		if sqlDB, err := getDb().DB(); err == nil {
+			sqlDB.Close()
+		}
+		dBReference = nil
+		appConf = origConf
+	})
+
+	appConf = *defaultAppConfig()
+	appConf.DbType = "sqlite"
+	appConf.DbHost = filepath.Join(tmpDir, "isolated.sqlite")
+	appConf.TimeZone = "UTC"
+	dBReference = nil
+	setupPersistence()
+}
+
+// mustGetChannels fetches the channels and fails the test on database errors
+func mustGetChannels(t *testing.T) *[]Channel {
+	t.Helper()
+	channels, err := getChannels()
+	if err != nil {
+		t.Fatalf("error fetching channels: %v", err)
+	}
+	return channels
+}
+
 func TestSetupPersistence(t *testing.T) {
 	verboseGlobal = true
 	setupInMemoryDbForTesting()
 
 	// test channels are set up
-	channels := getChannels()
+	channels, err := getChannels()
+	if err != nil {
+		t.Fatalf("error fetching channels: %v", err)
+	}
 	if len(*channels) != 27 {
 		t.Fatalf("Invalid number of channels after db setup: %d.\n", len(*channels))
 	}
 	// test channel families are set up
-	channelFamilies := getChannelFamilies()
+	channelFamilies, err := getChannelFamilies()
+	if err != nil {
+		t.Fatalf("error fetching channel families: %v", err)
+	}
 	if len(*channelFamilies) != 4 {
 		t.Fatalf("Invalid number of channel families after db setup: %d", len(*channelFamilies))
 	}

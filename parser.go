@@ -68,8 +68,13 @@ func newDefaultDateRangeHandler() dateRangeHandler {
 }
 
 func newDefaultDateRangeHandlerPadded(paddingDays uint) dateRangeHandler {
+	// avoid an unsigned underflow if DaysInPast is smaller than the padding
+	daysInPast := uint(0)
+	if GetAppConf().DaysInPast > paddingDays {
+		daysInPast = GetAppConf().DaysInPast - paddingDays
+	}
 	return &defaultDateRangeHandler{
-		DaysInPast:   GetAppConf().DaysInPast - paddingDays,
+		DaysInPast:   daysInPast,
 		DaysInFuture: GetAppConf().DaysInFuture + paddingDays,
 	}
 }

@@ -62,10 +62,9 @@ func SearchProgram() {
 	var excludedChannelIDs = getExcludedChannelsFromSearch(db)
 
 	var programEntryList = make([]ProgramEntry, 0)
-	programResponse := getProgramOf(&tStart, &tEnd, nil)
-
-	if programResponse == nil {
-		log.Fatalf("Could not retrieve program for date range '%s'-'%s'. Please fetch the program at first.\n", tStart, tEnd)
+	programResponse, err := getProgramOf(&tStart, &tEnd, nil)
+	if err != nil || programResponse == nil {
+		log.Printf("Could not retrieve program for date range '%s'-'%s'. Please fetch the program at first. Error: %v\n", tStart, tEnd, err)
 		return
 	}
 

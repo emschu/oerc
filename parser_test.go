@@ -86,3 +86,31 @@ func TestDaysInFuture(t *testing.T) {
 		t.Fatalf("Invalid calculation!")
 	}
 }
+
+func TestNewDefaultDateRangeHandlerPaddedUnderflow(t *testing.T) {
+	origConf := appConf
+	defer func() { appConf = origConf }()
+
+	appConf.DaysInPast = 0
+	appConf.DaysInFuture = 7
+
+	handler, ok := newDefaultDateRangeHandlerPadded(1).(*defaultDateRangeHandler)
+	if !ok {
+		t.Fatalf("unexpected handler type")
+	}
+	if handler.DaysInPast != 0 {
+		t.Fatalf("days in past must be capped at 0 instead of underflowing, was %d", handler.DaysInPast)
+	}
+	if handler.DaysInFuture != 8 {
+		t.Fatalf("days in future must be padded, was %d", handler.DaysInFuture)
+	}
+
+	appConf.DaysInPast = 5
+	handler, ok = newDefaultDateRangeHandlerPadded(1).(*defaultDateRangeHandler)
+	if !ok {
+		t.Fatalf("unexpected handler type")
+	}
+	if handler.DaysInPast != 4 {
+		t.Fatalf("days in past must be reduced by the padding, was %d", handler.DaysInPast)
+	}
+}

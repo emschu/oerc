@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -179,7 +180,16 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 
 		var url string
 		url, _ = detailLink.Attr("href")
-		url = fmt.Sprintf("%s/%s", orfProgramHostWithPrefix, url)
+		if strings.TrimSpace(url) == "" {
+			// without a link there is no valid program entry url to process
+			return
+		}
+		resolvedURL, urlErr := resolveOrfURL(url)
+		if urlErr != nil {
+			appLog(fmt.Sprintf("Unexpected/Invalid orf program url '%s'. Skipping entry.", trimAndSanitizeString(url)))
+			return
+		}
+		url = resolvedURL
 
 		if len(url) > 0 && !orfProgramEntryLinkMatcher.MatchString(url) {
 			appLog(fmt.Sprintf("Unexpected/Invalid orf program entry on page '%s'. Skipping entry with url '%s'.",
@@ -229,7 +239,9 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 		}
 
 		programEntry.Title = title
-		programEntry.Description = description + "<br/>"
+		if len(description) > 0 {
+			programEntry.Description = description + "<br/>"
+		}
 		programEntry.ChannelFamily = o.ChannelFamily
 		programEntry.ChannelFamilyID = o.ChannelFamily.ID
 		programEntry.Channel = channel
@@ -267,7 +279,16 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 		imageLinks := make([]ImageLink, 0)
 		element.ForEach("figure.broadcast-image img", func(_ int, imageElement *colly.HTMLElement) {
 			imgLink := imageElement.Attr("src")
-			imgLink = fmt.Sprintf("%s%s", orfProgramHostWithPrefix, imgLink)
+			if strings.TrimSpace(imgLink) == "" {
+				// empty image sources must not become the host root url
+				return
+			}
+			resolvedImgLink, imgErr := resolveOrfURL(imgLink)
+			if imgErr != nil {
+				appLog(fmt.Sprintf("Unexpected/Invalid orf image url '%s'. Skipping image.", trimAndSanitizeString(imgLink)))
+				return
+			}
+			imgLink = resolvedImgLink
 
 			for _, existingImgLinkEntry := range programEntry.ImageLinks {
 				if existingImgLinkEntry.URL == imgLink {
@@ -290,9 +311,36 @@ func (o *ORFParser) handleDay(channel Channel, day time.Time) {
 }
 
 func (o *ORFParser) getDaysBetween(day time.Time, now time.Time) int {
-	first := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC)
-	second := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	location, _ := time.LoadLocation(GetAppConf().TimeZone)
+	// compare the calendar days in the configured time zone, not in the
+	// potentially different system time zone of the parameters
+	dayLocal := day.In(location)
+	nowLocal := now.In(location)
+	// noon in UTC avoids daylight saving boundaries in the day difference
+	first := time.Date(dayLocal.Year(), dayLocal.Month(), dayLocal.Day(), 12, 0, 0, 0, time.UTC)
+	second := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 12, 0, 0, 0, time.UTC)
 	return int(first.Sub(second).Hours() / 24)
+}
+
+// resolveOrfURL resolves a relative or protocol-relative url against the orf
+// program host, so that no doubled host prefixes are generated
+func resolveOrfURL(href string) (string, error) {
+	trimmed := strings.TrimSpace(href)
+	if trimmed == "" {
+		return "", fmt.Errorf("empty orf url")
+	}
+	base, err := url.Parse(orfProgramHostWithPrefix + "/")
+	if err != nil {
+		return "", err
+	}
+	resolved, err := base.Parse(trimmed)
+	if err != nil {
+		return "", err
+	}
+	if resolved.Host == "" {
+		return "", fmt.Errorf("invalid orf url '%s'", href)
+	}
+	return resolved.String(), nil
 }
 
 func (o *ORFParser) isDateValidToFetch(day *time.Time) (bool, error) {

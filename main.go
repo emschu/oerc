@@ -93,6 +93,9 @@ func main() {
 					// update counters if something has happened
 					showFetchResults(startTime, nil, nil)
 
+					// refresh the materialized status view after the data changed
+					refreshMaterializedView()
+
 					infoLog(fmt.Sprintf("Finish of fetch process at %s", time.Now().Format(time.RFC3339)))
 
 					return nil
@@ -135,6 +138,9 @@ func main() {
 					if rangeStart == nil || rangeEnd == nil {
 						return fmt.Errorf("invalid date range start or end given")
 					}
+					if rangeStart.After(*rangeEnd) {
+						return fmt.Errorf("invalid date range, the start date is after the end date")
+					}
 
 					FetchAll(newSpecificDateRangeHandler(*rangeStart, *rangeEnd))
 
@@ -142,6 +148,9 @@ func main() {
 
 					// update counters if something has happened
 					showFetchResults(startTime, rangeStart, rangeEnd)
+
+					// refresh the materialized status view after the data changed
+					refreshMaterializedView()
 
 					infoLog(fmt.Sprintf("Finish of fetch-range process at %s", time.Now().Format(time.RFC3339)))
 
@@ -158,7 +167,10 @@ func main() {
 
 					setupMaterializedView()
 
-					object := getStatusResponse()
+					object, err := getStatusResponse()
+					if err != nil || object == nil {
+						return fmt.Errorf("error fetching application status data from database: %v", err)
+					}
 					object.TvChannels = nil
 					object.TvChannelFamilies = nil
 
@@ -214,6 +226,9 @@ func main() {
 					defer Shutdown()
 
 					SearchProgram()
+
+					// refresh the materialized status view after the data changed
+					refreshMaterializedView()
 
 					setSetting(settingKeyLastSearch, fmt.Sprintf("%s", startTime.Format(time.RFC3339)))
 

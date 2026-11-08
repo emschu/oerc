@@ -160,14 +160,14 @@ func (s *SRFParser) handleDay(channel Channel, day time.Time) {
 			if entry.ID != 0 {
 				if entry.isRecentlyUpdated() {
 					atomic.AddUint64(&status.TotalSkippedPE, 1)
-					return
+					continue
 				}
 				programEntry.ID = entry.ID
 			}
 
 			if programEntry.EndDateTime == nil || programEntry.EndDateTime.Before(*programEntry.StartDateTime) {
 				appLog(fmt.Sprintf("Problem with end or start date in program entry with hash '%s'.", programEntry.Hash))
-				return
+				continue
 			}
 
 			if len(srfEntry.Genre) > 0 {
