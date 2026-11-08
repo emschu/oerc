@@ -60,11 +60,11 @@ build: ## build dev version of application
 
 .PHONY: lint
 lint: ## linting the code
-	$(GO) fmt ./...
 	$(GO_REVIVE) .
 
 .PHONY: lint-fix
 lint-fix: ## lint-fix the code
+	$(GO) fmt ./...
 	$(GO) fix ./...
 
 .PHONY: test

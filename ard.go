@@ -91,10 +91,10 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 	for _, item := range flattenedProgramItems {
 		programEntry := ProgramEntry{}
 
-		eid := strings.TrimSpace(item.Id)
+		eid := strings.TrimSpace(item.ID)
 		programEntry.Hash = buildHash([]string{
 			eid,
-			item.NumericId,
+			item.NumericID,
 			fmt.Sprintf("%d", int(channel.ID)),
 			fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
 			"program-entry",
@@ -148,7 +148,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 			continue
 		}
 
-		programEntry.Homepage = trimAndSanitizeString(details.Video.WebUrl)
+		programEntry.Homepage = trimAndSanitizeString(details.Video.WebURL)
 		if programEntry.Homepage != "" && !ardMediathekMatcher.Match([]byte(programEntry.Homepage)) {
 			appLog(fmt.Sprintf("Invalid mediathek page '%s' for program entry with hash '%s'. Skipping.", programEntry.Homepage, programEntry.Hash))
 			atomic.AddUint64(&status.TotalSkippedPE, 1)
@@ -163,7 +163,7 @@ func (a *ARDParser) handleDay(channel Channel, day time.Time) {
 		programEntry.considerTagExists(&tag)
 
 		// image links
-		imageURL := details.Video.ImageUrl
+		imageURL := details.Video.ImageURL
 		if imageURL != "" && len(imageURL) > 5 {
 			programEntry.considerImageLinkExists(imageURL)
 		} else {
@@ -208,7 +208,7 @@ func (a *ARDParser) fetchProgramItemsOfDay(channel Channel, day time.Time) ([]ar
 		for _, slot := range singleChannel.TimeSlots {
 			for _, item := range slot {
 				// filter for items of the channel we are interested in
-				if item.Channel.MainChannelId == channel.TechnicalID {
+				if item.Channel.MainChannelID == channel.TechnicalID {
 					flattenedProgramItems = append(flattenedProgramItems, item)
 				}
 			}
@@ -308,8 +308,6 @@ func (a *ARDParser) fetchTVShows() {
 	// build set of urls to fetch tv shows from
 	var tvShowURLs = make([]string, 0)
 	for _, category := range ardTvShowCategories {
-		if category == "" {
-		}
 		categoryString := strings.TrimSuffix(base64.StdEncoding.EncodeToString([]byte("Das Erste."+category)), "=")
 		tvShowURLs = append(tvShowURLs, fmt.Sprintf("%s%s", ardMediathekAPITvShowPath, categoryString))
 	}
@@ -335,7 +333,7 @@ func (a *ARDParser) fetchTVShows() {
 				var hash = buildHash([]string{
 					fmt.Sprintf("%d", int(a.ChannelFamily.ID)),
 					trimAndSanitizeString(teaser.LongTitle),
-					trimAndSanitizeString(teaser.Id),
+					trimAndSanitizeString(teaser.ID),
 					"tv-show",
 				})
 				url := teaser.Links.Self.Href
@@ -345,7 +343,7 @@ func (a *ARDParser) fetchTVShows() {
 						URL:             url,
 						Hash:            hash,
 						Homepage:        url,
-						TechnicalID:     teaser.Id,
+						TechnicalID:     teaser.ID,
 						ChannelFamily:   a.ChannelFamily,
 						ChannelFamilyID: a.ChannelFamily.ID,
 					},
@@ -417,9 +415,9 @@ type ardDailyProgramOfChannelResponse struct {
 	Channels      []ardAPIChannel `json:"channels"`
 	TrackingPiano struct {
 		PageTitle         string `json:"page_title"`
-		PageInstitutionId string `json:"page_institution_id"`
+		PageInstitutionID string `json:"page_institution_id"`
 		PageInstitution   string `json:"page_institution"`
-		PageId            string `json:"page_id"`
+		PageID            string `json:"page_id"`
 		PageChapter2      string `json:"page_chapter2"`
 		PageChapter1      string `json:"page_chapter1"`
 	} `json:"trackingPiano"`
@@ -433,11 +431,11 @@ type ardDailyProgramOfChannelResponse struct {
 }
 
 type ardAPIChannel struct {
-	Id            string `json:"id"`
+	ID            string `json:"id"`
 	TrackingPiano struct {
 		WidgetType  string `json:"widget_type"`
 		WidgetTitle string `json:"widget_title"`
-		WidgetId    string `json:"widget_id"`
+		WidgetID    string `json:"widget_id"`
 	} `json:"trackingPiano"`
 	TimeSlots          [][]ardAPIChannelProgramItem `json:"timeSlots"`
 	PublicationService struct {
@@ -446,7 +444,7 @@ type ardAPIChannel struct {
 	} `json:"publicationService"`
 	Crid             string `json:"crid"`
 	LocalChannelList []struct {
-		Id           string `json:"id"`
+		ID           string `json:"id"`
 		Name         string `json:"name"`
 		Crid         string `json:"crid"`
 		LocalDefault bool   `json:"localDefault,omitempty"`
@@ -454,7 +452,7 @@ type ardAPIChannel struct {
 }
 
 type ardAPIChannelProgramItem struct {
-	Id    string `json:"id"`
+	ID    string `json:"id"`
 	Links struct {
 		Self struct {
 			Type  string `json:"type"`
@@ -464,7 +462,7 @@ type ardAPIChannelProgramItem struct {
 		Target struct {
 			Type    string `json:"type"`
 			Title   string `json:"title"`
-			UrlId   string `json:"urlId"`
+			URLID   string `json:"urlId"`
 			Partner string `json:"partner"`
 		} `json:"target"`
 	} `json:"links"`
@@ -481,18 +479,18 @@ type ardAPIChannelProgramItem struct {
 		} `json:"aspect16x9"`
 	} `json:"images"`
 	Channel struct {
-		Id            string `json:"id"`
+		ID            string `json:"id"`
 		Name          string `json:"name"`
-		MainChannelId string `json:"main_channel_id"`
+		MainChannelID string `json:"main_channel_id"`
 		LocalDefault  bool   `json:"localDefault,omitempty"`
 	} `json:"channel"`
 	TrackingPiano struct {
 		WidgetSection       string `json:"widget_section"`
 		TeaserTitle         string `json:"teaser_title"`
 		TeaserRecommended   bool   `json:"teaser_recommended"`
-		TeaserInstitutionId string `json:"teaser_institution_id"`
+		TeaserInstitutionID string `json:"teaser_institution_id"`
 		TeaserInstitution   string `json:"teaser_institution"`
-		TeaserId            string `json:"teaser_id"`
+		TeaserID            string `json:"teaser_id"`
 		TeaserContentType   string `json:"teaser_content_type"`
 		TeaserRegion        string `json:"teaser_region,omitempty"`
 	} `json:"trackingPiano"`
@@ -506,7 +504,7 @@ type ardAPIChannelProgramItem struct {
 	CoreSubline           string    `json:"coreSubline"`
 	CoreTitle             string    `json:"coreTitle"`
 	LastMod               time.Time `json:"lastMod"`
-	NumericId             string    `json:"numericId"`
+	NumericID             string    `json:"numericId"`
 	Subline               string    `json:"subline,omitempty"`
 	Synopsis              string    `json:"synopsis,omitempty"`
 	Live                  bool      `json:"live,omitempty"`
@@ -516,7 +514,7 @@ type ardAPIChannelProgramItem struct {
 	SplitPart             int       `json:"splitPart,omitempty"`
 	IsLocal               bool      `json:"isLocal,omitempty"`
 	FollowUps             []struct {
-		Id    string `json:"id"`
+		ID    string `json:"id"`
 		Links struct {
 			Self struct {
 				Type  string `json:"type"`
@@ -526,7 +524,7 @@ type ardAPIChannelProgramItem struct {
 			Target struct {
 				Type    string `json:"type"`
 				Title   string `json:"title"`
-				UrlId   string `json:"urlId"`
+				URLID   string `json:"urlId"`
 				Partner string `json:"partner"`
 			} `json:"target"`
 		} `json:"links"`
@@ -543,17 +541,17 @@ type ardAPIChannelProgramItem struct {
 			} `json:"aspect16x9"`
 		} `json:"images"`
 		Channel struct {
-			Id            string `json:"id"`
+			ID            string `json:"id"`
 			Name          string `json:"name"`
-			MainChannelId string `json:"main_channel_id"`
+			MainChannelID string `json:"main_channel_id"`
 		} `json:"channel"`
 		TrackingPiano struct {
 			WidgetSection       string `json:"widget_section"`
 			TeaserTitle         string `json:"teaser_title"`
 			TeaserRecommended   bool   `json:"teaser_recommended"`
-			TeaserInstitutionId string `json:"teaser_institution_id"`
+			TeaserInstitutionID string `json:"teaser_institution_id"`
 			TeaserInstitution   string `json:"teaser_institution"`
-			TeaserId            string `json:"teaser_id"`
+			TeaserID            string `json:"teaser_id"`
 			TeaserContentType   string `json:"teaser_content_type"`
 		} `json:"trackingPiano"`
 		CreationDate          time.Time `json:"creationDate"`
@@ -564,7 +562,7 @@ type ardAPIChannelProgramItem struct {
 		CoreSubline           string    `json:"coreSubline"`
 		CoreTitle             string    `json:"coreTitle"`
 		LastMod               time.Time `json:"lastMod"`
-		NumericId             string    `json:"numericId"`
+		NumericID             string    `json:"numericId"`
 		Subline               string    `json:"subline"`
 		Synopsis              string    `json:"synopsis"`
 		BinaryFeatures        []string  `json:"binaryFeatures,omitempty"`
@@ -574,7 +572,7 @@ type ardAPIChannelProgramItem struct {
 }
 
 type ardAPIProgramItemDetail struct {
-	Id    string `json:"id"`
+	ID    string `json:"id"`
 	Links struct {
 		Self struct {
 			Type  string `json:"type"`
@@ -584,7 +582,7 @@ type ardAPIProgramItemDetail struct {
 		Target struct {
 			Type    string `json:"type"`
 			Title   string `json:"title"`
-			UrlId   string `json:"urlId"`
+			URLID   string `json:"urlId"`
 			Partner string `json:"partner"`
 		} `json:"target"`
 	} `json:"links"`
@@ -592,24 +590,24 @@ type ardAPIProgramItemDetail struct {
 	Title    string `json:"title"`
 	Duration int    `json:"duration"`
 	Channel  struct {
-		Id            string `json:"id"`
+		ID            string `json:"id"`
 		Name          string `json:"name"`
 		Crid          string `json:"crid"`
-		MainChannelId string `json:"main_channel_id"`
+		MainChannelID string `json:"main_channel_id"`
 	} `json:"channel"`
 	TrackingPiano struct {
 		WidgetSection       string `json:"widget_section"`
 		TeaserTitle         string `json:"teaser_title"`
 		TeaserRecommended   bool   `json:"teaser_recommended"`
-		TeaserInstitutionId string `json:"teaser_institution_id"`
+		TeaserInstitutionID string `json:"teaser_institution_id"`
 		TeaserInstitution   string `json:"teaser_institution"`
-		TeaserId            string `json:"teaser_id"`
+		TeaserID            string `json:"teaser_id"`
 		TeaserContentType   string `json:"teaser_content_type"`
 	} `json:"trackingPiano"`
 	CreationDate time.Time `json:"creationDate"`
 	Synopsis     string    `json:"synopsis"`
 	Subline      string    `json:"subline"`
-	NumericId    string    `json:"numericId"`
+	NumericID    string    `json:"numericId"`
 	Images       struct {
 		Aspect16X9 struct {
 			Title        string `json:"title"`
@@ -636,7 +634,7 @@ type ardAPIProgramItemDetail struct {
 	HeightUnits int `json:"heightUnits"`
 	Grouping    struct {
 		Title string `json:"title"`
-		Url   string `json:"url"`
+		URL   string `json:"url"`
 	} `json:"grouping"`
 	CoreTitle      string    `json:"coreTitle"`
 	BroadcastedOn  time.Time `json:"broadcastedOn"`
@@ -646,51 +644,51 @@ type ardAPIProgramItemDetail struct {
 	CoreSubline    string    `json:"coreSubline"`
 	LastMod        time.Time `json:"lastMod"`
 	Video          struct {
-		AvailableFrom time.Time   `json:"availableFrom"`
-		AvailableTo   time.Time   `json:"availableTo"`
-		BroadcastedOn time.Time   `json:"broadcastedOn"`
-		CoreAssetType string      `json:"coreAssetType"`
-		CreatedAt     time.Time   `json:"createdAt"`
-		CreatedBy     interface{} `json:"createdBy"`
-		CreationBrid  interface{} `json:"creationBrid"`
-		Duration      int         `json:"duration"`
-		EpisodeNumber interface{} `json:"episodeNumber"`
+		AvailableFrom time.Time `json:"availableFrom"`
+		AvailableTo   time.Time `json:"availableTo"`
+		BroadcastedOn time.Time `json:"broadcastedOn"`
+		CoreAssetType string    `json:"coreAssetType"`
+		CreatedAt     time.Time `json:"createdAt"`
+		CreatedBy     any       `json:"createdBy"`
+		CreationBrid  any       `json:"creationBrid"`
+		Duration      int       `json:"duration"`
+		EpisodeNumber any       `json:"episodeNumber"`
 		ExternalMedia []struct {
 			MediaType string `json:"mediaType"`
 			Ratio     string `json:"ratio"`
 			Type      string `json:"type"`
-			Url       string `json:"url"`
+			URL       string `json:"url"`
 			Versions  []struct {
 				Ratio string `json:"ratio"`
-				Url   string `json:"url"`
+				URL   string `json:"url"`
 			} `json:"versions"`
 		} `json:"externalMedia"`
 		Extras []struct {
-			Index interface{} `json:"index"`
-			Text  string      `json:"text"`
-			Type  string      `json:"type"`
+			Index any    `json:"index"`
+			Text  string `json:"text"`
+			Type  string `json:"type"`
 		} `json:"extras"`
-		Fsk             string        `json:"fsk"`
-		GroupingId      string        `json:"groupingId"`
-		GroupingTitle   string        `json:"groupingTitle"`
-		GroupingWebUrl  string        `json:"groupingWebUrl"`
-		Id              string        `json:"id"`
-		ImageCredit     string        `json:"imageCredit"`
-		ImageUrl        string        `json:"imageUrl"`
-		IsTrailer       bool          `json:"isTrailer"`
-		SeasonNumber    interface{}   `json:"seasonNumber"`
-		SingleReport    bool          `json:"singleReport"`
-		Source          string        `json:"source"`
-		SourceId        string        `json:"sourceId"`
-		SourceUpdatedAt time.Time     `json:"sourceUpdatedAt"`
-		TagIds          []interface{} `json:"tagIds"`
+		Fsk             string    `json:"fsk"`
+		GroupingID      string    `json:"groupingId"`
+		GroupingTitle   string    `json:"groupingTitle"`
+		GroupingWebURL  string    `json:"groupingWebUrl"`
+		ID              string    `json:"id"`
+		ImageCredit     string    `json:"imageCredit"`
+		ImageURL        string    `json:"imageUrl"`
+		IsTrailer       bool      `json:"isTrailer"`
+		SeasonNumber    any       `json:"seasonNumber"`
+		SingleReport    bool      `json:"singleReport"`
+		Source          string    `json:"source"`
+		SourceID        string    `json:"sourceId"`
+		SourceUpdatedAt time.Time `json:"sourceUpdatedAt"`
+		TagIDs          []any     `json:"tagIds"`
 		Text            struct {
 			Short string `json:"short"`
 		} `json:"text"`
-		Title     string      `json:"title"`
-		UpdatedAt time.Time   `json:"updatedAt"`
-		UpdatedBy interface{} `json:"updatedBy"`
-		WebUrl    string      `json:"webUrl"`
+		Title     string    `json:"title"`
+		UpdatedAt time.Time `json:"updatedAt"`
+		UpdatedBy any       `json:"updatedBy"`
+		WebURL    string    `json:"webUrl"`
 	} `json:"video"`
 }
 
@@ -707,7 +705,7 @@ type ardAPITvShowResponse struct {
 		AvailableSeasons []string `json:"availableSeasons"`
 		BinaryFeatures   []string `json:"binaryFeatures"`
 		CoreAssetType    string   `json:"coreAssetType"`
-		Id               string   `json:"id"`
+		ID               string   `json:"id"`
 		Images           struct {
 			Aspect16X9 struct {
 				Alt          string `json:"alt"`
@@ -750,21 +748,21 @@ type ardAPITvShowResponse struct {
 			} `json:"logo"`
 			PublisherType string `json:"publisherType"`
 			Partner       string `json:"partner"`
-			Id            string `json:"id"`
-			CoreId        string `json:"coreId"`
+			ID            string `json:"id"`
+			CoreID        string `json:"coreId"`
 		} `json:"publicationService"`
 		Links struct {
 			Self struct {
-				Id      string `json:"id"`
-				UrlId   string `json:"urlId"`
+				ID      string `json:"id"`
+				URLID   string `json:"urlId"`
 				Title   string `json:"title"`
 				Href    string `json:"href"`
 				Type    string `json:"type"`
 				Partner string `json:"partner"`
 			} `json:"self"`
 			Target struct {
-				Id      string `json:"id"`
-				UrlId   string `json:"urlId"`
+				ID      string `json:"id"`
+				URLID   string `json:"urlId"`
 				Title   string `json:"title"`
 				Href    string `json:"href"`
 				Type    string `json:"type"`
@@ -775,20 +773,20 @@ type ardAPITvShowResponse struct {
 		TitleVisible  bool   `json:"titleVisible"`
 		TrackingPiano struct {
 			TeaserContentType   string `json:"teaser_content_type"`
-			TeaserId            string `json:"teaser_id"`
+			TeaserID            string `json:"teaser_id"`
 			TeaserInstitution   string `json:"teaser_institution"`
-			TeaserInstitutionId string `json:"teaser_institution_id"`
+			TeaserInstitutionID string `json:"teaser_institution_id"`
 			TeaserTitle         string `json:"teaser_title"`
 		} `json:"trackingPiano"`
 		Type string `json:"type"`
 	} `json:"teasers"`
 	UserVisibility string `json:"userVisibility"`
 	AZContent      bool   `json:"aZContent"`
-	Id             string `json:"id"`
+	ID             string `json:"id"`
 	Links          struct {
 		Self struct {
-			Id      string `json:"id"`
-			UrlId   string `json:"urlId"`
+			ID      string `json:"id"`
+			URLID   string `json:"urlId"`
 			Title   string `json:"title"`
 			Href    string `json:"href"`
 			Type    string `json:"type"`
@@ -801,7 +799,7 @@ type ardAPITvShowResponse struct {
 	TitleVisible  bool   `json:"titleVisible"`
 	TrackingPiano struct {
 		TeaserRecommended bool   `json:"teaser_recommended"`
-		WidgetId          string `json:"widget_id"`
+		WidgetID          string `json:"widget_id"`
 		WidgetTitle       string `json:"widget_title"`
 		WidgetTyp         string `json:"widget_typ"`
 	} `json:"trackingPiano"`

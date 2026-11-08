@@ -59,7 +59,7 @@ func TestGetLogEntriesHandlerPagination(t *testing.T) {
 	setupIsolatedSqliteForTesting(t)
 	db := getDb()
 
-	for i := 0; i < 251; i++ {
+	for i := range 251 {
 		if err := db.Create(&LogEntry{Message: fmt.Sprintf("entry %d", i)}).Error; err != nil {
 			t.Fatalf("could not create log entry: %v", err)
 		}
@@ -139,7 +139,7 @@ func TestGetRecommendationsAtPagination(t *testing.T) {
 	channel := getOverlapTestChannel(t)
 	now := time.Now().Truncate(time.Second)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		start := now.Add(time.Duration(i) * time.Hour)
 		end := start.Add(time.Hour)
 		entry := ProgramEntry{
