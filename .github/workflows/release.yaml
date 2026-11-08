@@ -19,84 +19,24 @@ jobs:
         uses: mikepenz/release-changelog-builder-action@v4
         env:
           GITHUB_TOKEN: ${{ github.token }}
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          cp ./bin/windows/oerc.exe ./release-assets/oerc.exe
+          cp ./bin/linux-amd64/oerc ./release-assets/oerc-amd64
+          cp ./bin/linux-386/oerc ./release-assets/oerc-386
+          cp ./bin/linux-arm/oerc ./release-assets/oerc-arm
+          cp ./bin/linux-arm64/oerc ./release-assets/oerc-arm64
+          cp ./bin/linux-armv7/oerc ./release-assets/oerc-armv7
+          cp ./bin/osx-arm64/oerc ./release-assets/oerc-darwin-arm64
+
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: ${{steps.github_release.outputs.changelog}}
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.github_release.outputs.changelog }}
           draft: false
           prerelease: false
-
-      - name: upload windows artifact
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/windows/oerc.exe
-          asset_name: oerc.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
-
-      - name: upload linux artifacts amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/linux-amd64/oerc
-          asset_name: oerc-amd64
-          asset_content_type: application/octet-stream
-
-      - name: upload linux artifacts 386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/linux-386/oerc
-          asset_name: oerc-386
-          asset_content_type: application/octet-stream
-
-      - name: upload linux artifacts arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/linux-arm/oerc
-          asset_name: oerc-arm
-          asset_content_type: application/octet-stream
-
-      - name: upload linux artifacts arm64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/linux-arm64/oerc
-          asset_name: oerc-arm64
-          asset_content_type: application/octet-stream
-
-      - name: upload linux artifacts armv7
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/linux-armv7/oerc
-          asset_name: oerc-armv7
-          asset_content_type: application/octet-stream
-
-      - name: upload darwin artifacts arm64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/osx-arm64/oerc
-          asset_name: oerc-darwin-arm64
-          asset_content_type: application/octet-stream
+          fail_on_unmatched_files: true
+          files: release-assets/*
