@@ -42,7 +42,7 @@ jobs:
       - name: Build oerc and startup server
         run: |
           make setup
-          docker-compose -f docker-compose-ci.yaml up -d --build
+          docker compose -f docker-compose-ci.yaml up -d --build
 
       - name: Run Schemathesis
         run: |
@@ -56,4 +56,4 @@ jobs:
 
       - name: Shutdown containers
         if: always()
-        run: docker-compose -f docker-compose-ci.yaml down
+        run: docker compose -f docker-compose-ci.yaml down
