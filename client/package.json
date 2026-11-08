@@ -18,13 +18,13 @@
     "@angular/platform-browser": "^22.2.5",
     "@angular/platform-browser-dynamic": "^22.2.5",
     "@angular/router": "^22.2.5",
-    "dayjs": "^1.11.19",
+    "dayjs": "^1.11.23",
     "flatpickr": "^4.6.13",
     "rxjs": "^7.5.0",
     "spectre.css": "^0.5.9",
-    "vis-data": "^8.0.3",
-    "vis-timeline": "^8.5.0",
-    "zone.js": "~0.15.1"
+    "vis-data": "^8.0.6",
+    "vis-timeline": "^8.5.6",
+    "zone.js": "~0.16.3"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^22.2.6",
@@ -38,7 +38,7 @@
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "^5.1.0",
-    "karma-jasmine-html-reporter": "^2.2.0",
+    "karma-jasmine-html-reporter": "^2.3.0",
     "typescript": "~6.0.3"
   }
 }
