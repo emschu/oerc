@@ -116,6 +116,6 @@ version: ## populate the current version defined in this make file
 	sed -r -i 's/version\s*=\s*"([0-9]+.[0-9]+.[0-9]+)"/version       = "'$(APP_VERSION_DOT)'"/g' main.go
 	sed -r -i 's/([0-9]+.[0-9]+.[0-9]+, License:)/'$(APP_VERSION_DOT)', License:/g' README.md
 	sed -r -i 's/"version": "([0-9]+.[0-9]+.[0-9]+)"/"version": "'$(APP_VERSION_DOT)'"/g' client/package.json
-	cd client; npm i;
+	cd client; npm ci;
 	make frontend
 	$(GO_RICE) embed-go
