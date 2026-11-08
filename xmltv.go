@@ -27,6 +27,7 @@ import (
 
 // Document XMLTV structure
 type Document struct {
+	XMLName   xml.Name        `xml:"tv"`
 	Channel   []ChannelItem   `xml:"channel"`
 	Programme []ProgrammeItem `xml:"programme"`
 }
@@ -284,9 +285,9 @@ func writeXMLTVToString(doc *Document) (string, error) {
 
 // exportToXMLTV exports program data to XMLTV format
 func exportToXMLTV(rangeStart, rangeEnd time.Time) (*Document, error) {
-	channels := getChannels()
-	if channels == nil {
-		return nil, fmt.Errorf("error fetching channels")
+	channels, err := getChannels()
+	if err != nil || channels == nil {
+		return nil, fmt.Errorf("error fetching channels: %w", err)
 	}
 
 	if verboseGlobal {

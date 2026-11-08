@@ -42,13 +42,23 @@ func StartServer() {
 	r := initRouter()
 	log.Printf("Starting API server...\n")
 	ip := net.ParseIP(GetAppConf().ServerHost)
-	var err error
+	var addr string
 	if ip.To4() == nil {
 		// ipv6
-		err = r.Run(fmt.Sprintf("[%s]:%d", GetAppConf().ServerHost, GetAppConf().ServerPort))
+		addr = fmt.Sprintf("[%s]:%d", GetAppConf().ServerHost, GetAppConf().ServerPort)
 	} else {
-		err = r.Run(fmt.Sprintf("%s:%d", GetAppConf().ServerHost, GetAppConf().ServerPort))
+		addr = fmt.Sprintf("%s:%d", GetAppConf().ServerHost, GetAppConf().ServerPort)
 	}
+	// an explicit http.Server provides timeouts, gin's r.Run() would use none
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      120 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	err := server.ListenAndServe()
 	if err != nil {
 		log.Printf("Problem starting server %v\n", err)
 		return
@@ -67,6 +77,29 @@ func setupMaterializedView() {
 	}
 	if isDebug() {
 		log.Printf("Materialized status view (or regular view for sqlite)")
+	}
+}
+
+// refreshMaterializedView refreshes the materialized status view after the data
+// has changed, e.g. after a fetch run. For sqlite a regular view is used, which
+// is always up to date, so there is nothing to refresh.
+func refreshMaterializedView() {
+	if strings.ToLower(GetAppConf().DbType) != "postgres" {
+		if isDebug() {
+			log.Printf("Debug: Skipping the status view refresh, no materialized view in use\n")
+		}
+		return
+	}
+	db := getDb()
+	var viewExists bool
+	result := db.Raw(`SELECT EXISTS (SELECT 1 FROM pg_matviews WHERE matviewname = 'status_info')`).Scan(&viewExists)
+	if result.Error != nil || !viewExists {
+		// the view does not exist (yet), create it
+		setupMaterializedView()
+		return
+	}
+	if err := db.Exec(`REFRESH MATERIALIZED VIEW status_info`).Error; err != nil {
+		log.Printf("Error refreshing the materialized view status_info: %v\n", err)
 	}
 }
 
@@ -146,17 +179,19 @@ func initRouter() *gin.Engine {
 
 	r.Use(gin.Logger())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	if appConf.ProxyURL != "" {
-		err := r.SetTrustedProxies([]string{appConf.ProxyURL})
+	// trust the configured trusted proxies (ip addresses or cidr ranges) only,
+	// the outbound ProxyUrl setting must not be used for inbound client ip detection
+	if len(appConf.TrustedProxies) > 0 {
+		err := r.SetTrustedProxies(appConf.TrustedProxies)
 		if err != nil {
-			log.Fatal(fmt.Sprintf("Problem to trust proxy url '%s'", appConf.ProxyURL))
+			log.Fatal(fmt.Sprintf("Problem to trust the configured trusted proxies '%s'", strings.Join(appConf.TrustedProxies, ", ")))
 			return nil
 		}
 	} else {
-		// trust no proxies - except the user specified one
+		// trust no proxies by default
 		err := r.SetTrustedProxies(nil)
 		if err != nil {
-			log.Fatal(fmt.Sprint("Problem to trust nil proxy url"))
+			log.Fatal(fmt.Sprint("Problem to disable trusted proxies"))
 			return nil
 		}
 	}
@@ -222,6 +257,8 @@ func initRouter() *gin.Engine {
 	apiV2.DELETE("/log/clear", clearAllLogEntriesHandler)
 	// recommendations
 	apiV2.GET("/recommendations", getRecommendationsHandler)
+	// keywords
+	apiV2.GET("/keywords", getKeywordsHandler)
 	// search
 	apiV2.GET("/search", getSearchHandler)
 	apiV2.GET("/xmltv", getXMLTvHandler)

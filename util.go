@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -57,7 +56,11 @@ var (
 			}).DialContext,
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 100,
-			Proxy:               getHTTPProxy(),
+			// evaluate the configured proxy on each request instead of on package
+			// initialization, because the configuration is loaded afterwards
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return getHTTPProxy()(req)
+			},
 		},
 		Timeout: time.Second * 45,
 	}
@@ -91,7 +94,7 @@ func getDb() *gorm.DB {
 			if !conf.DbSSLEnabled {
 				sslModeStr = "disable"
 			} else {
-				sslModeStr = "enable"
+				sslModeStr = "require"
 			}
 			connectionString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=%s TimeZone=%s",
 				conf.DbHost, conf.DbPort, conf.DbUser, conf.DbName, conf.DbPassword, sslModeStr, appConf.TimeZone)
@@ -317,25 +320,23 @@ func generateDateRangeInPastAndFuture(daysInPast, daysInFuture uint) *[]time.Tim
 	return &dates
 }
 
-// generateDateRangeBetweenDates: get a slice of dates between a and b
+// generateDateRangeBetweenDates: get a slice of dates between a and b (inclusive),
+// both bounds are normalized to midnight and calendar days are used instead of
+// 24 hour blocks, so that daylight saving changes are handled correctly
 func generateDateRangeBetweenDates(startDate time.Time, endDate time.Time) *[]time.Time {
-	daysBetween := endDate.Sub(startDate).Hours() / 24
-	if daysBetween == 0 {
-		return &[]time.Time{
-			time.Now(),
-		}
-	}
-	var firstDate time.Time
-	if startDate.Before(endDate) {
-		firstDate = startDate
-	} else {
+	firstDate := startDate
+	lastDate := endDate
+	if endDate.Before(startDate) {
+		// tolerate reversed ranges
 		firstDate = endDate
+		lastDate = startDate
 	}
-	var dates []time.Time
-	dates = append(dates, firstDate)
+	firstMidnight := time.Date(firstDate.Year(), firstDate.Month(), firstDate.Day(), 0, 0, 0, 0, firstDate.Location())
+	lastMidnight := time.Date(lastDate.Year(), lastDate.Month(), lastDate.Day(), 0, 0, 0, 0, lastDate.Location())
 
-	for i := 1; i <= int(math.Abs(daysBetween)); i++ {
-		dates = append(dates, firstDate.AddDate(0, 0, i))
+	dates := []time.Time{firstMidnight}
+	for current := firstMidnight.AddDate(0, 0, 1); !current.After(lastMidnight); current = current.AddDate(0, 0, 1) {
+		dates = append(dates, current)
 	}
 	return &dates
 }
@@ -382,7 +383,7 @@ func (p *ProgramEntry) saveProgramEntryRecord(db *gorm.DB) {
 		if verboseGlobal {
 			log.Printf("Updating program entry #%d.\n", p.ID)
 		}
-		db.Model(&p).Updates(map[string]any{
+		if err := db.Model(&p).Updates(map[string]any{
 			"Description":     p.Description,
 			"StartDateTime":   p.StartDateTime,
 			"EndDateTime":     p.EndDateTime,
@@ -391,7 +392,24 @@ func (p *ProgramEntry) saveProgramEntryRecord(db *gorm.DB) {
 			"Title":           p.Title,
 			"Homepage":        p.Homepage,
 			"LastCheck":       time.Now(),
-		}).Association("ImageLinks")
+		}).Error; err != nil {
+			log.Printf("error updating program entry #%d: %v\n", p.ID, err)
+		}
+		// persist image links explicitly, a plain Updates() call does not save associations
+		if len(p.ImageLinks) > 0 {
+			// delete and recreate the links, gorm's association Replace would only
+			// null the foreign keys of removed links instead of deleting the rows
+			if err := db.Where("program_entry_id = ?", p.ID).Delete(&ImageLink{}).Error; err != nil {
+				log.Printf("error deleting image links of program entry #%d: %v\n", p.ID, err)
+			}
+			for i := range p.ImageLinks {
+				p.ImageLinks[i].ID = 0
+				p.ImageLinks[i].ProgramEntryID = p.ID
+			}
+			if err := db.Create(&p.ImageLinks).Error; err != nil {
+				log.Printf("error saving image links of program entry #%d: %v\n", p.ID, err)
+			}
+		}
 
 		atomic.AddUint64(&status.TotalUpdatedPE, 1)
 	} else {
@@ -676,7 +694,11 @@ func ClearOldRecommendations() {
 func ClearDeprecations() {
 	db := getDb()
 
-	db.Model(&ProgramEntry{}).Update("is_deprecated = ?", false).Set("last_collision_check", "NULL").Where("is_deprecated = true")
+	result := db.Model(&ProgramEntry{}).Where("is_deprecated = true").
+		Updates(map[string]any{"is_deprecated": false, "last_collision_check": nil})
+	if result.Error != nil {
+		log.Printf("error clearing deprecation status of program entries: %v\n", result.Error)
+	}
 }
 
 func getWorkerPoolIdleTimeout() pond.Option {
@@ -706,14 +728,37 @@ func chunkStringSlice(slice []string, size int) [][]string {
 	return chunks
 }
 
+// dateTimeLayouts contains all date time layouts parseDate() accepts: RFC3339
+// for example for ORF page attributes, and database specific formats as returned
+// by the status view, like "2026-08-26 21:00:00+02:00" (sqlite) or
+// "2026-08-26 21:00:00+02" (postgres).
+var dateTimeLayouts = []string{
+	time.RFC3339,
+	"2006-01-02 15:04:05.999999999Z07:00",
+	"2006-01-02 15:04:05.999999999-07",
+	"2006-01-02 15:04:05",
+}
+
 func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
-	dateTime, err := time.Parse(time.RFC3339, datetimeStr)
-	if err != nil {
-		appLog(fmt.Sprint("Problem with parsing date time in orf program entry."))
-		return time.Time{}, true
+	var dateTime time.Time
+	var parsed = false
+	for _, layout := range dateTimeLayouts {
+		var candidate time.Time
+		var err error
+		if layout == time.RFC3339 {
+			candidate, err = time.Parse(layout, datetimeStr)
+		} else {
+			// date times without time zone information are interpreted in the given location
+			candidate, err = time.ParseInLocation(layout, datetimeStr, location)
+		}
+		if err == nil && !candidate.IsZero() {
+			dateTime = candidate
+			parsed = true
+			break
+		}
 	}
-	if dateTime.IsZero() {
-		appLog(fmt.Sprint("Problem with parsing date time in orf program entry."))
+	if !parsed {
+		appLog(fmt.Sprintf("Problem with parsing date time '%s'.", datetimeStr))
 		return time.Time{}, true
 	}
 	dateTime = dateTime.In(location)
@@ -721,7 +766,7 @@ func parseDate(datetimeStr string, location *time.Location) (time.Time, bool) {
 }
 
 // getProgramOf to work with program entries, without deprecated entries
-func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *[]ProgramEntry {
+func getProgramOf(start *time.Time, end *time.Time, channel *Channel) (*[]ProgramEntry, error) {
 	db := getDb()
 	var entries []ProgramEntry
 	// 14 day = max range
@@ -742,19 +787,25 @@ func getProgramOf(start *time.Time, end *time.Time, channel *Channel) *[]Program
 
 	result := entryQuery.Find(&entries)
 	if result.Error != nil {
-		log.Fatalf("error fetching program items: %v", result.Error)
-		return nil
+		return nil, fmt.Errorf("error fetching program items: %w", result.Error)
 	}
-	return &entries
+	return &entries, nil
 }
 
 // getAllProgramEntriesOf to work with program entries, without deprecated entries
 func getAllProgramEntriesOf(start, end time.Time) (*[]ProgramEntry, error) {
 	allEntries := make([]ProgramEntry, 0)
 
-	for _, channel := range *getChannels() {
+	channels, err := getChannels()
+	if err != nil {
+		return nil, err
+	}
+	for _, channel := range *channels {
 		channelPtr := channel
-		programResponse := getProgramOf(&start, &end, &channelPtr)
+		programResponse, err := getProgramOf(&start, &end, &channelPtr)
+		if err != nil {
+			return nil, err
+		}
 		if programResponse == nil {
 			continue
 		}

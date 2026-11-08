@@ -89,7 +89,7 @@ func TestChannelsOrdering(t *testing.T) {
 	setupInMemoryDbForTesting()
 	handleChannelsSetup()
 
-	channels := *getChannels()
+	channels := *mustGetChannels(t)
 	if len(channels) < 2 {
 		t.Skip("Not enough channels to test ordering")
 	}
@@ -107,7 +107,7 @@ func TestChannelsOrdering(t *testing.T) {
 	}
 
 	// Fetch channels again and check order
-	orderedChannels := *getChannels()
+	orderedChannels := *mustGetChannels(t)
 	for i, channel := range orderedChannels {
 		if channel.ID != reversedChannels[i].ID {
 			t.Errorf("Channel at index %d has wrong ID. Expected %d, got %d", i, reversedChannels[i].ID, channel.ID)
@@ -115,5 +115,33 @@ func TestChannelsOrdering(t *testing.T) {
 		if channel.Priority != i {
 			t.Errorf("Channel at index %d has wrong priority. Expected %d, got %d", i, i, channel.Priority)
 		}
+	}
+}
+
+func TestHandleChannelsSetupSkipsUnknownFamilies(t *testing.T) {
+	setupIsolatedSqliteForTesting(t)
+	db := getDb()
+
+	// reset channels and families to control the processing order
+	if err := db.Where("1 = 1").Delete(&Channel{}).Error; err != nil {
+		t.Fatalf("could not delete the channels: %v", err)
+	}
+	if err := db.Where("1 = 1").Delete(&ChannelFamily{}).Error; err != nil {
+		t.Fatalf("could not delete the channel families: %v", err)
+	}
+
+	// the unknown family is processed first, so that an early return
+	// would abort the setup before any channel was created
+	db.Create(&ChannelFamily{Title: "Unknown"})
+	db.Create(&ChannelFamily{Title: "ARD"})
+	db.Create(&ChannelFamily{Title: "ZDF"})
+	db.Create(&ChannelFamily{Title: "SRF"})
+	db.Create(&ChannelFamily{Title: "ORF"})
+
+	handleChannelsSetup()
+
+	channels := *mustGetChannels(t)
+	if len(channels) != 27 {
+		t.Fatalf("expected 27 channels after the setup with an unknown channel family, got %d", len(channels))
 	}
 }

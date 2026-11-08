@@ -19,7 +19,7 @@ version: "3"
 
 services:
   db:
-    image: postgres:14.15-alpine
+    image: postgres:16-alpine
     container_name: oerc-db
     environment:
       POSTGRES_PASSWORD: root
@@ -31,7 +31,7 @@ services:
     networks:
       - oerc
     volumes:
-      - oerc-postgres-data:/var/lib/postgresql/data
+      - oerc-postgres-data:/var/lib/postgresql
     ports:
       - "5432:5432"
     healthcheck:

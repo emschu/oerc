@@ -1,5 +1,18 @@
 # Changelog oerc
 
+## 0.26.0 - 2026/11/08
+- Fix wrong date formatting in SRF integration
+- Fix XMLTV export to emit a valid `<tv>` root and limit the XMLTV endpoint to 14 days
+- Refresh the PostgreSQL status view after `fetch`, `fetch-range` and `search`
+- Fix date parsing and DST-safe date ranges, including `full-overlap-check` on SQLite
+- Add `TrustedProxies` configuration and fix proxy and PostgreSQL SSL handling
+- API: add `/keywords`, recommendation pagination, request limits and server timeouts
+- Return HTTP 500 instead of terminating the server on database errors
+- Parser and reliability fixes for ARD, ORF, SRF and ZDF
+- Fix log pagination in the web client
+- Upgrade PostgreSQL to 16
+- Dependency updates for application and CI
+
 ## 0.25.1 - 2026/09/05
 - Fix ard api model types  
 

@@ -18,6 +18,7 @@ package main
 
 import (
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,8 +29,13 @@ import (
 func FindOverlaps(handler dateRangeHandler) {
 	log.Println("Start processing overlaps")
 
+	channels, err := getChannels()
+	if err != nil {
+		log.Printf("Error fetching channels for the overlap processing: %v\n", err)
+		return
+	}
 	var wg sync.WaitGroup
-	for _, channel := range *getChannels() {
+	for _, channel := range *channels {
 		if isChannelFamilyExcluded(&channel.ChannelFamily) {
 			continue
 		}
@@ -47,27 +53,32 @@ func FindOverlaps(handler dateRangeHandler) {
 func FindOverlapsGlobal() {
 	setupMaterializedView()
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
-	currentStatusData := getStatusResponse()
-	if currentStatusData == nil {
+	currentStatusData, err := getStatusResponse()
+	if err != nil || currentStatusData == nil {
 		log.Fatalln("Error fetching application status data from database")
 	}
 	if len(currentStatusData.DataStartTime) == 0 || len(currentStatusData.DataEndTime) == 0 {
 		return
 	}
-	dataStartTime, err := parseDate(currentStatusData.DataStartTime, location)
-	if err != false {
+	dataStartTime, fail := parseDate(currentStatusData.DataStartTime, location)
+	if fail {
 		return
 	}
-	dataEndTime, err := parseDate(currentStatusData.DataEndTime, location)
-	if err != false {
+	dataEndTime, fail := parseDate(currentStatusData.DataEndTime, location)
+	if fail {
 		return
 	}
 
 	times := generateDateRangeBetweenDates(dataStartTime.Add(-24*time.Hour), dataEndTime.Add(24*time.Hour))
 	log.Printf("Check %d days for each channel\n", len(*times))
 
+	channels, err := getChannels()
+	if err != nil {
+		log.Printf("Error fetching channels for the overlap processing: %v\n", err)
+		return
+	}
 	var wg sync.WaitGroup
-	for _, channel := range *getChannels() {
+	for _, channel := range *channels {
 		chn := channel
 
 		for _, dayToCheck := range *times {
@@ -85,6 +96,8 @@ func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
 
 	db := getDb()
 	collisionMap := findOverlaps(db, channel, day)
+	// clear collision state of program entries of this day without current overlaps
+	clearStaleCollisions(db, channel, day, collisionMap)
 	if len(*collisionMap) == 0 {
 		return
 	}
@@ -99,6 +112,43 @@ func handleOverlapsByDay(wg *sync.WaitGroup, channel *Channel, day time.Time) {
 		processOverlaps(db, &programEntryID)
 	}
 
+}
+
+// clearStaleCollisions removes collision entries and the deprecation status of
+// program entries of the given channel and day which do not have any current
+// overlaps anymore, so that the overlap state cannot become stale
+func clearStaleCollisions(db *gorm.DB, channel *Channel, day time.Time, currentOverlaps *map[uint][]uint) {
+	startOfDay := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location())
+	endOfDay := time.Date(day.Year(), day.Month(), day.Day(), 23, 59, 59, 0, day.Location())
+
+	var entries []ProgramEntry
+	result := db.Model(&ProgramEntry{}).
+		Where("channel_id = ? AND start_date_time BETWEEN ? AND ?", channel.ID, startOfDay, endOfDay).
+		Preload("CollisionEntries").
+		Find(&entries)
+	if result.Error != nil {
+		log.Printf("Error fetching program entries of channel %d on day '%s' to clear stale collisions: %v\n",
+			channel.ID, day.Format("2006-01-02"), result.Error)
+		return
+	}
+
+	for _, entry := range entries {
+		if _, hasCurrentOverlap := (*currentOverlaps)[entry.ID]; hasCurrentOverlap {
+			continue
+		}
+		// clear join table entries of collisions which do not exist anymore
+		if len(entry.CollisionEntries) > 0 {
+			if err := db.Model(&entry).Association("CollisionEntries").Clear(); err != nil {
+				log.Printf("Error clearing collision entries of program entry #%d: %v\n", entry.ID, err)
+				continue
+			}
+		}
+		if entry.IsDeprecated {
+			if err := db.Model(&entry).Updates(map[string]any{"is_deprecated": false, "last_collision_check": time.Now()}).Error; err != nil {
+				log.Printf("Error clearing deprecation status of program entry #%d: %v\n", entry.ID, err)
+			}
+		}
+	}
 }
 
 func processOverlaps(db *gorm.DB, programEntryID *uint) {
@@ -153,8 +203,12 @@ func storeCollisions(db *gorm.DB, collisionMap *map[uint][]uint) []uint {
 			db.Model(&ProgramEntry{}).Where("id IN(?)", relatedIDs).Find(&relatedItems)
 		}
 		if len(relatedItems) > 0 {
-			programEntry.CollisionEntries = relatedItems
-			db.Save(&programEntry)
+			// replace the join table entries, so that collisions which do not
+			// exist anymore are removed as well
+			if err := db.Model(&programEntry).Association("CollisionEntries").Replace(relatedItems); err != nil {
+				log.Printf("Error storing collisions of program entry #%d: %v\n", programEntry.ID, err)
+				continue
+			}
 		}
 		affectedIDs = append(affectedIDs, programEntry.ID)
 	}
@@ -169,7 +223,7 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time) *map[uint][]uint
 	// execute raw SQL query to find overlaps with duration calculation
 	var overlaps []overlapResult
 	var sqlQuery string
-	if GetAppConf().DbType == "postgres" {
+	if strings.ToLower(GetAppConf().DbType) == "postgres" {
 		sqlQuery = `
 		SELECT
 			a.channel_id,
@@ -185,7 +239,7 @@ func findOverlaps(db *gorm.DB, channel *Channel, day time.Time) *map[uint][]uint
 		ORDER BY a.channel_id, a.start_date_time
 	`
 	}
-	if GetAppConf().DbType == "sqlite" {
+	if strings.ToLower(GetAppConf().DbType) == "sqlite" {
 		sqlQuery = `
 		SELECT
 		  a.channel_id,

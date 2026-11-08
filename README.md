@@ -72,7 +72,7 @@ $ docker-compose up
 **Option 1**: SQLite database (default) - this is the easiest way to get started.
     - The SQLite database file is located at `~/.oerc.db` by default.
 
-**Option 2**: Set up a PostgreSQL database (12+), configure a database with a user and start it.
+**Option 2**: Set up a PostgreSQL database (14+), configure a database with a user and start it.
     - The [development section](./DEVELOPMENT.md) contains a simple docker command to run a local database for development or testing. 
 3. Run `oerc init`.   
    - This will copy a sample configuration file to the path `~/.oerc.yaml` if the file does not exist already.
@@ -92,7 +92,7 @@ USAGE:
    oerc [global options] command [command options]
 
 VERSION:
-   0.25.1, License: AGPLv3, https://github.com/emschu/oerc
+   0.26.0, License: AGPLv3, https://github.com/emschu/oerc
 
 DESCRIPTION:
    Fetch, view and search TV program data of public-law stations in Germany, Switzerland and Austria

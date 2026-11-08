@@ -118,7 +118,7 @@ func handleChannelsSetup() {
 			break
 		default:
 			log.Printf("Unknown channel family '%s'", channelFam.Title)
-			return
+			continue
 		}
 		var channelCounter = 0
 		for _, c := range *channels {

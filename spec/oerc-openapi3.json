@@ -780,6 +780,33 @@
               "type": "string"
             },
             "style": "form"
+          },
+          {
+            "allowEmptyValue": true,
+            "description": "limit, maximum amount of recommendations to return, default 250, maximum 5000",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 250,
+              "maximum": 5000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "style": "form"
+          },
+          {
+            "allowEmptyValue": true,
+            "description": "offset, amount of recommendations to skip for pagination",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "style": "form"
           }
         ],
         "responses": {
@@ -805,6 +832,26 @@
               }
             },
             "description": "Error, bad request, a query string must be provided"
+          }
+        }
+      }
+    },
+    "/keywords": {
+      "get": {
+        "operationId": "keywordsGET",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "get keywords"
           }
         }
       }

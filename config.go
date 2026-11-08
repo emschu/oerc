@@ -65,6 +65,7 @@ type AppConfig struct {
 	SearchSkipChannels           []string `yaml:"SearchSkipChannels"`
 	SearchDaysInFuture           uint     `yaml:"SearchDaysInFuture"`
 	AccessControlAllowOrigin     string   `yaml:"AccessControlAllowOrigin,omitempty"`
+	TrustedProxies               []string `yaml:"TrustedProxies,omitempty"`
 }
 
 func (a *AppConfig) verifyConfiguration() bool {
@@ -98,6 +99,19 @@ func (a *AppConfig) verifyConfiguration() bool {
 	if strings.ToLower(a.DbType) != "sqlite" && strings.TrimSpace(a.DbSchema) == "" {
 		log.Printf("Invalid empty database schema provided in configuration!\n")
 		return false
+	}
+	// check the trusted proxies are valid ip addresses or cidr ranges,
+	// they are used by the webserver for the client ip detection only
+	for _, trustedProxy := range a.TrustedProxies {
+		if strings.Contains(trustedProxy, "/") {
+			if _, _, err := net.ParseCIDR(trustedProxy); err != nil {
+				log.Printf("Invalid trusted proxy '%s' provided in configuration! Trusted proxies have to be IP addresses or CIDR ranges.\n", trustedProxy)
+				return false
+			}
+		} else if net.ParseIP(trustedProxy) == nil {
+			log.Printf("Invalid trusted proxy '%s' provided in configuration! Trusted proxies have to be IP addresses or CIDR ranges.\n", trustedProxy)
+			return false
+		}
 	}
 	return true
 }

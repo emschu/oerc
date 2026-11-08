@@ -17,8 +17,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 SHELL := /bin/bash
 
-APP_VERSION_DOT = "0.25.1"
-APP_VERSION_STR = "0-25-1"
+APP_VERSION_DOT = "0.26.0"
+APP_VERSION_STR = "0-26-0"
 
 GO := GO111MODULE=on go
 GO_PATH = $(shell $(GO) env GOPATH)
@@ -60,11 +60,11 @@ build: ## build dev version of application
 
 .PHONY: lint
 lint: ## linting the code
-	$(GO) fmt ./...
 	$(GO_REVIVE) .
 
 .PHONY: lint-fix
 lint-fix: ## lint-fix the code
+	$(GO) fmt ./...
 	$(GO) fix ./...
 
 .PHONY: test
@@ -116,6 +116,6 @@ version: ## populate the current version defined in this make file
 	sed -r -i 's/version\s*=\s*"([0-9]+.[0-9]+.[0-9]+)"/version       = "'$(APP_VERSION_DOT)'"/g' main.go
 	sed -r -i 's/([0-9]+.[0-9]+.[0-9]+, License:)/'$(APP_VERSION_DOT)', License:/g' README.md
 	sed -r -i 's/"version": "([0-9]+.[0-9]+.[0-9]+)"/"version": "'$(APP_VERSION_DOT)'"/g' client/package.json
-	cd client; npm i;
+	cd client; npm ci;
 	make frontend
 	$(GO_RICE) embed-go

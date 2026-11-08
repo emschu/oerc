@@ -17,6 +17,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,6 +61,37 @@ func TestGenerateDateRangeBetweenDates(t *testing.T) {
 	}
 }
 
+func TestGenerateDateRangeBetweenDatesDstAndBounds(t *testing.T) {
+	location, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Fatalf("could not load location: %v", err)
+	}
+
+	// the day of the daylight saving change (2026-03-29) has only 23 hours,
+	// calendar days must be used instead of 24 hour blocks
+	start := time.Date(2026, 3, 28, 0, 0, 0, 0, location)
+	end := time.Date(2026, 3, 30, 0, 0, 0, 0, location)
+	dates := generateDateRangeBetweenDates(start, end)
+	if len(*dates) != 3 {
+		t.Fatalf("expected 3 calendar days, got %d: %v", len(*dates), *dates)
+	}
+
+	// a single day range must return the requested day, not time.Now()
+	sameDate := generateDateRangeBetweenDates(start, start)
+	if len(*sameDate) != 1 {
+		t.Fatalf("expected one element for a single day range, got %d", len(*sameDate))
+	}
+	if !(*sameDate)[0].Equal(start) {
+		t.Fatalf("expected the requested start date, got %v", (*sameDate)[0])
+	}
+
+	// reversed ranges must work as well
+	reversed := generateDateRangeBetweenDates(end, start)
+	if len(*reversed) != 3 {
+		t.Fatalf("expected 3 calendar days for the reversed range, got %d", len(*reversed))
+	}
+}
+
 func TestTrim(t *testing.T) {
 	in := "\n\t\t\t\t\t\t\tZDX-Morgenmagazin\t\t\t\t\t\tn\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tModeration: X Y, Z D und F A\t\t\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
 	trimString := trimAndSanitizeString(in)
@@ -91,6 +123,10 @@ func TestTrimAndSanitizeString(t *testing.T) {
 }
 
 func TestGetProxy(t *testing.T) {
+	// restore the configuration, an invalid proxy would leak into subsequent tests
+	origConf := appConf
+	defer func() { appConf = origConf }()
+
 	// invalid proxy settings -> fallback to http.ProxyFromEnvironment expected
 	appConf.ProxyURL = ""
 	if getHTTPProxy() == nil {
@@ -309,22 +345,41 @@ func TestParseDate(t *testing.T) {
 	setupInMemoryDbForTesting()
 
 	location, _ := time.LoadLocation(defaultAppConfig().TimeZone)
+
+	// rfc3339, for example used in orf page attributes
 	date, fail := parseDate("2022-02-22T10:10:11Z", location)
 	if fail || date.IsZero() {
 		t.Fatalf("invalid date")
+	}
+
+	// database formats as returned by the status info view, they must be
+	// parseable for the global overlap check to work
+	dbDates := []string{
+		"2026-08-26 21:00:00+02:00", // sqlite
+		"2026-08-26 21:00:00+02",    // postgres
+		"2026-08-26 21:00:00",       // without time zone information
+		"2026-08-26 21:00:00.123456+02:00",
+	}
+	for _, dbDate := range dbDates {
+		date, fail = parseDate(dbDate, location)
+		if fail || date.IsZero() {
+			t.Fatalf("database date '%s' must be parseable", dbDate)
+		}
+		if date.Month() != time.August || date.Day() != 26 || date.Hour() != 21 {
+			t.Fatalf("unexpected parsed date '%s': %v", dbDate, date)
+		}
 	}
 
 	invalidDates := []string{
 		"",
 		"1",
 		"2022-02-22T10:10:11",
-		"2022-02-22 10:10:11Z",
-		"2022-02-22 10:10:11",
+		"not-a-date",
 	}
 	for _, invalidDate := range invalidDates {
 		date, fail2 := parseDate(invalidDate, location)
 		if !fail2 || !date.IsZero() {
-			t.Fatalf("invalid date parsing result")
+			t.Fatalf("invalid date parsing result for '%s'", invalidDate)
 		}
 	}
 }
@@ -382,4 +437,97 @@ func TestGetDbWithHomeDir(t *testing.T) {
 	sqlDB, _ := db.DB()
 	sqlDB.Close()
 	os.Remove(expectedPath)
+}
+
+func TestSaveProgramEntryRecordUpdatesImageLinks(t *testing.T) {
+	setupIsolatedSqliteForTesting(t)
+
+	db := getDb()
+	channels := *mustGetChannels(t)
+	if len(channels) == 0 {
+		t.Fatalf("no channels present after setup")
+	}
+	channel := channels[0]
+
+	now := time.Now().Truncate(time.Second)
+	later := now.Add(time.Hour)
+	entry := ProgramEntry{
+		ManagedRecord: ManagedRecord{
+			Title: "image link test",
+			Hash:  buildHash([]string{"image-link-test", now.Format(time.RFC3339)}),
+		},
+		StartDateTime: &now,
+		EndDateTime:   &later,
+		ChannelID:     channel.ID,
+	}
+	entry.considerImageLinkExists("https://example.com/first.png")
+	entry.saveProgramEntryRecord(db)
+	if entry.ID == 0 {
+		t.Fatalf("program entry was not created")
+	}
+
+	// reload with preloaded image links and add a second one
+	var stored ProgramEntry
+	db.Preload("ImageLinks").First(&stored, entry.ID)
+	stored.considerImageLinkExists("https://example.com/second.png")
+	stored.saveProgramEntryRecord(db)
+
+	var linkCount int64
+	db.Model(&ImageLink{}).Where("program_entry_id = ?", entry.ID).Count(&linkCount)
+	if linkCount != 2 {
+		t.Fatalf("expected 2 image links after the update, got %d", linkCount)
+	}
+
+	// removing image links must be persisted as well
+	var reloaded ProgramEntry
+	db.Preload("ImageLinks").First(&reloaded, entry.ID)
+	reloaded.ImageLinks = reloaded.ImageLinks[:1]
+	reloaded.saveProgramEntryRecord(db)
+
+	db.Model(&ImageLink{}).Where("program_entry_id = ?", entry.ID).Count(&linkCount)
+	if linkCount != 1 {
+		t.Fatalf("expected 1 image link after the removal, got %d", linkCount)
+	}
+
+	// no orphaned image links must remain
+	var totalCount int64
+	db.Model(&ImageLink{}).Count(&totalCount)
+	if totalCount != 1 {
+		t.Fatalf("removed image links must be deleted and not orphaned, got %d rows in total", totalCount)
+	}
+}
+
+func TestHTTPClientProxyIsEvaluatedPerRequest(t *testing.T) {
+	transport, ok := httpClient.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("httpClient must use an http.Transport")
+	}
+	if transport.Proxy == nil {
+		t.Fatalf("the transport must have a proxy function")
+	}
+
+	req, err := http.NewRequest("GET", "https://example.com", nil)
+	if err != nil {
+		t.Fatalf("could not create request: %v", err)
+	}
+
+	origConf := appConf
+	defer func() { appConf = origConf }()
+
+	// the proxy has to be resolved from the current configuration per request,
+	// not from the empty configuration state at package initialization
+	appConf.ProxyURL = "http://localhost:7676"
+	proxyURL, err := transport.Proxy(req)
+	if err != nil {
+		t.Fatalf("unexpected proxy error: %v", err)
+	}
+	if proxyURL == nil || proxyURL.String() != "http://localhost:7676" {
+		t.Fatalf("the configured proxy must be returned, got: %v", proxyURL)
+	}
+
+	// without configuration the environment fallback must be used
+	appConf.ProxyURL = ""
+	if _, err := transport.Proxy(req); err != nil {
+		t.Fatalf("unexpected proxy error: %v", err)
+	}
 }

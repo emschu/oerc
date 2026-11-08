@@ -19,6 +19,7 @@ package main
 // this file contains all HTTP JSON API methods for the gin server implementation of this project
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -29,8 +30,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// respondWithProgramOfWeb answers the request with the program data of the given
+// date range, database errors are answered with http 500 instead of terminating
+// the whole server process
+func respondWithProgramOfWeb(c *gin.Context, start *time.Time, end *time.Time, channel *Channel) {
+	response, err := getProgramOfWeb(start, end, channel)
+	if err != nil || response == nil {
+		log.Printf("error fetching program items: %v\n", err)
+		c.JSON(http.StatusInternalServerError, Error{Status: "500", Message: "Internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
 // use this method to get program entries for the web frontend, includes deprecated entries
-func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *ProgramResponse {
+func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) (*ProgramResponse, error) {
 	db := getDb()
 	var entries []ProgramEntry
 	// 14 day = max range
@@ -48,8 +62,7 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 	}
 	result := order.Find(&entries)
 	if result.Error != nil {
-		log.Fatalf("error fetching program items: %v", result.Error)
-		return nil
+		return nil, fmt.Errorf("error fetching program items: %w", result.Error)
 	}
 	response := ProgramResponse{
 		From:             start,
@@ -61,18 +74,17 @@ func getProgramOfWeb(start *time.Time, end *time.Time, channel *Channel) *Progra
 	if channel != nil {
 		response.ChannelID = int64(channel.ID)
 	}
-	return &response
+	return &response, nil
 }
 
-func getChannels() *[]Channel {
+func getChannels() (*[]Channel, error) {
 	db := getDb()
 	var channels []Channel
 	result := db.Model(&Channel{}).Preload("ChannelFamily").Where("is_deprecated is false").Order("priority asc").Find(&channels)
 	if result.Error != nil {
-		log.Fatalf("error fetching channels: %v", result.Error)
-		return nil
+		return nil, fmt.Errorf("error fetching channels: %w", result.Error)
 	}
-	return &channels
+	return &channels, nil
 }
 
 func getTvShows() *[]TvShow {
@@ -86,15 +98,14 @@ func getTvShows() *[]TvShow {
 	return &tvShows
 }
 
-func getChannelFamilies() *[]ChannelFamily {
+func getChannelFamilies() (*[]ChannelFamily, error) {
 	db := getDb()
 	families := &[]ChannelFamily{}
 	result := db.Model(&ChannelFamily{}).Find(families)
 	if result.Error != nil {
-		log.Fatalf("error fetching channel channelFamilyKeys: %v", result.Error)
-		return nil
+		return nil, fmt.Errorf("error fetching channel channelFamilyKeys: %w", result.Error)
 	}
-	return families
+	return families, nil
 }
 
 func getProgramYesterdayHandler(c *gin.Context) {
@@ -102,7 +113,7 @@ func getProgramYesterdayHandler(c *gin.Context) {
 	yStart := time.Date(y.Year(), y.Month(), y.Day(), 0, 0, 0, 0, y.Location())
 	yEnd := time.Date(y.Year(), y.Month(), y.Day(), 23, 59, 59, 0, y.Location())
 
-	c.JSON(http.StatusOK, getProgramOfWeb(&yStart, &yEnd, nil))
+	respondWithProgramOfWeb(c, &yStart, &yEnd, nil)
 }
 
 func getYesterdayProgramWithChannelHandler(c *gin.Context) {
@@ -116,7 +127,7 @@ func getYesterdayProgramWithChannelHandler(c *gin.Context) {
 	yStart := time.Date(y.Year(), y.Month(), y.Day(), 0, 0, 0, 0, y.Location())
 	yEnd := time.Date(y.Year(), y.Month(), y.Day(), 23, 59, 59, 0, y.Location())
 
-	c.JSON(http.StatusOK, getProgramOfWeb(&yStart, &yEnd, channel))
+	respondWithProgramOfWeb(c, &yStart, &yEnd, channel)
 }
 
 func getProgramTodayHandler(c *gin.Context) {
@@ -124,7 +135,7 @@ func getProgramTodayHandler(c *gin.Context) {
 	tStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	tEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
 
-	c.JSON(http.StatusOK, getProgramOfWeb(&tStart, &tEnd, nil))
+	respondWithProgramOfWeb(c, &tStart, &tEnd, nil)
 }
 
 func getProgramTomorrowHandler(c *gin.Context) {
@@ -132,7 +143,7 @@ func getProgramTomorrowHandler(c *gin.Context) {
 	toStart := time.Date(tom.Year(), tom.Month(), tom.Day(), 0, 0, 0, 0, tom.Location())
 	toEnd := time.Date(tom.Year(), tom.Month(), tom.Day(), 23, 59, 59, 0, tom.Location())
 
-	c.JSON(http.StatusOK, getProgramOfWeb(&toStart, &toEnd, nil))
+	respondWithProgramOfWeb(c, &toStart, &toEnd, nil)
 }
 
 func getTomorrowProgramWithChannelHandler(c *gin.Context) {
@@ -147,7 +158,7 @@ func getTomorrowProgramWithChannelHandler(c *gin.Context) {
 	toStart := time.Date(tom.Year(), tom.Month(), tom.Day(), 0, 0, 0, 0, tom.Location())
 	toEnd := time.Date(tom.Year(), tom.Month(), tom.Day(), 23, 59, 59, 0, tom.Location())
 
-	c.JSON(http.StatusOK, getProgramOfWeb(&toStart, &toEnd, channel))
+	respondWithProgramOfWeb(c, &toStart, &toEnd, channel)
 }
 
 func getSingleChannelHandler(c *gin.Context) {
@@ -170,7 +181,7 @@ func getDailyProgramWithChannelHandler(c *gin.Context) {
 	tStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	tEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
 
-	c.JSON(http.StatusOK, getProgramOfWeb(&tStart, &tEnd, channel))
+	respondWithProgramOfWeb(c, &tStart, &tEnd, channel)
 }
 
 func getProgramHandler(c *gin.Context) {
@@ -229,7 +240,7 @@ func getProgramHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, getProgramOfWeb(&start, &end, channel))
+	respondWithProgramOfWeb(c, &start, &end, channel)
 }
 
 func getSingleProgramEntryHandler(c *gin.Context) {
@@ -297,8 +308,10 @@ func isChannelValid(c *gin.Context, cid string, acceptZero bool) (*Channel, bool
 }
 
 func getStatusHandler(c *gin.Context) {
-	response := getStatusResponse()
-	if response == nil {
+	response, err := getStatusResponse()
+	if err != nil || response == nil {
+		log.Printf("error fetching status response: %v\n", err)
+		c.JSON(http.StatusInternalServerError, Error{Status: "500", Message: "Internal server error"})
 		return
 	}
 	c.JSON(http.StatusOK, response)
@@ -313,12 +326,14 @@ func getTvShowsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func getStatusResponse() *StatusResponse {
-	channels := getChannels()
-	channelFamilies := getChannelFamilies()
-
-	if channels == nil || channelFamilies == nil {
-		return nil
+func getStatusResponse() (*StatusResponse, error) {
+	channels, err := getChannels()
+	if err != nil {
+		return nil, err
+	}
+	channelFamilies, err := getChannelFamilies()
+	if err != nil {
+		return nil, err
 	}
 
 	db := getDb()
@@ -345,7 +360,7 @@ func getStatusResponse() *StatusResponse {
 		TvChannels:          channels,
 		TvChannelFamilies:   channelFamilies,
 	}
-	return &response
+	return &response, nil
 }
 
 func getTvShowResponse(_ *gin.Context) *[]TvShow {
@@ -353,11 +368,21 @@ func getTvShowResponse(_ *gin.Context) *[]TvShow {
 }
 
 func getChannelsHandler(c *gin.Context) {
-	channels := getChannels()
+	channels, err := getChannels()
+	if err != nil || channels == nil {
+		log.Printf("error fetching channels: %v\n", err)
+		c.JSON(http.StatusInternalServerError, Error{Status: "500", Message: "Internal server error"})
+		return
+	}
 	c.JSON(http.StatusOK, ChannelResponse{channels, len(*channels)})
 }
 
+// maxChannelRequestBodyBytes limits the request body size of the channels update endpoint
+const maxChannelRequestBodyBytes = 1 << 20 // 1 MiB
+
 func putChannelsHandler(c *gin.Context) {
+	// limit the request body size, the channel list is small
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxChannelRequestBodyBytes)
 	var channels []Channel
 	if err := c.ShouldBindJSON(&channels); err != nil || channels == nil {
 		c.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid channel data"})
@@ -369,7 +394,12 @@ func putChannelsHandler(c *gin.Context) {
 		db.Model(&Channel{}).Where("id = ?", channel.ID).Update("priority", i)
 	}
 
-	updatedChannels := getChannels()
+	updatedChannels, err := getChannels()
+	if err != nil || updatedChannels == nil {
+		log.Printf("error fetching channels: %v\n", err)
+		c.JSON(http.StatusInternalServerError, Error{Status: "500", Message: "Internal server error"})
+		return
+	}
 	c.JSON(http.StatusOK, ChannelResponse{updatedChannels, len(*updatedChannels)})
 }
 
@@ -385,16 +415,17 @@ func getLogEntriesHandler(context *gin.Context) {
 	var entryCount, pageCount, pageSize int64
 	db.Model(&LogEntry{}).Count(&entryCount)
 	pageSize = 250
-	pageCount = int64(math.Ceil(float64(entryCount / pageSize)))
+	pageCount = int64(math.Ceil(float64(entryCount) / float64(pageSize)))
 	db.Model(&LogEntry{}).Offset(int(page * pageSize)).Limit(int(pageSize)).Order("id desc").Find(&logEntryList)
 	context.JSON(
 		http.StatusOK,
 		LogEntriesResponse{
-			Elements:  &logEntryList,
-			Size:      int64(len(logEntryList)),
-			Page:      page,
-			PageCount: pageCount,
-			PageSize:  entryCount,
+			Elements:   &logEntryList,
+			Size:       int64(len(logEntryList)),
+			Page:       page,
+			PageCount:  pageCount,
+			PageSize:   pageSize,
+			EntryCount: entryCount,
 		},
 	)
 }
@@ -422,6 +453,11 @@ func clearAllLogEntriesHandler(context *gin.Context) {
 	context.JSON(http.StatusOK, "OK")
 }
 
+func getKeywordsHandler(context *gin.Context) {
+	config := GetAppConf()
+	context.JSON(http.StatusOK, config.SearchKeywords)
+}
+
 func getRecommendationsHandler(context *gin.Context) {
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
 
@@ -440,21 +476,59 @@ func getRecommendationsHandler(context *gin.Context) {
 		}
 	}
 	from = from.In(location)
-	logEntryList := getRecommendationsAt(from)
 
-	context.JSON(http.StatusOK, &logEntryList)
+	// handle limit param for pagination
+	limitStr := context.Query("limit")
+	var limit uint64 = 250 // default
+	if len(limitStr) > 0 {
+		var err error
+		limit, err = strconv.ParseUint(limitStr, 10, 64)
+		if err != nil {
+			context.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid value for parameter 'limit'. Should be a positive integer."})
+			return
+		}
+	}
+	if limit > 5000 {
+		// internal maximum
+		limit = 5000
+	}
+	if limit == 0 {
+		limit = 250
+	}
+
+	// handle offset param for pagination
+	offsetStr := context.Query("offset")
+	var offset uint64
+	if len(offsetStr) > 0 {
+		var err error
+		offset, err = strconv.ParseUint(offsetStr, 10, 64)
+		if err != nil {
+			context.JSON(http.StatusBadRequest, Error{Status: "400", Message: "Invalid value for parameter 'offset'. Should be a positive integer."})
+			return
+		}
+	}
+
+	recommendationList, err := getRecommendationsAt(from, int(limit), int(offset))
+	if err != nil {
+		log.Printf("error fetching recommendations: %v\n", err)
+		context.JSON(http.StatusInternalServerError, Error{Status: "500", Message: "Internal server error"})
+		return
+	}
+	context.JSON(http.StatusOK, &recommendationList)
 }
 
-func getRecommendationsAt(at time.Time) []Recommendation {
+func getRecommendationsAt(at time.Time, limit int, offset int) ([]Recommendation, error) {
 	location, _ := time.LoadLocation(GetAppConf().TimeZone)
 	minuteDiff := at.Sub(time.Now().In(location)).Minutes()
 
 	db := getDb()
-	var logEntryList []Recommendation
+	var recommendationList []Recommendation
 	dbQuery := db.Model(&Recommendation{}).
 		Select("recommendations.*").
 		Joins("LEFT JOIN program_entries ON (recommendations.program_entry_id = program_entries.id)").
 		Order("recommendations.start_date_time asc").
+		Offset(offset).
+		Limit(limit).
 		Preload("ProgramEntry").
 		Preload("ProgramEntry.ImageLinks").
 		Preload("ProgramEntry.CollisionEntries")
@@ -465,9 +539,12 @@ func getRecommendationsAt(at time.Time) []Recommendation {
 	} else {
 		dbQuery = dbQuery.Where("(recommendations.start_date_time >= ?)", at)
 	}
-	dbQuery.Find(&logEntryList)
+	result := dbQuery.Find(&recommendationList)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-	return logEntryList
+	return recommendationList, nil
 }
 
 func getSearchHandler(context *gin.Context) {
@@ -527,6 +604,10 @@ func getSearchHandler(context *gin.Context) {
 		}
 	} else {
 		offset = 0
+	}
+	if offset > 100000 {
+		// internal maximum to prevent absurd deep pagination
+		offset = 100000
 	}
 
 	db := getDb()
@@ -595,6 +676,13 @@ func getXMLTvHandler(context *gin.Context) {
 		context.XML(http.StatusBadRequest, Error{
 			Status:  "400",
 			Message: "invalid date range, end is before or equal to start",
+		})
+		return
+	}
+	if end.After(start.AddDate(0, 0, 14)) {
+		context.XML(http.StatusBadRequest, Error{
+			Status:  "400",
+			Message: "invalid date range, exceeds limit of 14 days",
 		})
 		return
 	}
